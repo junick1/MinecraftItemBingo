@@ -1,5 +1,7 @@
 package me.junick.itemBingo.events.gui;
 
+import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.enums.BingoEffect;
 import me.junick.itemBingo.gui.EffectShopGUI;
 import me.junick.itemBingo.gui.ShopGUI;

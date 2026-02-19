@@ -43,13 +43,12 @@ public class ItemShopClickEvent implements Listener {
         handlePurchase(p, selected);
     }
 
-    private void giveItem(Player p, BingoItem item) {
-        switch (item) {
-            case COPPER_OXIDIZER -> p.getInventory().addItem(CustomItems.copperOxidizer());
-            case BINGO_FILLER -> p.getInventory().addItem(CustomItems.bingoFiller());
-            case DYE_SELECTOR -> p.getInventory().addItem(CustomItems.dyeSelector());
-            default -> {}
-        }
+    private ItemStack createItem(BingoItem item) {
+        return switch (item) {
+            case BINGO_FILLER -> CustomItems.bingoFiller();
+            case DYE_SELECTOR -> CustomItems.dyeSelector();
+            default -> null;
+        };
     }
 
     private BingoItem getClickedShopItem(ItemStack item) {
@@ -75,9 +74,27 @@ public class ItemShopClickEvent implements Listener {
             return;
         }
 
+        ItemStack toGive = createItem(item);
+        if (toGive == null) return;
+
+        var leftover = p.getInventory().addItem(toGive);
+        if (!leftover.isEmpty()) {
+            int leftAmount = leftover.values().stream().mapToInt(ItemStack::getAmount).sum();
+            if (leftAmount < toGive.getAmount()) {
+                int givenAmount = toGive.getAmount() - leftAmount;
+                ItemStack remove = toGive.clone();
+                remove.setAmount(givenAmount);
+                p.getInventory().removeItem(remove);
+            }
+
+            p.sendMessage("§e[상점] §c인벤토리가 가득 차서 구매할 수 없습니다!");
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            ItemShopGUI.open(p);
+            return;
+        }
+
         deductCost(prog, item);
         PlayerDataManager.save(p);
-        giveItem(p, item);
 
         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
         p.sendMessage("§e[상점] §a" + item.getDisplay() + "§f(을)를 구매했습니다!");

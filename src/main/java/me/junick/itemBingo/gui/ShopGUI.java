@@ -1,6 +1,7 @@
 package me.junick.itemBingo.gui;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.interfaces.access.SoloProgressAccess;
 import me.junick.itemBingo.util.IconGenerator;
 import me.junick.itemBingo.util.TeamManager;
@@ -16,6 +17,8 @@ public class ShopGUI {
     public static final String TITLE = "§a상점";
 
     public static void open(Player p) {
+        if (!new Settings(ItemBingo.getInstance()).isShopEnabled()) return;
+
         TeamManager tm = ItemBingo.getInstance().getTeamManager();
         int teamId = tm.getTeamId(p);
 

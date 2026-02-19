@@ -1,6 +1,7 @@
 package me.junick.itemBingo.events.gui;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.enums.BingoRewardType;
 import me.junick.itemBingo.gui.DiamondExchangeGUI;
 import me.junick.itemBingo.model.PlayerBingoProgress;

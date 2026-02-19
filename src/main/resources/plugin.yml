@@ -38,3 +38,7 @@ commands:
   teammate:
     description: Check teammates
     usage: /teammate
+  admin:
+    description: Open ItemBingo admin panel
+    usage: /admin
+    permission: itembingo.admin

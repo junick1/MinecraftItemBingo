@@ -19,16 +19,6 @@ public class CustomItems {
     private static final NamespacedKey CUSTOM_TAG =
             new NamespacedKey(ItemBingo.getInstance(), "custom_item");
 
-    public static ItemStack copperOxidizer() {
-        return createCustomItem(
-                Material.REDSTONE,
-                "구리 산화제",
-                NamedTextColor.GOLD,
-                List.of("구리 블록에 우클릭하면 한 단계 산화시킵니다."),
-                "copper_oxidizer"
-        );
-    }
-
     public static ItemStack bingoFiller() {
         return createCustomItem(
                 Material.LIGHT_BLUE_DYE,
@@ -47,10 +37,6 @@ public class CustomItems {
                 List.of("염료를 하나 선택해 획득합니다."),
                 "dye_selector"
         );
-    }
-
-    public static boolean isCopperOxidizer(ItemStack item) {
-        return hasCustomTag(item, "copper_oxidizer");
     }
 
     public static boolean isBingoFiller(ItemStack item) {

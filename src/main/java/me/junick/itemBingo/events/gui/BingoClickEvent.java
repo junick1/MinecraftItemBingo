@@ -65,9 +65,6 @@ public class BingoClickEvent implements Listener {
         ItemStack clicked = e.getCurrentItem();
         if (!isValidItem(clicked)) return;
 
-        if (CustomItems.isCopperOxidizer(clicked)) {
-            return;
-        }
         if (CustomItems.isBingoFiller(clicked)) {
             return;
         }
@@ -91,10 +88,6 @@ public class BingoClickEvent implements Listener {
         ItemStack submitted = e.getCursor();
         if (!isValidItem(submitted)) return;
 
-        if (CustomItems.isCopperOxidizer(submitted)) {
-            sendInvalidItemMessage(p);
-            return;
-        }
         if (CustomItems.isBingoFiller(submitted)) {
             consumeItem(e, submitted);
             completeSubmission(p, progress, board, idx);

@@ -1,6 +1,7 @@
 package me.junick.itemBingo.gui;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.enums.BingoItem;
 import me.junick.itemBingo.enums.BingoRewardType;
 import me.junick.itemBingo.model.PlayerBingoProgress;
@@ -28,6 +29,9 @@ public class ItemShopGUI {
     public static final String TITLE = "§e아이템 상점";
 
     public static void open(Player p) {
+        if (!new Settings(ItemBingo.getInstance()).isShopEnabled()) return;
+        if (!new Settings(ItemBingo.getInstance()).isItemShopEnabled()) return;
+
         PlayerBingoProgress prog = PlayerDataManager.get(p);
 
         Inventory inv = Bukkit.createInventory(null, 9*5, TITLE);

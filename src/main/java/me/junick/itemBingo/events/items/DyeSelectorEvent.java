@@ -1,5 +1,6 @@
 package me.junick.itemBingo.events.items;
 
+import me.junick.itemBingo.gui.ItemShopGUI;
 import me.junick.itemBingo.util.CustomItems;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -102,12 +103,28 @@ public class DyeSelectorEvent implements Listener {
             return;
         }
 
-        active.setAmount(active.getAmount() - 1);
+        ItemStack toGive = new ItemStack(dyeType);
 
-        player.closeInventory();
-        player.getInventory().addItem(new ItemStack(dyeType));
+        var leftover = player.getInventory().addItem(toGive);
+        if (!leftover.isEmpty()) {
+            int leftAmount = leftover.values().stream().mapToInt(ItemStack::getAmount).sum();
+            if (leftAmount < toGive.getAmount()) {
+                int givenAmount = toGive.getAmount() - leftAmount;
+                ItemStack remove = toGive.clone();
+                remove.setAmount(givenAmount);
+                player.getInventory().removeItem(remove);
+            }
+
+            player.sendMessage("§c오류: 인벤토리가 꽉 차있습니다.");
+            player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            player.closeInventory();
+            return;
+        }
+
+        active.setAmount(active.getAmount() - 1);
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
 
+        player.closeInventory();
         activeSelectors.remove(player.getUniqueId());
     }
 }

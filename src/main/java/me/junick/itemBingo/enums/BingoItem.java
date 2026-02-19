@@ -6,12 +6,6 @@ import java.util.EnumMap;
 import java.util.Map;
 
 public enum BingoItem {
-    COPPER_OXIDIZER(
-            "§6구리 산화제",
-            Material.REDSTONE,
-            Map.of(BingoRewardType.LINE, 1),
-            "밀랍칠하지 않은 구리류 블록에 우클릭하면 한 단계 산화시킵니다."
-    ),
     BINGO_FILLER(
             "§d빙고 제출권",
             Material.LIGHT_BLUE_DYE,

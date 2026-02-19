@@ -11,6 +11,7 @@ import me.junick.itemBingo.util.PlayerDataManager;
 import me.junick.itemBingo.util.ProgressFactory;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -100,6 +101,8 @@ public class BingoGUI {
         return createPane(
                 Material.LIME_STAINED_GLASS_PANE,
                 Component.text("제출됨", NamedTextColor.GREEN)
+                        .decoration(TextDecoration.ITALIC, false)
+                        .decoration(TextDecoration.BOLD, true)
         );
     }
 

@@ -1,6 +1,7 @@
 package me.junick.itemBingo.gui;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.util.IconGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -15,6 +16,8 @@ public class DiamondExchangeGUI {
     public static final String TITLE = "§b다이아몬드 환전";
 
     public static void open(Player p, int amount) {
+        if (!new Settings(ItemBingo.getInstance()).isShopEnabled()) return;
+
         Inventory inv = Bukkit.createInventory(null, 9*5, TITLE);
 
         ItemStack grayGlass = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);

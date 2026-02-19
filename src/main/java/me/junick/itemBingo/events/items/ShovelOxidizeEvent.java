@@ -1,6 +1,7 @@
 package me.junick.itemBingo.events.items;
 
-import me.junick.itemBingo.util.CustomItems;
+import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.config.Settings;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -9,34 +10,32 @@ import org.bukkit.block.data.BlockData;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
+import org.bukkit.inventory.meta.ItemMeta;
 
-public class CopperOxidizerEvent implements Listener {
+public class ShovelOxidizeEvent implements Listener {
     @EventHandler
-    public void onUseCopperOxidizer(PlayerInteractEvent e) {
+    public void onUseShovel(PlayerInteractEvent e) {
+        if (!new Settings(ItemBingo.getInstance()).isShovelOxidizeCopper()) return;
+
         if (e.getHand() != EquipmentSlot.HAND) return;
         if (!e.getAction().isRightClick()) return;
-        if (e.getClickedBlock() == null) return;
 
         Player player = e.getPlayer();
         ItemStack hand = player.getInventory().getItemInMainHand();
-
-        if (!CustomItems.isCopperOxidizer(hand)) return;
-
-        e.setCancelled(true);
+        if (!isShovel(hand)) return;
 
         Block block = e.getClickedBlock();
+        if (block == null) return;
 
         Material current = block.getType();
         Material next = getNextOxidation(current);
-        if (next == null) {
-            player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
-            player.sendMessage("§c이 블럭에는 사용할 수 없습니다.");
-            return;
-        }
+        if (next == null) return;
+
+        e.setCancelled(true);
 
         String oldDataStr = block.getBlockData().getAsString();
         String newDataStr = oldDataStr.replace(
@@ -47,27 +46,52 @@ public class CopperOxidizerEvent implements Listener {
         block.setType(next);
 
         try {
+            player.getClass().getMethod("swingHand", EquipmentSlot.class).invoke(player, EquipmentSlot.HAND);
+        } catch (Throwable ignored) { }
+
+
+        try {
             BlockData newData = Bukkit.createBlockData(newDataStr);
             block.setBlockData(newData, false);
 
-            hand.setAmount(hand.getAmount() - 1);
+            damageShovelIfNeeded(player, hand);
 
             player.playSound(player.getLocation(), Sound.ENTITY_PHANTOM_HURT, 1.0f, 1.5f);
             player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_PLACE, 0.1f, 0.5f);
-            player.sendMessage("§a구리가 산화되었습니다!");
-        } catch (IllegalArgumentException ex) {
-            player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
-            player.sendMessage("§c이 블럭에는 사용할 수 없습니다.");
-            return;
-        }
+        } catch (IllegalArgumentException ignored) { }
     }
 
-    @EventHandler
-    public void onUseCopperOxidizerOnCopperGolem(PlayerInteractAtEntityEvent e) {
-        if (e.getHand() != EquipmentSlot.HAND) return;
+    private boolean isShovel(ItemStack item) {
+        if (item == null) return false;
+        return switch (item.getType()) {
+            case WOODEN_SHOVEL, STONE_SHOVEL, COPPER_SHOVEL, IRON_SHOVEL, GOLDEN_SHOVEL, DIAMOND_SHOVEL, NETHERITE_SHOVEL -> true;
+            default -> false;
+        };
+    }
 
-        Player player = e.getPlayer();
-        ItemStack hand = player.getInventory().getItemInMainHand();
+    private void damageShovelIfNeeded(Player player, ItemStack tool) {
+        if (tool == null || tool.getType().isAir()) return;
+
+        ItemMeta meta = tool.getItemMeta();
+        if (meta == null) return;
+        if (meta.isUnbreakable()) return;
+
+        if (!(meta instanceof Damageable dmg)) return;
+
+        // TODO: Add unbreaking logic
+
+        int currentDamage = dmg.getDamage();
+        int max = tool.getType().getMaxDurability();
+        int nextDamage = currentDamage + 1;
+
+        if (nextDamage >= max) {
+            player.getInventory().setItemInMainHand(null);
+            player.playSound(player.getLocation(), Sound.ENTITY_ITEM_BREAK, 1.0f, 1.0f);
+            return;
+        }
+
+        dmg.setDamage(nextDamage);
+        tool.setItemMeta((ItemMeta) dmg);
     }
 
     private Material getNextOxidation(Material type) {
@@ -128,6 +152,10 @@ public class CopperOxidizerEvent implements Listener {
             case COPPER_GOLEM_STATUE -> next = Material.EXPOSED_COPPER_GOLEM_STATUE;
             case EXPOSED_COPPER_GOLEM_STATUE -> next = Material.WEATHERED_COPPER_GOLEM_STATUE;
             case WEATHERED_COPPER_GOLEM_STATUE -> next = Material.OXIDIZED_COPPER_GOLEM_STATUE;
+
+            case LIGHTNING_ROD -> next = Material.EXPOSED_LIGHTNING_ROD;
+            case EXPOSED_LIGHTNING_ROD -> next = Material.WEATHERED_LIGHTNING_ROD;
+            case WEATHERED_LIGHTNING_ROD -> next = Material.OXIDIZED_LIGHTNING_ROD;
 
             default -> {}
         }
