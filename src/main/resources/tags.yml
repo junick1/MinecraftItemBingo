@@ -1,0 +1,54 @@
+tags:
+
+  COLOR:
+    match:
+      - "*_WOOL"
+      - "*_CARPET"
+      - "*_TERRACOTTA"
+      - "*_CONCRETE"
+      - "*_CONCRETE_POWDER"
+      - "*_GLAZED_TERRACOTTA"
+      - "*_STAINED_GLASS"
+      - "*_STAINED_GLASS_PANE"
+      - "*_SHULKER_BOX"
+      - "*_BED"
+      - "*_CANDLE"
+      - "*_BANNER"
+
+  SILK_TOUCH:
+    match:
+      - "*_AMETHYST_BUD"
+      - "*_CORAL_BLOCK"
+      - "*_CORAL"
+      - "*_CORAL_FAN"
+      - "*_ORE"
+      - "*_MUSHROOM_BLOCK"
+      - "*_NYLIUM"
+      - "*SCULK*"
+    materials:
+      - "AMETHYST_CLUSTER"
+      - "BEE_NEST"
+      - "BLUE_ICE"
+      - "CREAKING_HEART"
+      - "GRASS_BLOCK"
+      - "ICE"
+      - "MYCELIUM"
+      - "PACKED_ICE"
+      - "PODZOL"
+      - "TURTLE_EGG"
+
+  THE_END:
+    match:
+      - "PURPUR_*"
+      - "END_STONE*"
+      - "*CHORUS_*"
+      - "DRAGON_*"
+      - "*SHULKER*"
+    materials:
+      - "END_ROD"
+      - "ELYTRA"
+      - "SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE"
+
+  SMITHING_TEMPLATE:
+    match:
+      - "*_SMITHING_TEMPLATE"

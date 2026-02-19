@@ -1,0 +1,40 @@
+name: ItemBingo
+version: '1.0-SNAPSHOT'
+main: me.junick.itemBingo.ItemBingo
+api-version: '1.21'
+commands:
+  rollbingo:
+    description: Start a new bingo game
+    usage: /rollbingo <width> <height>
+    permission: itembingo.command.rollbingo
+    permission-message: You do not have permission to use this command.
+  menu:
+    description: Open Bingo main menu
+    usage: /menu
+  bingo:
+    description: View the bingo board
+    usage: /bingo
+  timer:
+    description: Timer utilities
+    usage: /timer <start|stop|reset> [seconds]
+    permission: itembingo.command.timer
+    permission-message: You do not have permission to use this command.
+  rank:
+    description: View rankings
+    usage: /rank
+  shop:
+    description: Open shop
+    usage: /shop
+  startbingo:
+    description: Start the bingo game
+    usage: /startbingo <seconds>
+    permission: itembingo.command.startbingo
+    permission-message: You do not have permission to use this command.
+  teams:
+    description: args
+    usage: /teams <args...>
+    permission: itembingo.command.teams
+    permission-message: You do not have permission to use this command.
+  teammate:
+    description: Check teammates
+    usage: /teammate
