@@ -1,6 +1,7 @@
 package me.junick.itemBingo.commands;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.config.BundleManager;
 import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.util.BingoItemSelector;
 import me.junick.itemBingo.util.BingoStorage;
@@ -39,6 +40,7 @@ public class RollBingo implements CommandExecutor, TabCompleter {
 
             List<ItemStack> items = BingoItemSelector.getRandomSurvivalItems(count);
 
+            BundleManager.resetPlayerList();
             PlayerDataManager.resetAll();
             TeamDataManager.resetAll();
 

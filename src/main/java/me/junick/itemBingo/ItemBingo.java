@@ -55,6 +55,7 @@ public final class ItemBingo extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ShovelOxidizeEvent(), this);
 
         Bukkit.getPluginManager().registerEvents(new EffectListener(), this);
+        Bukkit.getPluginManager().registerEvents(new SetBundleCommand(), this);
         EffectApplier.start();
 
         // /admin
@@ -76,9 +77,10 @@ public final class ItemBingo extends JavaPlugin {
         getCommand("timer").setExecutor(new TimerCommand());
 
         getCommand("startbingo").setExecutor(new StartBingoCommand());
-        this.getCommand("pointadd").setExecutor((CommandExecutor)new PointCommand());
-        this.getCommand("customitem").setExecutor((CommandExecutor)new CustomItemCommand());
-
+        getCommand("pointadd").setExecutor((CommandExecutor)new PointCommand());
+        getCommand("customitem").setExecutor((CommandExecutor)new CustomItemCommand());
+        getCommand("setbundle").setExecutor((CommandExecutor)new SetBundleCommand());
+        getCommand("bundle").setExecutor((CommandExecutor)new BundleCommand());
 
 //        MaterialExporter.exportToFile();
 
@@ -94,6 +96,7 @@ public final class ItemBingo extends JavaPlugin {
 
         for (World world : Bukkit.getWorlds()) {
             world.setGameRule(GameRules.KEEP_INVENTORY, true);
+            world.setGameRule(GameRules.PVP, false);
         }
 
         getLogger().info("ItemBingo plugin has been enabled!");

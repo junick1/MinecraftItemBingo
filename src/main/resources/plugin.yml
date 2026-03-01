@@ -52,3 +52,11 @@ commands:
     usage: /customitem
     permission: itembingo.command.customitem
     permission-message: You do not have permission to use this command.
+  bundle:
+    description: bundle
+    usage: /bundle
+  setbundle:
+    description: setbundle
+    usage: /setbundle
+    permission: itembingo.command.setbundle
+    permission-message: You do not have permission to use this command.

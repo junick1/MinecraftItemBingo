@@ -1,7 +1,9 @@
 package me.junick.itemBingo.commands;
 
+import me.junick.itemBingo.config.BundleManager;
 import me.junick.itemBingo.util.TimerManager;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -30,9 +32,12 @@ public class StartBingoCommand implements CommandExecutor, TabCompleter {
         }
 
         TimerManager.start(seconds);
+        BundleManager.resetPlayerList();
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.getInventory().clear();
             player.setHealth(0);
+            player.setGameMode(GameMode.SURVIVAL);
+            BundleManager.getBundle(player);
         }
 
         sender.sendMessage("§aBingo started for " + seconds + " seconds.");
