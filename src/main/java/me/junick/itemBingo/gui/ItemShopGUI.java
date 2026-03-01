@@ -80,7 +80,7 @@ public class ItemShopGUI {
 
             ItemStack item = new ItemStack(itemEnum.getIcon());
             ItemMeta meta = item.getItemMeta();
-            meta.displayName(Component.text(itemEnum.getDisplay()));
+            meta.itemName(Component.text(itemEnum.getDisplay(), itemEnum.getColor()));
             meta.lore(lore);
 
             meta.getPersistentDataContainer().set(
