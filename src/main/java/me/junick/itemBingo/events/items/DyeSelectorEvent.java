@@ -1,5 +1,6 @@
 package me.junick.itemBingo.events.items;
 
+import me.junick.itemBingo.enums.BingoItem;
 import me.junick.itemBingo.gui.ItemShopGUI;
 import me.junick.itemBingo.util.CustomItems;
 import net.kyori.adventure.text.Component;
@@ -34,7 +35,7 @@ public class DyeSelectorEvent implements Listener {
         Player player = e.getPlayer();
         ItemStack hand = player.getInventory().getItemInMainHand();
 
-        if (!CustomItems.isDyeSelector(hand)) return;
+        if (!CustomItems.is(hand, BingoItem.DYE_SELECTOR)) return;
 
         e.setCancelled(true);
 
@@ -96,7 +97,7 @@ public class DyeSelectorEvent implements Listener {
         if (!dyeType.name().endsWith("_DYE")) return;
 
         ItemStack active = activeSelectors.get(player.getUniqueId());
-        if (!CustomItems.isDyeSelector(active)) {
+        if (!CustomItems.is(active, BingoItem.DYE_SELECTOR)) {
             player.closeInventory();
             player.sendMessage("§c오류: 유효한 염료 획득권이 인식되지 않습니다.");
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);

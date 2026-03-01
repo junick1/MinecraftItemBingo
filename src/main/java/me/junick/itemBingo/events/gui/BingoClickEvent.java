@@ -1,6 +1,7 @@
 package me.junick.itemBingo.events.gui;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.enums.BingoItem;
 import me.junick.itemBingo.enums.BingoRewardType;
 import me.junick.itemBingo.gui.BingoGUI;
 import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
@@ -65,7 +66,7 @@ public class BingoClickEvent implements Listener {
         ItemStack clicked = e.getCurrentItem();
         if (!isValidItem(clicked)) return;
 
-        if (CustomItems.isBingoFiller(clicked)) {
+        if (CustomItems.is(clicked, BingoItem.BINGO_FILLER)) {
             return;
         }
 
@@ -88,7 +89,7 @@ public class BingoClickEvent implements Listener {
         ItemStack submitted = e.getCursor();
         if (!isValidItem(submitted)) return;
 
-        if (CustomItems.isBingoFiller(submitted)) {
+        if (CustomItems.is(submitted, BingoItem.BINGO_FILLER)) {
             consumeItem(e, submitted);
             completeSubmission(p, progress, board, idx);
             return;

@@ -22,38 +22,13 @@ public class CustomItems {
     private static final NamespacedKey CUSTOM_TAG =
             new NamespacedKey(ItemBingo.getInstance(), "custom_item");
 
-    public static ItemStack bingoFiller() {
-        return createCustomItem(
-                Material.LIGHT_BLUE_DYE,
-                "빙고 제출권",
-                NamedTextColor.LIGHT_PURPLE,
-                List.of("빙고칸 중 하나를 즉시 제출합니다."),
-                "bingo_filler"
-        );
-    }
-
-    public static ItemStack dyeSelector() {
-        return createCustomItem(
-                Material.COMMAND_BLOCK,
-                "염료 획득권",
-                NamedTextColor.GREEN,
-                List.of("염료를 하나 선택해 획득합니다."),
-                "dye_selector"
-        );
-    }
-
     public static ItemStack get(BingoItem b) {
-        return createCustomItem(b.getIcon(),
+        ItemStack item = createCustomItem(b.getIcon(),
                 b.getDisplay(),
                 b.getColor(),
                 b.getLore(),
                 b.name());
-    }
-
-    public static boolean isBingoFiller(ItemStack item) { return hasCustomTag(item, "bingo_filler"); }
-
-    public static boolean isDyeSelector(ItemStack item) {
-        return hasCustomTag(item, "dye_selector");
+        return b.apply(item);
     }
 
     public static boolean is(ItemStack item, BingoItem b) { return hasCustomTag(item, b.name()); }
@@ -68,8 +43,8 @@ public class CustomItems {
         meta.lore(createLoreComponents(loreLines));
         setCustomTag(meta, tag);
         addVisualEnchant(meta);
-
         item.setItemMeta(meta);
+
         return item;
     }
 

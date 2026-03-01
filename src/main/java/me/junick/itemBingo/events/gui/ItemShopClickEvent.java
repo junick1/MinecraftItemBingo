@@ -45,8 +45,8 @@ public class ItemShopClickEvent implements Listener {
 
     private ItemStack createItem(BingoItem item) {
         return switch (item) {
-            case BINGO_FILLER -> CustomItems.bingoFiller();
-            case DYE_SELECTOR -> CustomItems.dyeSelector();
+            case BINGO_FILLER -> CustomItems.get(BingoItem.BINGO_FILLER);
+            case DYE_SELECTOR -> CustomItems.get(BingoItem.DYE_SELECTOR);
             default -> null;
         };
     }
