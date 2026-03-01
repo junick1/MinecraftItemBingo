@@ -14,18 +14,43 @@ tags:
       - "*_BED"
       - "*_CANDLE"
       - "*_BANNER"
+      - "*_BUNDLE"
+      - "*_HARNESS"
+      - "*_DYE"
 
   SILK_TOUCH:
     match:
       - "*_AMETHYST_BUD"
-      - "*_CORAL_BLOCK"
-      - "*_CORAL"
-      - "*_CORAL_FAN"
       - "*_ORE"
       - "*_MUSHROOM_BLOCK"
       - "*_NYLIUM"
       - "*SCULK*"
     materials:
+      - "TUBE_CORAL_BLOCK"
+      - "BRAIN_CORAL_BLOCK"
+      - "BUBBLE_CORAL_BLOCK"
+      - "FIRE_CORAL_BLOCK"
+      - "HORN_CORAL_BLOCK"
+      - "TUBE_CORAL"
+      - "BRAIN_CORAL"
+      - "BUBBLE_CORAL"
+      - "FIRE_CORAL"
+      - "HORN_CORAL"
+      - "DEAD_TUBE_CORAL"
+      - "DEAD_BRAIN_CORAL"
+      - "DEAD_BUBBLE_CORAL"
+      - "DEAD_FIRE_CORAL"
+      - "DEAD_+_CORAL"
+      - "TUBE_CORAL_FAN"
+      - "BRAIN_CORAL_FAN"
+      - "BUBBLE_CORAL_FAN"
+      - "FIRE_CORAL_FAN"
+      - "HORN_CORAL_FAN"
+      - "DEAD_TUBE_CORAL_FAN"
+      - "DEAD_BRAIN_CORAL_FAN"
+      - "DEAD_BUBBLE_CORAL_FAN"
+      - "DEAD_FIRE_CORAL_FAN"
+      - "DEAD_HORN_CORAL_FAN"
       - "AMETHYST_CLUSTER"
       - "BEE_NEST"
       - "BLUE_ICE"
@@ -34,8 +59,30 @@ tags:
       - "ICE"
       - "MYCELIUM"
       - "PACKED_ICE"
+      - "BLUE_ICE"
       - "PODZOL"
       - "TURTLE_EGG"
+
+  THE_NETHER:
+    match:
+      - "*BASALT"
+      - "*BLACKSTONE*"
+      - "*CRIMSON*"
+      - "*WARPED*"
+      - "*NETHER*"
+      - "*MAGMA*"
+      - "*VINES*"
+      - "*QUARTZ*"
+      - "BLAZE*"
+      - "GLOWSTONE*"
+    materials:
+      - "ANCIENT_DEBRIS"
+      - "DRIED_GHAST"
+      - "GHAST_TEAR"
+      - "RIB_ARMOR_TRIM_SMITHING_TEMPLATE"
+      - "SNOUT_ARMOR_TRIM_SMITHING_TEMPLATE"
+      - "WITHER_ROSE"
+      - "WITHER_SKELETON_SKULL"
 
   THE_END:
     match:
@@ -48,6 +95,35 @@ tags:
       - "END_ROD"
       - "ELYTRA"
       - "SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE"
+
+  WAXED:
+    match:
+      - "WAXED*"
+
+  DISC:
+    match:
+      - "MUSIC_DISC*"
+
+  POTTERY_SHERD:
+    match:
+      - "*_POTTERY_SHERD"
+
+  COPPER:
+    match:
+      - "WAXED*"
+      - "*EXPOSED*"
+      - "*WEATHERED*"
+      - "*OXIDIZED*"
+      - "*CUT_COPPER*"
+    materials:
+      - "COPPER_BLOCK"
+      - "CHISELED_COPPER"
+      - "CUT_COPPER"
+      - "COPPER_BARS"
+      - "COPPER_DOOR"
+      - "COPPER_TRAPDOOR"
+      - "COPPER_BULB"
+      - "COPPER_CHAIN"
 
   SMITHING_TEMPLATE:
     match:
