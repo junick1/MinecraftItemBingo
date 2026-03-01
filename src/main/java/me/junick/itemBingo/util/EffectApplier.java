@@ -82,21 +82,10 @@ public class EffectApplier extends BukkitRunnable {
                 continue;
             }
             if (type == PotionEffectType.DOLPHINS_GRACE && lvl > 1) {
-                if (p.getInventory().getBoots() == null || p.getInventory().getBoots().isEmpty()) {
-                    var boots = new ItemStack(Material.CHAINMAIL_BOOTS);
-                    boots.setAmount(1);
-                    var meta = boots.getItemMeta();
-                    meta.setUnbreakable(true);
-                    meta.displayName(Component.text("신발이라는 개념", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));
-                    boots.setItemMeta(meta);
-                    p.getInventory().setBoots(boots);
+                var waterMovement = p.getAttribute(Attribute.WATER_MOVEMENT_EFFICIENCY);
+                if (waterMovement != null) {
+                    waterMovement.setBaseValue(0.0 + 0.1 * (lvl - 1));
                 }
-                var boots = p.getInventory().getBoots();
-                var enchlvl = boots.getEnchantmentLevel(Enchantment.DEPTH_STRIDER);
-                if (enchlvl < lvl - 1) {
-                    boots.addEnchantment(Enchantment.DEPTH_STRIDER, lvl - 1);
-                }
-                p.getInventory().setBoots(boots);
             }
             int targetAmp = Math.max(0, lvl - 1);
             PotionEffect cur = p.getPotionEffect(type);
