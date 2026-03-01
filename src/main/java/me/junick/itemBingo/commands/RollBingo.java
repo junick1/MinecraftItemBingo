@@ -38,7 +38,7 @@ public class RollBingo implements CommandExecutor, TabCompleter {
 
             int count = width * height;
 
-            List<ItemStack> items = BingoItemSelector.getRandomSurvivalItems(count);
+            List<ItemStack> items = BingoItemSelector.getWeightedRandomSurvivalItems(count);
 
             BundleManager.resetPlayerList();
             PlayerDataManager.resetAll();
