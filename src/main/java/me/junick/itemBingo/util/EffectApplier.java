@@ -3,8 +3,15 @@ package me.junick.itemBingo.util;
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.enums.BingoEffect;
 import me.junick.itemBingo.model.PlayerBingoProgress;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -30,7 +37,61 @@ public class EffectApplier extends BukkitRunnable {
             int lvl = eff.getTotalLevel(prog.getEffectLevel(eff));
             PotionEffectType type = map(eff);
             if (type == null) continue;
+            if (type == PotionEffectType.UNLUCK) {
+                switch(eff) {
+                    case STEP_HEIGHT -> {
+                        var step = p.getAttribute(Attribute.STEP_HEIGHT);
+                        if (step != null) {
+                            step.setBaseValue(0.5 + 1.0 * lvl);
+                        }
+                    }
+                    case EFFICIENCY -> {
+                        var item = p.getInventory().getItemInMainHand();
+                        if (!item.isEmpty()) {
+                            if (Enchantment.EFFICIENCY.canEnchantItem(item)) {
+                                int enchlvl = item.getEnchantmentLevel(Enchantment.EFFICIENCY);
+                                if (enchlvl < lvl) {
+                                    item.addEnchantment(Enchantment.EFFICIENCY, lvl);
+                                }
+                            }
+                            p.getInventory().setItemInMainHand(item);
+                        }
 
+                    }
+                    case MENDING -> {
+                        var item = p.getInventory().getItemInMainHand();
+                        if (!item.isEmpty()) {
+                            if (Enchantment.MENDING.canEnchantItem(item)) {
+                                int enchlvl = item.getEnchantmentLevel(Enchantment.MENDING);
+                                if (enchlvl < lvl) {
+                                    item.addEnchantment(Enchantment.MENDING, lvl);
+                                }
+                            }
+                            p.getInventory().setItemInMainHand(item);
+                        }
+
+                    }
+                }
+
+                continue;
+            }
+            if (type == PotionEffectType.DOLPHINS_GRACE && lvl > 1) {
+                if (p.getInventory().getBoots() == null || p.getInventory().getBoots().isEmpty()) {
+                    var boots = new ItemStack(Material.CHAINMAIL_BOOTS);
+                    boots.setAmount(1);
+                    var meta = boots.getItemMeta();
+                    meta.setUnbreakable(true);
+                    meta.displayName(Component.text("신발이라는 개념", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));
+                    boots.setItemMeta(meta);
+                    p.getInventory().setBoots(boots);
+                }
+                var boots = p.getInventory().getBoots();
+                var enchlvl = boots.getEnchantmentLevel(Enchantment.DEPTH_STRIDER);
+                if (enchlvl < lvl - 1) {
+                    boots.addEnchantment(Enchantment.DEPTH_STRIDER, lvl - 1);
+                }
+                p.getInventory().setBoots(boots);
+            }
             int targetAmp = Math.max(0, lvl - 1);
             PotionEffect cur = p.getPotionEffect(type);
 
@@ -40,7 +101,6 @@ public class EffectApplier extends BukkitRunnable {
 
             if (cur != null) {
                 int curAmp = cur.getAmplifier();
-
                 if (curAmp > targetAmp) continue;
             }
 
@@ -57,6 +117,8 @@ public class EffectApplier extends BukkitRunnable {
             case RESISTANCE -> PotionEffectType.RESISTANCE;
             case HEALTH_BOOST -> PotionEffectType.HEALTH_BOOST;
             case FIRE_RESISTANCE -> PotionEffectType.FIRE_RESISTANCE;
+            case STEP_HEIGHT, EFFICIENCY, MENDING -> PotionEffectType.UNLUCK;
+            case CONDUIT_POWER -> PotionEffectType.CONDUIT_POWER;
         };
     }
 }

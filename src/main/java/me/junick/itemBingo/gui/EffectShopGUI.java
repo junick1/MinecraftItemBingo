@@ -33,7 +33,7 @@ public class EffectShopGUI {
 
         PlayerBingoProgress prog = PlayerDataManager.get(p);
 
-        Inventory inv = Bukkit.createInventory(null, 9*5, TITLE);
+        Inventory inv = Bukkit.createInventory(null, 9*6, TITLE);
 
         ItemStack grayGlass = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemStack redGlass = new ItemStack(Material.RED_STAINED_GLASS_PANE);
@@ -45,7 +45,10 @@ public class EffectShopGUI {
         redGlass.setItemMeta(glassMeta);
 
         for (int i = 0; i < 9*2; i++) inv.setItem(i, grayGlass);
-        for (int i = 9*2; i < 9*5; i++) inv.setItem(i, redGlass);
+        for (int i = 9*2; i < 9*3; i++) inv.setItem(i, redGlass);
+        for (int i = 9*3; i < 9*4; i+=8) inv.setItem(i, redGlass);
+        for (int i = 9*4; i < 9*5; i+=8) inv.setItem(i, redGlass);
+        for (int i = 9*5; i < 9*6; i++) inv.setItem(i, redGlass);
 
         inv.setItem(9*1 + 4, IconGenerator.currencyIcon(prog));
 
@@ -92,10 +95,12 @@ public class EffectShopGUI {
             item.setItemMeta(meta);
 
             inv.setItem(slot, item);
+
             slot++;
+            if (slot == 9*3 + 8) slot += 2;
         }
 
-        inv.setItem(9*4 + 4, IconGenerator.backIcon());
+        inv.setItem(9*5 + 4, IconGenerator.backIcon());
 
         p.openInventory(inv);
     }
