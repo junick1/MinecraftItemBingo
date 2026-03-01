@@ -1,12 +1,15 @@
 package me.junick.itemBingo.util;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.enums.BingoItem;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Item;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -39,24 +42,29 @@ public class CustomItems {
         );
     }
 
-    public static boolean isBingoFiller(ItemStack item) {
-        return hasCustomTag(item, "bingo_filler");
+    public static ItemStack get(BingoItem b) {
+        return createCustomItem(b.getIcon(),
+                b.getDisplay(),
+                b.getColor(),
+                b.getLore(),
+                b.name());
     }
+
+    public static boolean isBingoFiller(ItemStack item) { return hasCustomTag(item, "bingo_filler"); }
 
     public static boolean isDyeSelector(ItemStack item) {
         return hasCustomTag(item, "dye_selector");
     }
 
+    public static boolean is(ItemStack item, BingoItem b) { return hasCustomTag(item, b.name()); }
+
     /* ========================= Helper Methods ========================= */
 
-    private static ItemStack createCustomItem(Material material, String name, NamedTextColor color, List<String> loreLines, String tag) {
+    private static ItemStack createCustomItem(Material material, String name, TextColor color, List<String> loreLines, String tag) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
 
-        meta.displayName(
-                Component.text(name, color)
-                        .decoration(TextDecoration.ITALIC, false)
-        );
+        meta.itemName(Component.text(name, color));
         meta.lore(createLoreComponents(loreLines));
         setCustomTag(meta, tag);
         addVisualEnchant(meta);
