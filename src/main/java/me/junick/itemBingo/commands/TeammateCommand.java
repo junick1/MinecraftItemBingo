@@ -7,20 +7,20 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class TeammateCommand implements CommandExecutor {
     @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        if (!(sender instanceof Player)) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
+        if (!(sender instanceof Player p)) {
             sender.sendMessage("§cOnly players can run this command!");
             return true;
         }
 
         TeamManager tm = ItemBingo.getInstance().getTeamManager();
-        Player p = (Player) sender;
 
         int teamId = tm.getTeamId(p);
         if (teamId == TeamManager.NO_TEAM) {

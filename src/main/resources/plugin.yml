@@ -42,3 +42,13 @@ commands:
     description: Open ItemBingo admin panel
     usage: /admin
     permission: itembingo.admin
+  pointadd:
+    description: pointadd
+    usage: /pointadd <player> <diamond|line|slot> <amount>
+    permission: itembingo.command.point
+    permission-message: You do not have permission to use this command.
+  customitem:
+    description: customitem
+    usage: /customitem
+    permission: itembingo.command.customitem
+    permission-message: You do not have permission to use this command.

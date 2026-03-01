@@ -10,13 +10,17 @@ import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class RollBingo implements CommandExecutor {
+public class RollBingo implements CommandExecutor, TabCompleter {
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (args.length != 2) {
             sender.sendMessage("§cUsage: /rollbingo <width> <height>");
             return true;
@@ -47,5 +51,17 @@ public class RollBingo implements CommandExecutor {
             sender.sendMessage("§cInvalid width or height! Please enter valid integers.");
         }
         return true;
+    }
+
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
+        List<String> completions = new ArrayList<>();
+        if (args.length == 1) {
+            for (int i = 1; i <= 9; i++) completions.add(String.valueOf(i));
+        }
+        if (args.length == 2) {
+            for (int i = 1; i <= 6; i++) completions.add(String.valueOf(i));
+        }
+        return completions;
     }
 }
