@@ -30,7 +30,37 @@ public enum BingoItem {
             Material.SUGAR,
             Map.of(BingoRewardType.DIAMOND, 1),
             List.of("밀랍칠하지 않은 구리류 블록에 우클릭하면 한 단계 산화시킵니다.", "구리 골렘에 우클릭하면 즉시 동상으로 변환시킵니다.")
-    );
+    ),
+    EXPLORER_MAP(
+            "탐험가 지도",
+            NamedTextColor.GREEN,
+            Material.PAPER,
+            Map.of(BingoRewardType.DIAMOND, 5),
+            List.of("구조물을 선택하여 가장 가까운 것을 가리키는 탐험가 지도를 획득합니다.")
+    ) {
+        @Override
+        public ItemStack apply(ItemStack item) {
+            var meta = item.getItemMeta();
+            meta.setMaxStackSize(1);
+            item.setItemMeta(meta);
+            return item;
+        }
+    },
+    BIOME_MAP(
+            "바이옴 지도",
+            NamedTextColor.GREEN,
+            Material.PAPER,
+            Map.of(BingoRewardType.DIAMOND, 5),
+            List.of("바이옴을 선택하여 가장 가까운 곳을 가리키는 지도를 획득합니다.")
+    ) {
+        @Override
+        public ItemStack apply(ItemStack item) {
+            var meta = item.getItemMeta();
+            meta.setMaxStackSize(1);
+            item.setItemMeta(meta);
+            return item;
+        }
+    };
 
     private final String display;
     private final TextColor color;

@@ -5,10 +5,7 @@ import me.junick.itemBingo.admin.AdminCommand;
 import me.junick.itemBingo.commands.*;
 import me.junick.itemBingo.events.EffectListener;
 import me.junick.itemBingo.events.gui.*;
-import me.junick.itemBingo.events.items.CopperOxidizerEvent;
-import me.junick.itemBingo.events.items.DiamondEvent;
-import me.junick.itemBingo.events.items.DyeSelectorEvent;
-import me.junick.itemBingo.events.items.ShovelOxidizeEvent;
+import me.junick.itemBingo.events.items.*;
 import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.util.*;
 import org.bukkit.*;
@@ -49,10 +46,12 @@ public final class ItemBingo extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new DiamondExchangeClickEvent(), this);
 
         Bukkit.getPluginManager().registerEvents(new DyeSelectorEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new CopperOxidizerEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new ExplorerMapEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new BiomeMapEvent(), this);
 
         Bukkit.getPluginManager().registerEvents(new DiamondEvent(), this);
         Bukkit.getPluginManager().registerEvents(new ShovelOxidizeEvent(), this);
-        Bukkit.getPluginManager().registerEvents(new CopperOxidizerEvent(), this);
 
         Bukkit.getPluginManager().registerEvents(new EffectListener(), this);
         EffectApplier.start();
