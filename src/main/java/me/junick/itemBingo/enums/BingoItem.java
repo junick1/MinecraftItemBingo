@@ -23,6 +23,13 @@ public enum BingoItem {
             Material.COMMAND_BLOCK,
             Map.of(BingoRewardType.DIAMOND, 5),
             List.of("염료를 하나 선택해 획득합니다.")
+    ),
+    COPPER_OXIDIZER(
+            "구리 산화제",
+            NamedTextColor.GOLD,
+            Material.SUGAR,
+            Map.of(BingoRewardType.DIAMOND, 1),
+            List.of("밀랍칠하지 않은 구리류 블록에 우클릭하면 한 단계 산화시킵니다.", "구리 골렘에 우클릭하면 즉시 동상으로 변환시킵니다.")
     );
 
     private final String display;

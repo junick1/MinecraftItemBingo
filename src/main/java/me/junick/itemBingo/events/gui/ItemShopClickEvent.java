@@ -47,6 +47,7 @@ public class ItemShopClickEvent implements Listener {
         return switch (item) {
             case BINGO_FILLER -> CustomItems.get(BingoItem.BINGO_FILLER);
             case DYE_SELECTOR -> CustomItems.get(BingoItem.DYE_SELECTOR);
+            case COPPER_OXIDIZER -> CustomItems.get(BingoItem.COPPER_OXIDIZER);
             default -> null;
         };
     }
