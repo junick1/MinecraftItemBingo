@@ -87,6 +87,12 @@ public class EffectApplier extends BukkitRunnable {
                     waterMovement.setBaseValue(0.0 + 0.1 * (lvl - 1));
                 }
             }
+            if (type == PotionEffectType.CONDUIT_POWER) {
+                var submergedMining = p.getAttribute(Attribute.SUBMERGED_MINING_SPEED);
+                if (submergedMining != null) {
+                    submergedMining.setBaseValue(0.0 + lvl);
+                }
+            }
             int targetAmp = Math.max(0, lvl - 1);
             PotionEffect cur = p.getPotionEffect(type);
 
