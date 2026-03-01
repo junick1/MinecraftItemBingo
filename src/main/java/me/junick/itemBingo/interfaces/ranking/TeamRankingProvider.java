@@ -74,7 +74,7 @@ public class TeamRankingProvider implements RankingProvider {
 
         StringBuilder sb = new StringBuilder();
         for (String name : names) {
-            String add = (sb.isEmpty() ? "" : ", ") + name;
+            String add = (sb.isEmpty() ? "" : ", ") + (name.length() > 3 ? name.substring(0, 3) : name);
 
             if (sb.length() + add.length() > maxChars) {
                 if (sb.isEmpty()) {

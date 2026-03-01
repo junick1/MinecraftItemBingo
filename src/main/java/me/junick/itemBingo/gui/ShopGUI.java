@@ -22,11 +22,11 @@ public class ShopGUI {
         TeamManager tm = ItemBingo.getInstance().getTeamManager();
         int teamId = tm.getTeamId(p);
 
-        if (teamId != TeamManager.NO_TEAM) {
-            p.sendMessage("§cDisabled on Team Mode!");
-            p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
-            return;
-        }
+        // if (teamId != TeamManager.NO_TEAM) {
+        //     p.sendMessage("§cDisabled on Team Mode!");
+        //     p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
+        //     return;
+        // }
 
         Inventory inv = Bukkit.createInventory(null, 9*3, TITLE);
 
