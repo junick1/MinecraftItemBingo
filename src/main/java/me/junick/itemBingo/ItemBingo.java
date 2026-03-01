@@ -4,6 +4,7 @@ import me.junick.itemBingo.admin.AdminClickListener;
 import me.junick.itemBingo.admin.AdminCommand;
 import me.junick.itemBingo.commands.*;
 import me.junick.itemBingo.events.EffectListener;
+import me.junick.itemBingo.events.LavaMovement;
 import me.junick.itemBingo.events.gui.*;
 import me.junick.itemBingo.events.items.*;
 import me.junick.itemBingo.model.BingoBoard;
@@ -50,6 +51,7 @@ public final class ItemBingo extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new CopperOxidizerEvent(), this);
         Bukkit.getPluginManager().registerEvents(new ExplorerMapEvent(), this);
         Bukkit.getPluginManager().registerEvents(new BiomeMapEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new LavaMovement(), this);
 
         Bukkit.getPluginManager().registerEvents(new DiamondEvent(), this);
         Bukkit.getPluginManager().registerEvents(new ShovelOxidizeEvent(), this);

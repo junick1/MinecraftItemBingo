@@ -2,6 +2,7 @@ package me.junick.itemBingo.util;
 
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.enums.BingoEffect;
+import me.junick.itemBingo.events.LavaMovement;
 import me.junick.itemBingo.model.PlayerBingoProgress;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -69,10 +70,15 @@ public class EffectApplier extends BukkitRunnable {
                             }
                             p.getInventory().setItemInMainHand(item);
                         }
-
+                    }
+                    case IMPROVE_LAVA_MOVEMENT -> {
+                        if (lvl == 0) {
+                            LavaMovement.removePlayer(p);
+                        } else {
+                            LavaMovement.addPlayer(p);
+                        }
                     }
                 }
-
                 continue;
             }
             if (type == PotionEffectType.DOLPHINS_GRACE && lvl > 1) {
@@ -117,7 +123,7 @@ public class EffectApplier extends BukkitRunnable {
             case RESISTANCE -> PotionEffectType.RESISTANCE;
             case HEALTH_BOOST -> PotionEffectType.HEALTH_BOOST;
             case FIRE_RESISTANCE -> PotionEffectType.FIRE_RESISTANCE;
-            case STEP_HEIGHT, EFFICIENCY, MENDING -> PotionEffectType.UNLUCK;
+            case STEP_HEIGHT, EFFICIENCY, MENDING, IMPROVE_LAVA_MOVEMENT -> PotionEffectType.UNLUCK;
             case CONDUIT_POWER -> PotionEffectType.CONDUIT_POWER;
         };
     }

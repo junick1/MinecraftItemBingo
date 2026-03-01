@@ -13,7 +13,8 @@ public enum BingoEffect {
     STRENGTH("힘", 3, 1, Material.IRON_SWORD),
     RESISTANCE("저항", 3, 1, Material.SHIELD),
     HEALTH_BOOST("체력 증가", 3, 2, Material.ENCHANTED_GOLDEN_APPLE),
-    FIRE_RESISTANCE("화염 저항", 1, 1, Material.FIRE_CHARGE);
+    FIRE_RESISTANCE("화염 저항", 1, 1, Material.FIRE_CHARGE),
+    IMPROVE_LAVA_MOVEMENT("스트라이더의 가호", 1, 1, Material.STRIDER_SPAWN_EGG);
 
     private final String display;
     private final int maxLevel;
