@@ -90,7 +90,7 @@ public class EffectApplier extends BukkitRunnable {
             if (type == PotionEffectType.CONDUIT_POWER) {
                 var submergedMining = p.getAttribute(Attribute.SUBMERGED_MINING_SPEED);
                 if (submergedMining != null) {
-                    submergedMining.setBaseValue(0.0 + lvl);
+                    submergedMining.setBaseValue(0.2 + 0.8 * lvl);
                 }
             }
             int targetAmp = Math.max(0, lvl - 1);

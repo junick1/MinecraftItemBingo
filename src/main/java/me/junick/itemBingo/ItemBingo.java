@@ -33,7 +33,6 @@ public final class ItemBingo extends JavaPlugin {
         tagLoader = new BingoTagLoader(this);
 
         teamManager = new TeamManager(this);
-        teamManager.setTeamCount(2);
 
         KEY_EFFECT = new NamespacedKey(this, "effect");
 

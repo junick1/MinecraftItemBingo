@@ -6,7 +6,7 @@ public enum BingoEffect {
     SPEED("신속", 3, 1, Material.LEATHER_BOOTS),
     DOLPHINS_GRACE("돌고래의 가호", 3, 1, Material.DOLPHIN_SPAWN_EGG),
     HASTE("성급함 II", 5, 2, Material.GOLDEN_PICKAXE),
-    CONDUIT_POWER("수중 호흡 & 채굴 패널티 제거", 1, 1, Material.HEART_OF_THE_SEA),
+    CONDUIT_POWER("수중 호흡 & 채굴 패널티 제거", 2, 1, Material.HEART_OF_THE_SEA),
     STEP_HEIGHT("스텝 높이", 3, 1, Material.FEATHER),
     EFFICIENCY("효율", 5, 1, Material.DIAMOND_PICKAXE),
     MENDING("수선", 1, 1, Material.EMERALD_BLOCK),

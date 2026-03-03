@@ -26,7 +26,7 @@ public class TeamProgressAccess implements BingoProgressAccess {
 
     @Override public void addCurrency(BingoRewardType type, int amount) {
         prog.addCurrency(type, amount);
-        if (type != BingoRewardType.LINE) return;
+        if (type != BingoRewardType.SLOT) return;
         TeamManager tm = ItemBingo.getInstance().getTeamManager();
         Set<UUID> member = tm.getPlayersOnTeam(teamId);
         for (UUID u : member) {
