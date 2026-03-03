@@ -10,11 +10,12 @@ import me.junick.itemBingo.model.PlayerBingoProgress;
 import me.junick.itemBingo.model.TeamBingoProgress;
 import me.junick.itemBingo.util.*;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.HoverEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import org.bukkit.Bukkit;
-import org.bukkit.GameMode;
-import org.bukkit.Material;
-import org.bukkit.Sound;
+import org.bukkit.*;
+import org.bukkit.entity.ComplexEntityPart;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -23,6 +24,10 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import javax.naming.Name;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BingoClickEvent implements Listener {
     @EventHandler
@@ -131,6 +136,7 @@ public class BingoClickEvent implements Listener {
     private void completeSubmission(Player p, BingoProgressAccess progress, BingoBoard board, int idx) {
         progress.submit(idx);
         progress.addCurrencyAll(BingoRewardType.SLOT, 1);
+
         checkAndAwardLine(p, progress, board.getWidth(), board.getHeight(), idx);
         progress.save();
 
@@ -138,7 +144,7 @@ public class BingoClickEvent implements Listener {
             updateGUISlot(viewer, board, idx);
         }
 
-        sendFeedback(p, progress);
+        sendFeedback(p, progress, board.getItems().get(idx).getType());
     }
 
     /** 슬롯을 빙고판 인덱스로 변환 */
@@ -205,6 +211,33 @@ public class BingoClickEvent implements Listener {
         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
     }
 
+    private void sendFeedback(Player p, BingoProgressAccess progress, Material item) {
+        int current = progress.getSubmittedSlots().size();
+        int total = ItemBingo.currentBingo.getItems().size();
+
+        var tm = ItemBingo.getInstance().getTeamManager();
+        int teamId = tm.getTeamId(p);
+        List<Player> team = (teamId != TeamManager.NO_TEAM)
+                ? tm.getOnlinePlayersOnTeam(teamId)
+                : List.of(p);
+
+        String rawMessage = p.getName() + "님이 아이템을 제출했습니다! (" + current + "/" + total + ")";
+        Component message = Component.text(rawMessage, NamedTextColor.GREEN);
+        Component itemInfo = Component.text(" -> ", NamedTextColor.WHITE).append(
+                Component.translatable(item.translationKey())
+        );
+
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (team.contains(player)) {
+                player.sendMessage(message.append(itemInfo));
+            } else {
+                player.sendMessage(message);
+            }
+        }
+
+        p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
+    }
+
     /** 줄 완성 체크 및 보상 */
     private void checkAndAwardLine(Player p, BingoProgressAccess progress, int width, int height, int justSubmittedIdx) {
         int r = justSubmittedIdx / width;
@@ -220,8 +253,8 @@ public class BingoClickEvent implements Listener {
                 + (diag2Done ? 1 : 0);
 
         if (cnt > 0) {
-            p.sendMessage("§e빙고줄 완성!" + (cnt > 1 ? " §a(" + cnt + "줄)" : ""));
-            p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
+            p.sendMessage("§e팀 빙고줄 포인트 + " + cnt);
+            p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.33f, 1.0f);
             progress.addCurrencyAll(BingoRewardType.LINE, cnt);
             progress.save();
         }
