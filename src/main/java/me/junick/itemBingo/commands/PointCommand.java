@@ -2,6 +2,7 @@ package me.junick.itemBingo.commands;
 
 import me.junick.itemBingo.enums.BingoRewardType;
 import me.junick.itemBingo.util.PlayerDataManager;
+import me.junick.itemBingo.util.ProgressFactory;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -34,10 +35,11 @@ implements CommandExecutor, TabCompleter {
             sender.sendMessage("§cInvalid number");
             return true;
         }
+        var prog = ProgressFactory.of(p);
         switch (args[1].toLowerCase()) {
-            case "diamond" -> PlayerDataManager.get(p).addCurrency(BingoRewardType.DIAMOND, amount);
-            case "line" -> PlayerDataManager.get(p).addCurrency(BingoRewardType.LINE, amount);
-            case "slot" -> PlayerDataManager.get(p).addCurrency(BingoRewardType.SLOT, amount);
+            case "diamond" -> prog.addCurrency(p, BingoRewardType.DIAMOND, amount);
+            case "line" -> prog.addCurrency(p, BingoRewardType.LINE, amount);
+            case "slot" -> prog.addCurrency(p, BingoRewardType.SLOT, amount);
         }
         sender.sendMessage(String.format("%s에게 %s %d개를 주었다", p.getName(), args[1].toLowerCase(), amount));
         return true;
