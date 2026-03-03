@@ -9,8 +9,10 @@ public interface BingoProgressAccess {
     boolean isSubmitted(int idx);
     void submit(int idx);
 
-    void addCurrency(BingoRewardType type, int amount);
-    int getCurrency(BingoRewardType type);
+    void addCurrencyAll(BingoRewardType type, int amount);
+    void addCurrency(Player p, BingoRewardType type, int amount);
+    int getCurrencyAll(BingoRewardType type);
+    int getCurrency(Player p, BingoRewardType type);
 
     Set<Integer> getSubmittedSlots();
 

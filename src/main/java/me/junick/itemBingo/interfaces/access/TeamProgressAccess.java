@@ -24,19 +24,33 @@ public class TeamProgressAccess implements BingoProgressAccess {
     @Override public boolean isSubmitted(int idx) { return prog.isSubmitted(idx); }
     @Override public void submit(int idx) { prog.submit(idx); }
 
-    @Override public void addCurrency(BingoRewardType type, int amount) {
-        prog.addCurrency(type, amount);
-        if (type != BingoRewardType.SLOT) return;
-        TeamManager tm = ItemBingo.getInstance().getTeamManager();
-        Set<UUID> member = tm.getPlayersOnTeam(teamId);
-        for (UUID u : member) {
-            Player p = Bukkit.getPlayer(u);
-            if (p != null) {
-                PlayerDataManager.get(p).addCurrency(type, amount);
+    @Override public void addCurrencyAll(BingoRewardType type, int amount) {
+        if (type.isPersonal()) {
+            TeamManager tm = ItemBingo.getInstance().getTeamManager();
+            for (UUID u : tm.getPlayersOnTeam(teamId)) {
+                var data = PlayerDataManager.get(u);
+                if (data != null) data.addCurrency(type, amount);
             }
+        } else {
+            prog.addCurrency(type, amount);
         }
     }
-    @Override public int getCurrency(BingoRewardType type) { return prog.getCurrency(type); }
+
+    @Override public void addCurrency(Player p, BingoRewardType type, int amount) {
+        var data = PlayerDataManager.get(p);
+        data.addCurrency(type, amount);
+    }
+
+    @Override public int getCurrencyAll(BingoRewardType type) { return prog.getCurrency(type); }
+
+    @Override public int getCurrency(Player p, BingoRewardType type) {
+        if (type.isPersonal()) {
+            var data = PlayerDataManager.get(p);
+            return data.getCurrency(type);
+        } else {
+            return prog.getCurrency(type);
+        }
+    }
 
     @Override public Set<Integer> getSubmittedSlots() { return prog.getSubmittedSlots(); }
 

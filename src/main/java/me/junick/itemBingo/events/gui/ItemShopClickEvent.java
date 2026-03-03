@@ -5,9 +5,11 @@ import me.junick.itemBingo.enums.BingoItem;
 import me.junick.itemBingo.enums.BingoRewardType;
 import me.junick.itemBingo.gui.ItemShopGUI;
 import me.junick.itemBingo.gui.ShopGUI;
+import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
 import me.junick.itemBingo.model.PlayerBingoProgress;
 import me.junick.itemBingo.util.CustomItems;
 import me.junick.itemBingo.util.PlayerDataManager;
+import me.junick.itemBingo.util.ProgressFactory;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -69,9 +71,9 @@ public class ItemShopClickEvent implements Listener {
     }
 
     private void handlePurchase(Player p, BingoItem item) {
-        PlayerBingoProgress prog = PlayerDataManager.get(p);
+        BingoProgressAccess prog = ProgressFactory.of(p);
 
-        if (!canAfford(prog, item)) {
+        if (!canAfford(prog, p, item)) {
             p.sendMessage("§e[상점] §c포인트가 부족합니다!");
             p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
             return;
@@ -96,7 +98,7 @@ public class ItemShopClickEvent implements Listener {
             return;
         }
 
-        deductCost(prog, item);
+        deductCost(prog, p, item);
         PlayerDataManager.save(p);
 
         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
@@ -104,11 +106,10 @@ public class ItemShopClickEvent implements Listener {
         ItemShopGUI.open(p);
     }
 
-    private boolean canAfford(PlayerBingoProgress prog, BingoItem item) {
+    private boolean canAfford(BingoProgressAccess prog, Player p, BingoItem item) {
         for (BingoRewardType type : BingoRewardType.values()) {
             int price = item.getPrice(type);
-            int balance = prog.getCurrency(type);
-
+            int balance = prog.getCurrency(p, type);
             if (price > 0 && balance < price) {
                 return false;
             }
@@ -116,10 +117,10 @@ public class ItemShopClickEvent implements Listener {
         return true;
     }
 
-    private void deductCost(PlayerBingoProgress prog, BingoItem item) {
+    private void deductCost(BingoProgressAccess prog, Player p, BingoItem item) {
         for (BingoRewardType type : BingoRewardType.values()) {
             int price = item.getPrice(type);
-            if (price > 0) prog.addCurrency(type, -price);
+            if (price > 0) prog.addCurrency(p, type, -price);
         }
     }
 }

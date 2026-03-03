@@ -4,9 +4,11 @@ import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.enums.BingoEffect;
 import me.junick.itemBingo.enums.BingoRewardType;
+import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
 import me.junick.itemBingo.model.PlayerBingoProgress;
 import me.junick.itemBingo.util.IconGenerator;
 import me.junick.itemBingo.util.PlayerDataManager;
+import me.junick.itemBingo.util.ProgressFactory;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -32,6 +34,7 @@ public class EffectShopGUI {
         if (!new Settings(ItemBingo.getInstance()).isEffectShopEnabled()) return;
 
         PlayerBingoProgress prog = PlayerDataManager.get(p);
+        BingoProgressAccess proga = ProgressFactory.of(p);
 
         Inventory inv = Bukkit.createInventory(null, 9*6, TITLE);
 
@@ -50,7 +53,7 @@ public class EffectShopGUI {
         for (int i = 9*4; i < 9*5; i+=8) inv.setItem(i, redGlass);
         for (int i = 9*5; i < 9*6; i++) inv.setItem(i, redGlass);
 
-        inv.setItem(9*1 + 4, IconGenerator.currencyIcon(prog));
+        inv.setItem(9*1 + 4, IconGenerator.currencyIcon(p, proga));
 
         int slot = 9*3 + 1;
         for (BingoEffect eff : BingoEffect.values()) {

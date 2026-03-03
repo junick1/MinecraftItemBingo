@@ -1,10 +1,12 @@
 package me.junick.itemBingo.util;
 
 import me.junick.itemBingo.enums.BingoRewardType;
+import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
 import me.junick.itemBingo.model.PlayerBingoProgress;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -54,6 +56,19 @@ public class IconGenerator {
                 "§b다이아몬드 포인트: §f" + prog.getCurrency(BingoRewardType.DIAMOND)
         );
     }
+
+    public static ItemStack currencyIcon(Player p, BingoProgressAccess prog) {
+        return icon(
+                Material.EMERALD,
+                "§f§l보유 포인트",
+                "§7빙고판을 채워 포인트를 얻으세요!",
+                "",
+                "§a개인 빙고칸 포인트: §f" + prog.getCurrency(p, BingoRewardType.SLOT),
+                "§e팀 빙고줄 포인트: §f" + prog.getCurrency(p, BingoRewardType.LINE),
+                "§b팀 다이아몬드 포인트: §f" + prog.getCurrency(p, BingoRewardType.DIAMOND)
+        );
+    }
+
 
     public static ItemStack backIcon() {
         return icon(

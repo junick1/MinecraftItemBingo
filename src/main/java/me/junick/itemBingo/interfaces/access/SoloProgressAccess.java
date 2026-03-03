@@ -19,8 +19,10 @@ public class SoloProgressAccess implements BingoProgressAccess {
     @Override public boolean isSubmitted(int idx) { return prog.isSubmitted(idx); }
     @Override public void submit(int idx) { prog.submit(idx); }
 
-    @Override public void addCurrency(BingoRewardType type, int amount) { prog.addCurrency(type, amount); }
-    @Override public int getCurrency(BingoRewardType type) { return prog.getCurrency(type); }
+    @Override public void addCurrencyAll(BingoRewardType type, int amount) { prog.addCurrency(type, amount); }
+    @Override public void addCurrency(Player p, BingoRewardType type, int amount) { prog.addCurrency(type, amount); }
+    @Override public int getCurrencyAll(BingoRewardType type) { return prog.getCurrency(type); }
+    @Override public int getCurrency(Player p, BingoRewardType type) { return prog.getCurrency(type); }
 
     @Override public Set<Integer> getSubmittedSlots() { return prog.getSubmittedSlots(); }
 

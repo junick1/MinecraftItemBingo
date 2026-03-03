@@ -130,7 +130,7 @@ public class BingoClickEvent implements Listener {
     /** 제출 완료 처리 (저장, GUI 업데이트, 효과음, 메세지 등) */
     private void completeSubmission(Player p, BingoProgressAccess progress, BingoBoard board, int idx) {
         progress.submit(idx);
-        progress.addCurrency(BingoRewardType.SLOT, 1);
+        progress.addCurrencyAll(BingoRewardType.SLOT, 1);
         checkAndAwardLine(p, progress, board.getWidth(), board.getHeight(), idx);
         progress.save();
 
@@ -222,7 +222,7 @@ public class BingoClickEvent implements Listener {
         if (cnt > 0) {
             p.sendMessage("§e빙고줄 완성!" + (cnt > 1 ? " §a(" + cnt + "줄)" : ""));
             p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
-            progress.addCurrency(BingoRewardType.LINE, cnt);
+            progress.addCurrencyAll(BingoRewardType.LINE, cnt);
             progress.save();
         }
     }
