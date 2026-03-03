@@ -19,7 +19,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 public class ShovelOxidizeEvent implements Listener {
     @EventHandler
     public void onUseShovel(PlayerInteractEvent e) {
-        if (!new Settings(ItemBingo.getInstance()).isShovelOxidizeCopper()) return;
+        if (!Settings.isShovelOxidizeCopper()) return;
 
         if (e.getHand() != EquipmentSlot.HAND) return;
         if (!e.getAction().isRightClick()) return;

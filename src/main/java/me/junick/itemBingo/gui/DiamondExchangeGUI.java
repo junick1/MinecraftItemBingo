@@ -16,7 +16,7 @@ public class DiamondExchangeGUI {
     public static final String TITLE = "§b다이아몬드 환전";
 
     public static void open(Player p, int amount) {
-        if (!new Settings(ItemBingo.getInstance()).isShopEnabled()) return;
+        if (!Settings.isShopEnabled()) return;
 
         Inventory inv = Bukkit.createInventory(null, 9*5, TITLE);
 

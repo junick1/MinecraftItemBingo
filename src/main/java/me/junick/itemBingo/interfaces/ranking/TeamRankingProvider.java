@@ -1,6 +1,7 @@
 package me.junick.itemBingo.interfaces.ranking;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.model.TeamBingoProgress;
 import me.junick.itemBingo.records.ranking.RankingEntry;
 import me.junick.itemBingo.util.TeamDataManager;
@@ -25,18 +26,27 @@ public class TeamRankingProvider implements RankingProvider {
         List<Map.Entry<Integer, TeamBingoProgress>> entries =
                 new ArrayList<>(allProgress.entrySet());
 
-        entries.sort((a, b) -> {
-            int cmp = Integer.compare(
-                    b.getValue().getSubmittedSlots().size(),
-                    a.getValue().getSubmittedSlots().size()
-            );
-            if (cmp != 0) return cmp;
-
-            return Long.compare(
-                    a.getValue().getTotalSubmitTime(),
-                    b.getValue().getTotalSubmitTime()
-            );
-        });
+        if (Settings.getPenaltySystem() == Settings.Penalty.TOTAL_SUBMISSION) {
+            entries.sort((a, b) -> {
+                int cmp = Integer.compare(b.getValue().getScore(), a.getValue().getScore());
+                if (cmp != 0) return cmp;
+                return Long.compare(a.getValue().getTotalSubmitTime(), b.getValue().getTotalSubmitTime());
+            });
+        }
+        if (Settings.getPenaltySystem() == Settings.Penalty.LAST_SUBMISSION) {
+            entries.sort((a, b) -> {
+                int cmp = Integer.compare(b.getValue().getScore(), a.getValue().getScore());
+                if (cmp != 0) return cmp;
+                return Long.compare(a.getValue().getMaxSubmitTime(), b.getValue().getMaxSubmitTime());
+            });
+        }
+        if (Settings.getPenaltySystem() == Settings.Penalty.CODEFORCES) {
+            entries.sort((a, b) -> {
+                int cmp = Long.compare(b.getValue().getCodeforcesScore(), a.getValue().getCodeforcesScore());
+                if (cmp != 0) return cmp;
+                return Long.compare(b.getValue().getScore(), a.getValue().getScore());
+            });
+        }
 
         int realLimit = (limit <= 0)
                 ? entries.size()
@@ -53,7 +63,11 @@ public class TeamRankingProvider implements RankingProvider {
 
             String name = buildTeamName(teamId, tm);
 
-            out.add(new RankingEntry(name, score, penalty));
+            switch(Settings.getPenaltySystem()) {
+                case TOTAL_SUBMISSION -> out.add(new RankingEntry(name, prog.getScore(), prog.getTotalSubmitTime()));
+                case LAST_SUBMISSION -> out.add(new RankingEntry(name, prog.getScore(), prog.getMaxSubmitTime()));
+                case CODEFORCES -> out.add(new RankingEntry(name, (int)prog.getCodeforcesScore(), prog.getScore()));
+            }
         }
         return out;
     }

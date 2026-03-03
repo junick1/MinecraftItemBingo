@@ -1,49 +1,71 @@
 package me.junick.itemBingo.config;
 
-import me.junick.itemBingo.ItemBingo;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public class Settings {
-    private final ItemBingo plugin;
+    private static boolean teamEnabled;
+    private static boolean shopEnabled;
+    private static boolean effectShopEnabled;
+    private static boolean itemShopEnabled;
+    private static boolean shovelOxidizeCopper;
+    private static int penaltySystem;
 
-    public Settings(ItemBingo plugin) {
-        this.plugin = plugin;
+    public static void load(JavaPlugin plugin) {
+        plugin.saveDefaultConfig();
+        plugin.reloadConfig();
+
+        FileConfiguration config = plugin.getConfig();
+
+        teamEnabled = config.getBoolean("team.enabled", false);
+        shopEnabled = config.getBoolean("shop.enabled", false);
+        effectShopEnabled = config.getBoolean("shop.effectShopEnabled", false);
+        itemShopEnabled = config.getBoolean("shop.itemShopEnabled", false);
+        shovelOxidizeCopper = config.getBoolean("vanilla.shovelOxidizeCopper", false);
+        penaltySystem = config.getInt("game.penalty", 0);
+
+        plugin.getLogger().info("모든 설정이 로드되었습니다");
     }
 
-    private FileConfiguration c() {
-        return plugin.getConfig();
-    }
+    public static void save(JavaPlugin plugin) {
+        FileConfiguration config = plugin.getConfig();
 
-    public boolean isTeamEnabled() { return c().getBoolean("team.enabled", false); }
-    public boolean isShopEnabled() { return c().getBoolean("shop.enabled", false); }
-    public boolean isEffectShopEnabled() { return c().getBoolean("shop.effectShopEnabled", false); }
-    public boolean isItemShopEnabled() { return c().getBoolean("shop.itemShopEnabled", false); }
-    public boolean isShovelOxidizeCopper() { return c().getBoolean("vanilla.shovelOxidizeCopper", false); }
+        config.set("team.enabled", teamEnabled);
+        config.set("shop.enabled", shopEnabled);
+        config.set("shop.effectShopEnabled", effectShopEnabled);
+        config.set("shop.itemShopEnabled", itemShopEnabled);
+        config.set("vanilla.shovelOxidizeCopper", shovelOxidizeCopper);
+        config.set("game.penalty", penaltySystem);
 
-    public void toggleTeam() {
-        c().set("team.enabled", !isTeamEnabled());
         plugin.saveConfig();
+        plugin.getLogger().info("설정이  저장되었습니다");
     }
 
-    public void toggleShop() {
-        boolean next = !isShopEnabled();
-        c().set("shop.enabled", next);
+    public static boolean isTeamEnabled() { return teamEnabled; }
+    public static boolean isShopEnabled() { return shopEnabled; }
+    public static boolean isEffectShopEnabled() { return effectShopEnabled; }
+    public static boolean isItemShopEnabled() { return itemShopEnabled; }
+    public static boolean isShovelOxidizeCopper() { return shovelOxidizeCopper; }
+    public static int getPenaltyInt() { return penaltySystem; }
 
-        plugin.saveConfig();
+    public static void toggleTeamEnabled() { teamEnabled = !teamEnabled; }
+    public static void toggleShopEnabled() { shopEnabled = !shopEnabled; }
+    public static void toggleEffectShopEnabled() { effectShopEnabled = !effectShopEnabled; }
+    public static void toggleItemShopEnabled() { itemShopEnabled = !itemShopEnabled; }
+    public static void toggleShovelOxidizeCopper() { shovelOxidizeCopper = !shovelOxidizeCopper; }
+    public static void togglePenaltyInt() { penaltySystem = (penaltySystem + 1) % 3; }
+
+    public enum Penalty {
+        TOTAL_SUBMISSION, LAST_SUBMISSION, CODEFORCES
     }
 
-    public void toggleEffectShop() {
-        c().set("shop.effectShopEnabled", !isEffectShopEnabled());
-        plugin.saveConfig();
+    public static Penalty getPenaltySystem() {
+        return switch (getPenaltyInt()) {
+            case 0 -> Penalty.TOTAL_SUBMISSION;
+            case 1 -> Penalty.LAST_SUBMISSION;
+            case 2 -> Penalty.CODEFORCES;
+            default -> throw new IllegalStateException("Unexpected value: " + getPenaltyInt());
+        };
     }
 
-    public void toggleItemShop() {
-        c().set("shop.itemShopEnabled", !isItemShopEnabled());
-        plugin.saveConfig();
-    }
-
-    public void toggleShovelOxidizeCopper() {
-        c().set("vanilla.shovelOxidizeCopper", !isShovelOxidizeCopper());
-        plugin.saveConfig();
-    }
 }

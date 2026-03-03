@@ -30,8 +30,8 @@ public class EffectShopGUI {
     public static final String TITLE = "§b이펙트 상점";
 
     public static void open(Player p) {
-        if (!new Settings(ItemBingo.getInstance()).isShopEnabled()) return;
-        if (!new Settings(ItemBingo.getInstance()).isEffectShopEnabled()) return;
+        if (!Settings.isShopEnabled()) return;
+        if (!Settings.isEffectShopEnabled()) return;
 
         PlayerBingoProgress prog = PlayerDataManager.get(p);
         BingoProgressAccess proga = ProgressFactory.of(p);

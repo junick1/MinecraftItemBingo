@@ -3,6 +3,7 @@ package me.junick.itemBingo;
 import me.junick.itemBingo.admin.AdminClickListener;
 import me.junick.itemBingo.admin.AdminCommand;
 import me.junick.itemBingo.commands.*;
+import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.events.EffectListener;
 import me.junick.itemBingo.events.LavaMovement;
 import me.junick.itemBingo.events.gui.*;
@@ -100,6 +101,8 @@ public final class ItemBingo extends JavaPlugin {
             world.setGameRule(GameRules.PVP, false);
         }
 
+        Settings.load(this);
+
         getLogger().info("ItemBingo plugin has been enabled!");
 
     }
@@ -114,5 +117,6 @@ public final class ItemBingo extends JavaPlugin {
         }
 
         TimerManager.saveState();
+        Settings.save(this);
     }
 }

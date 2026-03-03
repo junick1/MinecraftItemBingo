@@ -17,7 +17,7 @@ public class ShopGUI {
     public static final String TITLE = "§a상점";
 
     public static void open(Player p) {
-        if (!new Settings(ItemBingo.getInstance()).isShopEnabled()) return;
+        if (!Settings.isShopEnabled()) return;
 
         TeamManager tm = ItemBingo.getInstance().getTeamManager();
         int teamId = tm.getTeamId(p);

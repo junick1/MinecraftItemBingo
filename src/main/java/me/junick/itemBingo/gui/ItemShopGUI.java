@@ -31,8 +31,8 @@ public class ItemShopGUI {
     public static final String TITLE = "§e아이템 상점";
 
     public static void open(Player p) {
-        if (!new Settings(ItemBingo.getInstance()).isShopEnabled()) return;
-        if (!new Settings(ItemBingo.getInstance()).isItemShopEnabled()) return;
+        if (!Settings.isShopEnabled()) return;
+        if (!Settings.isItemShopEnabled()) return;
 
         PlayerBingoProgress prog = PlayerDataManager.get(p);
         BingoProgressAccess proga = ProgressFactory.of(p);

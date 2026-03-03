@@ -13,6 +13,7 @@ import java.io.IOException;
 public class TimerManager {
     private static boolean running = false;
     private static boolean paused = false;
+    private static int maxSeconds = 1;
     private static int remainingSeconds = 0;
     private static int elapsedSeconds = 0;
     private static BukkitRunnable task;
@@ -25,6 +26,7 @@ public class TimerManager {
         config.set("paused", paused);
         config.set("remaining", remainingSeconds);
         config.set("elapsed", elapsedSeconds);
+        config.set("max", elapsedSeconds);
 
         try {
             config.save(file);
@@ -41,6 +43,7 @@ public class TimerManager {
         paused = config.getBoolean("paused", false);
         remainingSeconds = config.getInt("remaining", 0);
         elapsedSeconds = config.getInt("elapsed", 0);
+        maxSeconds = config.getInt("max", 0);
 
         if (running) {
             resumeTask();
@@ -75,6 +78,7 @@ public class TimerManager {
     public static void start(int seconds) {
         stop();
         remainingSeconds = seconds;
+        maxSeconds = seconds;
         elapsedSeconds = 0;
         paused = false;
         running = true;
@@ -119,6 +123,10 @@ public class TimerManager {
 
     public static int getElapsedSeconds() {
         return elapsedSeconds;
+    }
+
+    public static int getLastMaxSeconds() {
+        return maxSeconds;
     }
 
     private static String formatTime(int totalSeconds) {

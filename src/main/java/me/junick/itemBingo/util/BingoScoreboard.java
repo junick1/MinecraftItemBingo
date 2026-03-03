@@ -2,6 +2,7 @@ package me.junick.itemBingo.util;
 
 import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.records.ranking.RankingEntry;
 import org.bukkit.Bukkit;
 import org.bukkit.scoreboard.DisplaySlot;
@@ -78,6 +79,9 @@ public class BingoScoreboard {
         };
 
         String timeString = String.format("%02d:%02d", totalSeconds / 60, totalSeconds % 60);
+        if (Settings.getPenaltySystem() == Settings.Penalty.CODEFORCES) {
+            timeString = String.valueOf(totalSeconds);
+        }
         return String.format("%s%d위 §f%s - §b%d §7(%s)", color, rank, name, score, timeString);
     }
 }

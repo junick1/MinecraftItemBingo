@@ -24,7 +24,9 @@ public class BingoProgress {
     public void submit(int idx, boolean penalty) {
         submittedSlots.add(idx);
         if (TimerManager.isRunning() && penalty) {
-            submissionTimes.put(idx, (long) TimerManager.getElapsedSeconds());
+            submissionTimes.put(idx, (long)TimerManager.getElapsedSeconds());
+        } else {
+            submissionTimes.put(idx, (long)TimerManager.getLastMaxSeconds());
         }
     }
 
@@ -56,6 +58,16 @@ public class BingoProgress {
         long total = 0;
         for (long time : submissionTimes.values()) {
             total = Math.max(total, time);
+        }
+        return total;
+    }
+
+    public long getCodeforcesScore() {
+        int POINT = 1000;
+        long total = 0;
+        long maxTime = TimerManager.getLastMaxSeconds();
+        for (long time : submissionTimes.values()) {
+            total += POINT - time * POINT * 60 / maxTime / 125;
         }
         return total;
     }

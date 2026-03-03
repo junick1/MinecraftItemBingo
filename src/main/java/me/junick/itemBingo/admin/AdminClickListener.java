@@ -1,14 +1,19 @@
 package me.junick.itemBingo.admin;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.config.BundleManager;
 import me.junick.itemBingo.config.Settings;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Sound;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
+
+import java.util.Set;
 
 public class AdminClickListener implements Listener {
     private final ItemBingo plugin;
@@ -25,6 +30,13 @@ public class AdminClickListener implements Listener {
 
     private boolean hasAdmin(Player p) {
         return p.isOp() && p.hasPermission("itembingo.admin");
+    }
+
+    @EventHandler
+    public void onInventoryClose(InventoryCloseEvent event) {
+        if (isAdminGuiTitle(event.getView().getTitle())) {
+            Settings.save(ItemBingo.getInstance());
+        }
     }
 
     @EventHandler
@@ -47,7 +59,6 @@ public class AdminClickListener implements Listener {
         p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
 
         int slot = e.getRawSlot();
-        Settings s = new Settings(plugin);
 
         // ===== 탭 이동 (0,1,2) =====
         if (slot == 0) {
@@ -66,7 +77,7 @@ public class AdminClickListener implements Listener {
         // ===== Team GUI =====
         if (title.equals(AdminGUI.TITLE_TEAM)) {
             if (slot == 13) {
-                s.toggleTeam();
+                Settings.toggleTeamEnabled();
                 AdminGUI.openTeam(plugin, p);
             }
             return;
@@ -75,22 +86,22 @@ public class AdminClickListener implements Listener {
         // ===== Shop GUI =====
         if (title.equals(AdminGUI.TITLE_SHOP)) {
             if (slot == 11) {
-                s.toggleShop();
+                Settings.toggleShopEnabled();
                 AdminGUI.openShop(plugin, p);
                 return;
             }
 
             // 상점이 OFF면 하위 토글은 건드릴 수 없게
-            if (!s.isShopEnabled()) return;
+            if (!Settings.isShopEnabled()) return;
 
             if (slot == 13) {
-                s.toggleEffectShop();
+                Settings.toggleEffectShopEnabled();
                 AdminGUI.openShop(plugin, p);
                 return;
             }
 
             if (slot == 15) {
-                s.toggleItemShop();
+                Settings.toggleItemShopEnabled();
                 AdminGUI.openShop(plugin, p);
                 return;
             }
@@ -100,7 +111,11 @@ public class AdminClickListener implements Listener {
         // ===== Vanilla GUI =====
         if (title.equals(AdminGUI.TITLE_VANILLA)) {
             if (slot == 13) {
-                s.toggleShovelOxidizeCopper();
+                Settings.toggleShovelOxidizeCopper();
+                AdminGUI.openVanilla(plugin, p);
+            }
+            if (slot == 14) {
+                Settings.togglePenaltyInt();
                 AdminGUI.openVanilla(plugin, p);
             }
         }
