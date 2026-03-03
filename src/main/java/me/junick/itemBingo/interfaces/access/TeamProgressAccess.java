@@ -37,8 +37,12 @@ public class TeamProgressAccess implements BingoProgressAccess {
     }
 
     @Override public void addCurrency(Player p, BingoRewardType type, int amount) {
-        var data = PlayerDataManager.get(p);
-        data.addCurrency(type, amount);
+        if (type.isPersonal()) {
+            var data = PlayerDataManager.get(p);
+            data.addCurrency(type, amount);
+        } else {
+            prog.addCurrency(type, amount);
+        }
     }
 
     @Override public int getCurrencyAll(BingoRewardType type) { return prog.getCurrency(type); }

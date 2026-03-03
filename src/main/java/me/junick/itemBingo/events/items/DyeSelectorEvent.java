@@ -85,6 +85,9 @@ public class DyeSelectorEvent implements Listener {
     public void onClickDye(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player player)) return;
 
+        ItemStack hand = player.getInventory().getItemInMainHand();
+        if (!CustomItems.is(hand, BingoItem.DYE_SELECTOR)) return;
+
         String title = LegacyComponentSerializer.legacySection().serialize(e.getView().title());
         if (!title.equals(TITLE)) return;
 
@@ -122,7 +125,7 @@ public class DyeSelectorEvent implements Listener {
             return;
         }
 
-        active.setAmount(active.getAmount() - 1);
+        hand.setAmount(hand.getAmount() - 1);
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
 
         player.closeInventory();

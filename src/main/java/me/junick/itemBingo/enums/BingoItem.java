@@ -10,6 +10,13 @@ import java.util.List;
 import java.util.Map;
 
 public enum BingoItem {
+    DIAMOND(
+            "다이아몬드",
+            NamedTextColor.AQUA,
+            Material.DIAMOND,
+            Map.of(BingoRewardType.DIAMOND, 1),
+            List.of("")
+    ),
     BINGO_FILLER(
             "빙고 제출권",
             NamedTextColor.LIGHT_PURPLE,
