@@ -34,7 +34,6 @@ import java.util.UUID;
 public class BiomeMapEvent
 implements Listener {
     private static final String TITLE = "§b바이옴 지도 선택";
-    private static final Map<UUID, ItemStack> activeSelectors = new HashMap<>();
 
     @EventHandler
     public void onUseBiomeMap(PlayerInteractEvent e) {
@@ -51,7 +50,6 @@ implements Listener {
         }
 
         e.setCancelled(true);
-        activeSelectors.put(player.getUniqueId(), hand);
         this.openMapSelectorGUI(player);
     }
 
@@ -143,7 +141,7 @@ implements Listener {
         if (clicked == null || clicked.getType() == Material.AIR) {
             return;
         }
-        ItemStack active = activeSelectors.get(player.getUniqueId());
+        ItemStack active = player.getInventory().getItemInMainHand();
         if (!CustomItems.is(active, BingoItem.BIOME_MAP)) {
             player.closeInventory();
             player.sendMessage("§c오류: 유효한 지도가 인식되지 않습니다.");
@@ -163,6 +161,5 @@ implements Listener {
         }
         gainBiomeMap(player, selectedBiome);
         player.playSound(player.getLocation(), Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 1.0f, 1.0f);
-        activeSelectors.remove(player.getUniqueId());
     }
 }

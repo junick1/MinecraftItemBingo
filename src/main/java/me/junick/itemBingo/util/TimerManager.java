@@ -26,7 +26,7 @@ public class TimerManager {
         config.set("paused", paused);
         config.set("remaining", remainingSeconds);
         config.set("elapsed", elapsedSeconds);
-        config.set("max", elapsedSeconds);
+        config.set("max", maxSeconds);
 
         try {
             config.save(file);

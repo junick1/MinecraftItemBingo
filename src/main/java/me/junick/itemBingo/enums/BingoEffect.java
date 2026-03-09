@@ -10,9 +10,9 @@ public enum BingoEffect {
     STEP_HEIGHT("스텝 높이", 3, 1, Material.FEATHER),
     EFFICIENCY("효율", 5, 1, Material.DIAMOND_PICKAXE),
     MENDING("수선", 1, 1, Material.EMERALD_BLOCK),
-    STRENGTH("힘", 3, 1, Material.IRON_SWORD),
-    RESISTANCE("저항", 3, 1, Material.SHIELD),
-    HEALTH_BOOST("체력 증가", 3, 2, Material.ENCHANTED_GOLDEN_APPLE),
+    STRENGTH("힘 II", 2, 2, Material.IRON_SWORD),
+    RESISTANCE("저항 II", 2, 2, Material.SHIELD),
+    HEALTH_BOOST("체력 증가 V", 2, 5, Material.ENCHANTED_GOLDEN_APPLE),
     FIRE_RESISTANCE("화염 저항", 1, 1, Material.FIRE_CHARGE),
     IMPROVE_LAVA_MOVEMENT("스트라이더의 가호", 1, 1, Material.STRIDER_SPAWN_EGG);
 

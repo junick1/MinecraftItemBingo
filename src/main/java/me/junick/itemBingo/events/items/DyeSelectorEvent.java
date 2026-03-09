@@ -25,7 +25,6 @@ import java.util.UUID;
 
 public class DyeSelectorEvent implements Listener {
     private static final String TITLE = "§b염료 선택 메뉴";
-    private static final Map<UUID, ItemStack> activeSelectors = new HashMap<>();
 
     @EventHandler
     public void onDyeSelect(PlayerInteractEvent e) {
@@ -39,7 +38,6 @@ public class DyeSelectorEvent implements Listener {
 
         e.setCancelled(true);
 
-        activeSelectors.put(player.getUniqueId(), hand);
         openDyeSelectorGUI(player);
     }
 
@@ -99,10 +97,10 @@ public class DyeSelectorEvent implements Listener {
         Material dyeType = clicked.getType();
         if (!dyeType.name().endsWith("_DYE")) return;
 
-        ItemStack active = activeSelectors.get(player.getUniqueId());
+        ItemStack active = player.getInventory().getItemInMainHand();
         if (!CustomItems.is(active, BingoItem.DYE_SELECTOR)) {
             player.closeInventory();
-            player.sendMessage("§c오류: 유효한 염료 획득권이 인식되지 않습니다.");
+            player.sendMessage("§c오류: 유효한 선택권이 인식되지 않습니다.");
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return;
         }
@@ -129,6 +127,5 @@ public class DyeSelectorEvent implements Listener {
         player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
 
         player.closeInventory();
-        activeSelectors.remove(player.getUniqueId());
     }
 }

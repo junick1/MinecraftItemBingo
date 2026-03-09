@@ -66,6 +66,7 @@ public class BingoProgress {
         int POINT = 1000;
         long total = 0;
         long maxTime = TimerManager.getLastMaxSeconds();
+        if (maxTime == 0) maxTime = 1;
         for (long time : submissionTimes.values()) {
             total += POINT - time * POINT * 60 / maxTime / 125;
         }
