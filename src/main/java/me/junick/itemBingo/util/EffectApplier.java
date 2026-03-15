@@ -33,6 +33,7 @@ public class EffectApplier extends BukkitRunnable {
         PlayerBingoProgress prog = PlayerDataManager.get(p);
 
         p.addPotionEffect(new PotionEffect(PotionEffectType.NIGHT_VISION, Integer.MAX_VALUE, 0, true, false, false));
+        p.removePotionEffect(PotionEffectType.MINING_FATIGUE); // QOL Change
 
         for (BingoEffect eff : BingoEffect.values()) {
             int lvl = eff.getTotalLevel(prog.getEffectLevel(eff));
