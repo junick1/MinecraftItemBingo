@@ -84,6 +84,27 @@ public class AdminGUI {
                 List.of(Component.text("1: 제출 합, 2: 마지막 제출, 3: 점수제", NamedTextColor.GRAY), Component.text("(기본 1)", NamedTextColor.GRAY))
         ));
 
+        inv.setItem(15, toggleItem(
+                Material.ENDER_EYE,
+                "포지션 스왑 모드",
+                Settings.isPositionSwapMode(),
+                List.of(Component.text("랜덤한 시간마다 위치 교체", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
+        ));
+
+        inv.setItem(16, toggleItem(
+                Material.ENDER_PEARL,
+                "포지션 스왑 모드 - 알림",
+                Settings.isSwapAlert(),
+                List.of(Component.text("바뀌기 3초 전에 알림?", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
+        ));
+
+        inv.setItem(17, toggleItem(
+                Material.ENDER_PEARL,
+                "포지션 스왑 모드 - 타이머",
+                Settings.isSwapTimer(),
+                List.of(Component.text("스왑 타이머 표시?", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
+        ));
+
         inv.setItem(22, placeholder("기타등등", "나중에 더 추가할 것"));
 
         p.openInventory(inv);

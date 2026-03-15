@@ -110,12 +110,14 @@ public class AdminClickListener implements Listener {
 
         // ===== Vanilla GUI =====
         if (title.equals(AdminGUI.TITLE_VANILLA)) {
-            if (slot == 13) {
-                Settings.toggleShovelOxidizeCopper();
-                AdminGUI.openVanilla(plugin, p);
+            switch(slot) {
+                case 13 -> Settings.toggleShovelOxidizeCopper();
+                case 14 -> Settings.togglePenaltyInt();
+                case 15 -> Settings.togglePositionSwapMode();
+                case 16 -> Settings.toggleSwapAlert();
+                case 17 -> Settings.toggleSwapTimer();
             }
-            if (slot == 14) {
-                Settings.togglePenaltyInt();
+            if (13 <= slot && slot <= 17) {
                 AdminGUI.openVanilla(plugin, p);
             }
         }
