@@ -86,7 +86,8 @@ public class TimerManager {
                     doSwap();
                     setSwap();
                 }
-                Component actionBar = Component.text("§a남은 시간: §e" + formatTime(remainingSeconds));
+                Component actionBar = Component.text(String.format("§e%s | §c%s", formatTime(remainingSeconds), formatTime(swapRemaining)));
+                // ✨
                 for (Player player : Bukkit.getOnlinePlayers()) {
                     player.sendActionBar(actionBar);
                 }
