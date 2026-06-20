@@ -78,6 +78,9 @@ public class BingoGUI {
         List<ItemStack> items = board.getItems();
         BingoTagLoader tagLoader = ItemBingo.getInstance().getTagLoader();
 
+        // The "submitted" pane is identical for every slot — build it once.
+        ItemStack submittedPane = createSubmittedPane();
+
         int offsetX = (GUI_WIDTH - board.getWidth()) / 2;
         int offsetY = tightMode ? 0 : 1;
 
@@ -89,7 +92,7 @@ public class BingoGUI {
                 int slot = (y + offsetY) * GUI_WIDTH + offsetX + x;
 
                 if (progress.isSubmitted(index)) {
-                    inv.setItem(slot, createSubmittedPane());
+                    inv.setItem(slot, submittedPane);
                 } else {
                     inv.setItem(slot, withTagLore(items.get(index), tagLoader));
                 }
@@ -99,7 +102,7 @@ public class BingoGUI {
 
     private static ItemStack createSubmittedPane() {
         return createPane(
-                Material.LIME_STAINED_GLASS_PANE,
+                Material.BARRIER,
                 Component.text("제출됨", NamedTextColor.GREEN)
                         .decoration(TextDecoration.ITALIC, false)
                         .decoration(TextDecoration.BOLD, true)

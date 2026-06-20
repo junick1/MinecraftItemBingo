@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 
 public class BingoTagLoader {
     private final Map<Material, EnumSet<BingoItemTag>> tagMap = new EnumMap<>(Material.class);
+    private static final EnumSet<BingoItemTag> EMPTY = EnumSet.noneOf(BingoItemTag.class);
 
     public BingoTagLoader(JavaPlugin plugin) {
         load(plugin);
@@ -32,6 +33,13 @@ public class BingoTagLoader {
 
         ConfigurationSection root = config.getConfigurationSection("tags");
         if (root == null) return;
+
+        // Filter to item materials once instead of re-checking isItem() for
+        // every regex pattern across all ~1000 Material values.
+        List<Material> itemMaterials = new ArrayList<>();
+        for (Material mat : Material.values()) {
+            if (mat.isItem()) itemMaterials.add(mat);
+        }
 
         for (String tagKey : root.getKeys(false)) {
             BingoItemTag tag;
@@ -54,9 +62,7 @@ public class BingoTagLoader {
             for (String pattern : section.getStringList("match")) {
                 Pattern regex = toRegex(pattern);
 
-                for (Material mat : Material.values()) {
-                    if (!mat.isItem()) continue;
-
+                for (Material mat : itemMaterials) {
                     if (regex.matcher(mat.name()).matches()) {
                         addTag(mat, tag);
                     }
@@ -78,7 +84,8 @@ public class BingoTagLoader {
         return Pattern.compile(regex);
     }
 
+    // Returns a shared empty set on a miss; callers must treat it as read-only.
     public EnumSet<BingoItemTag> getTags(Material material) {
-        return tagMap.getOrDefault(material, EnumSet.noneOf(BingoItemTag.class));
+        return tagMap.getOrDefault(material, EMPTY);
     }
 }

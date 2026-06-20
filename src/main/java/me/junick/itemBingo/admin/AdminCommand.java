@@ -16,12 +16,12 @@ public class AdminCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("§8Only players can use this command!");
+            sender.sendMessage("§c이 명령어는 플레이어만 사용할 수 있습니다.");
             return true;
         }
 
         if (!player.isOp() || !player.hasPermission("itembingo.admin")) {
-            player.sendMessage("§cNo permission.");
+            player.sendMessage("§c권한이 없습니다.");
             return true;
         }
 

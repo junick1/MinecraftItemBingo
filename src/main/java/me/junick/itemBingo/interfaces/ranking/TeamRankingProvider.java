@@ -23,30 +23,12 @@ public class TeamRankingProvider implements RankingProvider {
             allProgress.put(teamId, TeamDataManager.get(teamId));
         }
 
+        Settings.Penalty penalty = Settings.getPenaltySystem();
+
         List<Map.Entry<Integer, TeamBingoProgress>> entries =
                 new ArrayList<>(allProgress.entrySet());
 
-        if (Settings.getPenaltySystem() == Settings.Penalty.TOTAL_SUBMISSION) {
-            entries.sort((a, b) -> {
-                int cmp = Integer.compare(b.getValue().getScore(), a.getValue().getScore());
-                if (cmp != 0) return cmp;
-                return Long.compare(a.getValue().getTotalSubmitTime(), b.getValue().getTotalSubmitTime());
-            });
-        }
-        if (Settings.getPenaltySystem() == Settings.Penalty.LAST_SUBMISSION) {
-            entries.sort((a, b) -> {
-                int cmp = Integer.compare(b.getValue().getScore(), a.getValue().getScore());
-                if (cmp != 0) return cmp;
-                return Long.compare(a.getValue().getMaxSubmitTime(), b.getValue().getMaxSubmitTime());
-            });
-        }
-        if (Settings.getPenaltySystem() == Settings.Penalty.CODEFORCES) {
-            entries.sort((a, b) -> {
-                int cmp = Long.compare(b.getValue().getCodeforcesScore(), a.getValue().getCodeforcesScore());
-                if (cmp != 0) return cmp;
-                return Long.compare(b.getValue().getScore(), a.getValue().getScore());
-            });
-        }
+        entries.sort(Map.Entry.comparingByValue(RankingSupport.comparator(penalty)));
 
         int realLimit = (limit <= 0)
                 ? entries.size()
@@ -58,16 +40,9 @@ public class TeamRankingProvider implements RankingProvider {
             int teamId = entries.get(i).getKey();
             TeamBingoProgress prog = entries.get(i).getValue();
 
-            int score = prog.getScore();
-            long penalty = prog.getTotalSubmitTime();
-
             String name = buildTeamName(teamId, tm);
 
-            switch(Settings.getPenaltySystem()) {
-                case TOTAL_SUBMISSION -> out.add(new RankingEntry(name, prog.getScore(), prog.getTotalSubmitTime()));
-                case LAST_SUBMISSION -> out.add(new RankingEntry(name, prog.getScore(), prog.getMaxSubmitTime()));
-                case CODEFORCES -> out.add(new RankingEntry(name, (int)prog.getCodeforcesScore(), prog.getScore()));
-            }
+            out.add(RankingSupport.toEntry(name, prog, penalty));
         }
         return out;
     }

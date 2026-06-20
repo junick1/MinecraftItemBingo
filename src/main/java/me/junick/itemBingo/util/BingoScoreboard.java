@@ -78,10 +78,20 @@ public class BingoScoreboard {
             default -> "§f"; // White for others
         };
 
-        String timeString = String.format("%02d:%02d", totalSeconds / 60, totalSeconds % 60);
+        StringBuilder sb = new StringBuilder(48);
+        sb.append(color).append(rank).append("위 §f").append(name)
+          .append(" - §b").append(score).append(" §7(");
+
         if (Settings.getPenaltySystem() == Settings.Penalty.CODEFORCES) {
-            timeString = String.valueOf(totalSeconds);
+            sb.append(totalSeconds);
+        } else {
+            long minutes = totalSeconds / 60;
+            long seconds = totalSeconds % 60;
+            if (minutes < 10) sb.append('0');
+            sb.append(minutes).append(':');
+            if (seconds < 10) sb.append('0');
+            sb.append(seconds);
         }
-        return String.format("%s%d위 §f%s - §b%d §7(%s)", color, rank, name, score, timeString);
+        return sb.append(')').toString();
     }
 }

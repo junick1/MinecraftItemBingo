@@ -16,34 +16,34 @@ public class TimerCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (args.length == 0) {
-            sender.sendMessage("§cUsage: /timer <start|stop|pause> [seconds]");
+            sender.sendMessage("§c사용법: /timer <start|stop|pause> [초]");
             return true;
         }
 
         switch (args[0].toLowerCase()) {
             case "start" -> {
                 if (args.length < 2) {
-                    sender.sendMessage("§cUsage: /timer start <seconds>");
+                    sender.sendMessage("§c사용법: /timer start <초>");
                     return true;
                 }
                 try {
                     int seconds = Integer.parseInt(args[1]);
 
                     TimerManager.start(seconds);
-                    sender.sendMessage("§aTimer started for " + seconds + " seconds.");
+                    sender.sendMessage("§a타이머가 " + seconds + "초로 시작되었습니다.");
                 } catch (NumberFormatException e) {
-                    sender.sendMessage("§cInvalid number of seconds. Please enter a valid integer.");
+                    sender.sendMessage("§c올바른 정수를 입력하세요.");
                 }
             }
             case "pause" -> {
                 boolean nowPaused = TimerManager.togglePause();
-                sender.sendMessage(nowPaused ? "§aTimer paused." : "§aTimer resumed.");
+                sender.sendMessage(nowPaused ? "§a타이머가 일시정지되었습니다." : "§a타이머가 재개되었습니다.");
             }
             case "stop" -> {
                 TimerManager.stop();
-                sender.sendMessage("§aTimer stopped.");
+                sender.sendMessage("§a타이머가 정지되었습니다.");
             }
-            default -> sender.sendMessage("§cInvalid command. Use /timer <start|stop|pause> [seconds].");
+            default -> sender.sendMessage("§c알 수 없는 명령입니다. /timer <start|stop|pause> [초]");
         }
         return true;
     }

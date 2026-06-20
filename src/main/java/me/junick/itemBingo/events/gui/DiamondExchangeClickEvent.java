@@ -67,6 +67,17 @@ public class DiamondExchangeClickEvent implements Listener {
                 p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
             }
 
+            case GOLD_INGOT -> {
+                int currentDiamonds = countDiamonds(p);
+                if (currentDiamonds <= 0) {
+                    p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
+                    return;
+                }
+
+                DiamondExchangeGUI.open(p, currentDiamonds);
+                p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+            }
+
             case GREEN_TERRACOTTA -> confirm(p, amount);
             case RED_TERRACOTTA -> cancel(p);
         }

@@ -20,11 +20,12 @@ public class PointCommand
 implements CommandExecutor, TabCompleter {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
         if (args.length != 3) {
-            sender.sendMessage("§cusage: /pointadd <player> <diamond|line|slot> <amount>");
+            sender.sendMessage("§c사용법: /pointadd <플레이어> <diamond|line|slot> <수량>");
             return true;
         }
         var p = Bukkit.getPlayer(args[0]);
         if (p == null) {
+            sender.sendMessage("§c플레이어를 찾을 수 없습니다: " + args[0]);
             return true;
         }
         int amount;
@@ -32,7 +33,7 @@ implements CommandExecutor, TabCompleter {
             amount = Integer.parseInt(args[2]);
         }
         catch (NumberFormatException e) {
-            sender.sendMessage("§cInvalid number");
+            sender.sendMessage("§c올바른 숫자를 입력하세요.");
             return true;
         }
         var prog = ProgressFactory.of(p);

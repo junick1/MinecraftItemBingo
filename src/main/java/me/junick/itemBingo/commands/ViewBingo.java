@@ -24,7 +24,7 @@ public class ViewBingo implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
         if (!(sender instanceof Player p)) {
-            sender.sendMessage("§cThis command can only be used by players.");
+            sender.sendMessage("§c이 명령어는 플레이어만 사용할 수 있습니다.");
             return true;
         }
 

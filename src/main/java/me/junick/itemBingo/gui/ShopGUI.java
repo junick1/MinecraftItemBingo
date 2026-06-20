@@ -17,7 +17,11 @@ public class ShopGUI {
     public static final String TITLE = "§a상점";
 
     public static void open(Player p) {
-        if (!Settings.isShopEnabled()) return;
+        if (!Settings.isShopEnabled()) {
+            p.sendMessage("§c상점이 비활성화되어 있습니다.");
+            p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
+            return;
+        }
 
         TeamManager tm = ItemBingo.getInstance().getTeamManager();
         int teamId = tm.getTeamId(p);

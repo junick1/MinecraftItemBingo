@@ -76,7 +76,18 @@ public class DiamondExchangeGUI {
                 Math.clamp(amount, 1, 64)
         ));
 
-        inv.setItem(9*3 + 2, IconGenerator.icon(Material.GREEN_TERRACOTTA, "§a확인"));
+        inv.setItem(9*2 + 6, IconGenerator.icon(
+                Material.GOLD_INGOT,
+                "§6전부 선택",
+                "§7보유한 다이아몬드 전부를 선택합니다."
+        ));
+
+        inv.setItem(9*3 + 2, IconGenerator.icon(
+                Material.GREEN_TERRACOTTA,
+                "§a확인",
+                "§7다이아몬드 §b" + amount + "개§7를",
+                "§b" + amount + " 포인트§7로 교환합니다."
+        ));
         inv.setItem(9*3 + 6, IconGenerator.icon(Material.RED_TERRACOTTA, "§c취소"));
 
         for (ItemStack item : inv.getContents()) {

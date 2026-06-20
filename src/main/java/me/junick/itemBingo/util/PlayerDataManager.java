@@ -38,12 +38,30 @@ public class PlayerDataManager {
         return data.get(u);
     }
 
+    // Short-lived cache so repeated ranking lookups (scoreboard every second,
+    // commands) don't re-scan and re-parse every YAML file on disk each call.
+    private static final long ALL_DATA_TTL_MS = 3000;
+    private static Map<UUID, PlayerBingoProgress> allDataCache;
+    private static long allDataCacheTime;
+
     public static Map<UUID, PlayerBingoProgress> getAllData() {
+        long now = System.currentTimeMillis();
+        if (allDataCache != null && now - allDataCacheTime < ALL_DATA_TTL_MS) {
+            return new HashMap<>(allDataCache);
+        }
+
         Map<UUID, PlayerBingoProgress> all = new HashMap<>();
         for (UUID uuid : listAllUUIDs()) {
             all.put(uuid, load(uuid));
         }
-        return all;
+
+        allDataCache = all;
+        allDataCacheTime = now;
+        return new HashMap<>(all);
+    }
+
+    private static void invalidateAllDataCache() {
+        allDataCache = null;
     }
 
     public static void save(Player player) {
@@ -54,6 +72,7 @@ public class PlayerDataManager {
 
     public static void resetAll() {
         data.clear();
+        invalidateAllDataCache();
         deleteAllFiles();
         Bukkit.getLogger().info("[ItemBingo] All player data has been reset.");
     }
@@ -86,6 +105,7 @@ public class PlayerDataManager {
 
         try {
             config.save(file);
+            invalidateAllDataCache();
         } catch (IOException e) {
             Bukkit.getLogger().severe("[ItemBingo] Failed to save data for " + uuid + ": " + e.getMessage());
             e.printStackTrace();

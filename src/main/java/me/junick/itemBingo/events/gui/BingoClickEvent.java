@@ -193,7 +193,7 @@ public class BingoClickEvent implements Listener {
         int col = idx % width + offsetX;
         int slot = row * 9 + col;
 
-        ItemStack green = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
+        ItemStack green = new ItemStack(Material.BARRIER);
         ItemMeta meta = green.getItemMeta();
         meta.displayName(Component.text("§a제출됨"));
         green.setItemMeta(meta);

@@ -52,8 +52,11 @@ public class IconGenerator {
                 "§7빙고판을 채워 포인트를 얻으세요!",
                 "",
                 "§a빙고칸 포인트: §f" + prog.getCurrency(BingoRewardType.SLOT),
+                "§7  └ 빙고판에 아이템 제출 시 획득",
                 "§e빙고줄 포인트: §f" + prog.getCurrency(BingoRewardType.LINE),
-                "§b다이아몬드 포인트: §f" + prog.getCurrency(BingoRewardType.DIAMOND)
+                "§7  └ 빙고 줄 완성 시 획득",
+                "§b다이아몬드 포인트: §f" + prog.getCurrency(BingoRewardType.DIAMOND),
+                "§7  └ 다이아몬드 환전소에서 획득"
         );
     }
 
@@ -64,8 +67,11 @@ public class IconGenerator {
                 "§7빙고판을 채워 포인트를 얻으세요!",
                 "",
                 "§a개인 빙고칸 포인트: §f" + prog.getCurrency(p, BingoRewardType.SLOT),
+                "§7  └ 빙고판에 아이템 제출 시 획득",
                 "§e팀 빙고줄 포인트: §f" + prog.getCurrency(p, BingoRewardType.LINE),
-                "§b팀 다이아몬드 포인트: §f" + prog.getCurrency(p, BingoRewardType.DIAMOND)
+                "§7  └ 빙고 줄 완성 시 획득",
+                "§b팀 다이아몬드 포인트: §f" + prog.getCurrency(p, BingoRewardType.DIAMOND),
+                "§7  └ 다이아몬드 환전소에서 획득"
         );
     }
 

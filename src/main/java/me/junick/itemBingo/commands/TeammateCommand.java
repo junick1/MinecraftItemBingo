@@ -16,7 +16,7 @@ public class TeammateCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
         if (!(sender instanceof Player p)) {
-            sender.sendMessage("§cOnly players can run this command!");
+            sender.sendMessage("§c이 명령어는 플레이어만 사용할 수 있습니다.");
             return true;
         }
 
@@ -24,17 +24,17 @@ public class TeammateCommand implements CommandExecutor {
 
         int teamId = tm.getTeamId(p);
         if (teamId == TeamManager.NO_TEAM) {
-            sender.sendMessage("§cYou're not in a team!");
+            sender.sendMessage("§c팀에 속해 있지 않습니다!");
             return true;
         }
 
         if (teamId < 0 || teamId >= tm.getTeamCount()) {
-            sender.sendMessage("§cError! Team # out of range. (1.." + tm.getTeamCount() + ")");
+            sender.sendMessage("§c오류! 팀 번호가 범위를 벗어났습니다. (1.." + tm.getTeamCount() + ")");
             return true;
         }
 
         List<Player> online = tm.getOnlinePlayersOnTeam(teamId);
-        p.sendMessage("§b[Team " + (teamId + 1) + "] §f(" + online.size() + "명) §7" + joinNames(online));
+        p.sendMessage("§b[팀 " + (teamId + 1) + "] §f(" + online.size() + "명) §7" + joinNames(online));
         return true;
     }
 

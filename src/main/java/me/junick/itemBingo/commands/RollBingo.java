@@ -5,6 +5,7 @@ import me.junick.itemBingo.config.BundleManager;
 import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.util.BingoItemSelector;
 import me.junick.itemBingo.util.BingoStorage;
+import me.junick.itemBingo.util.ConfirmationManager;
 import me.junick.itemBingo.util.PlayerDataManager;
 import me.junick.itemBingo.util.TeamDataManager;
 import org.bukkit.Material;
@@ -23,7 +24,7 @@ public class RollBingo implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (args.length != 2) {
-            sender.sendMessage("§cUsage: /rollbingo <width> <height>");
+            sender.sendMessage("§c사용법: /rollbingo <가로> <세로>");
             return true;
         }
 
@@ -32,7 +33,13 @@ public class RollBingo implements CommandExecutor, TabCompleter {
             int height = Integer.parseInt(args[1]);
 
             if (width < 1 || width > 9 || height < 1 || height > 6) {
-                sender.sendMessage("§cWidth must be between 1 and 9, and height must be between 1 and 6.");
+                sender.sendMessage("§c가로는 1~9, 세로는 1~6 사이여야 합니다.");
+                return true;
+            }
+
+            if (!ConfirmationManager.confirm(sender, "rollbingo")) {
+                sender.sendMessage("§c§l[경고] §f새 빙고판을 생성하면 모든 플레이어와 팀의 진행 데이터가 초기화됩니다.");
+                sender.sendMessage("§e계속하려면 10초 안에 §f/rollbingo " + width + " " + height + "§e을(를) 다시 입력하세요.");
                 return true;
             }
 
@@ -48,9 +55,9 @@ public class RollBingo implements CommandExecutor, TabCompleter {
             ItemBingo.currentBingo = board;
             BingoStorage.save(board);
 
-            sender.sendMessage("§aBingo board rolled with " + width + "x" + height + " items!");
+            sender.sendMessage("§a" + width + "x" + height + " 빙고판이 생성되었습니다!");
         } catch (NumberFormatException e) {
-            sender.sendMessage("§cInvalid width or height! Please enter valid integers.");
+            sender.sendMessage("§c올바른 정수를 입력하세요.");
         }
         return true;
     }

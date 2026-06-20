@@ -1,6 +1,7 @@
 package me.junick.itemBingo.commands;
 
 import me.junick.itemBingo.config.BundleManager;
+import me.junick.itemBingo.util.ConfirmationManager;
 import me.junick.itemBingo.util.TimerManager;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -19,7 +20,7 @@ public class StartBingoCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
         if (args.length != 1) {
-            sender.sendMessage("§cUsage: /startbingo <seconds>");
+            sender.sendMessage("§c사용법: /startbingo <초>");
             return true;
         }
 
@@ -27,7 +28,13 @@ public class StartBingoCommand implements CommandExecutor, TabCompleter {
         try {
             seconds = Integer.parseInt(args[0]);
         } catch (NumberFormatException e) {
-            sender.sendMessage("§cInvalid number of seconds. Please enter a valid integer.");
+            sender.sendMessage("§c올바른 정수를 입력하세요.");
+            return true;
+        }
+
+        if (!ConfirmationManager.confirm(sender, "startbingo")) {
+            sender.sendMessage("§c§l[경고] §f게임을 시작하면 모든 플레이어의 인벤토리가 비워지고 리스폰됩니다.");
+            sender.sendMessage("§e계속하려면 10초 안에 §f/startbingo " + seconds + "§e을(를) 다시 입력하세요.");
             return true;
         }
 
@@ -40,7 +47,7 @@ public class StartBingoCommand implements CommandExecutor, TabCompleter {
             BundleManager.getBundle(player);
         }
 
-        sender.sendMessage("§aBingo started for " + seconds + " seconds.");
+        sender.sendMessage("§a빙고가 " + seconds + "초 동안 시작되었습니다.");
         return true;
     }
 
