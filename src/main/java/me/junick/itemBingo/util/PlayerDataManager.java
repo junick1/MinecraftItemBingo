@@ -8,9 +8,9 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
-import javax.annotation.Nonnegative;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -30,7 +30,7 @@ public class PlayerDataManager {
 
     /* ========================= Public API ========================= */
 
-    public static @Nonnull PlayerBingoProgress get(Player p) {
+    public static @NotNull PlayerBingoProgress get(Player p) {
         return data.computeIfAbsent(p.getUniqueId(), PlayerDataManager::load);
     }
 

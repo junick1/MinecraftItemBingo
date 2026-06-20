@@ -16,8 +16,9 @@ public enum BingoBiome {
     SWAMP(Biome.SWAMP, "늪", Material.LILY_PAD, Environment.NORMAL),
     DEEP_DARK(Biome.DEEP_DARK, "딥 다크", Material.SCULK, Environment.NORMAL),
     LUSH_CAVES(Biome.LUSH_CAVES, "무성한 동굴", Material.MOSS_BLOCK, Environment.NORMAL),
-    DRIPSTONE_CAVES(Biome.DRIPSTONE_CAVES, "점적석 동굴", Material.DRIPSTONE_BLOCK, Environment.NORMAL);
-    
+    DRIPSTONE_CAVES(Biome.DRIPSTONE_CAVES, "점적석 동굴", Material.DRIPSTONE_BLOCK, Environment.NORMAL),
+    SULFUR_CAVES(Biome.SULFUR_CAVES, "유황 동굴", Material.SULFUR, Environment.NORMAL);
+
 
     public Biome getBiome() { return biome; }
 

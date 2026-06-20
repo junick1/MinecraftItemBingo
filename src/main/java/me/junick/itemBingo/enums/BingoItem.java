@@ -11,17 +11,17 @@ import java.util.Map;
 
 public enum BingoItem {
     DIAMOND(
-            "다이아몬드",
+            "줄 포인트를 다이아몬드 포인트로 변환",
             NamedTextColor.AQUA,
             Material.DIAMOND,
-            Map.of(BingoRewardType.DIAMOND, 1),
-            List.of("")
+            Map.of(BingoRewardType.LINE, 1),
+            List.of("줄 포인트 -> 10 다이아몬드 포인트")
     ),
     BINGO_FILLER(
             "빙고 제출권",
             NamedTextColor.LIGHT_PURPLE,
             Material.LIGHT_BLUE_DYE,
-            Map.of(BingoRewardType.LINE, 5),
+            Map.of(BingoRewardType.LINE, 15),
             List.of("빙고칸 중 하나를 즉시 제출합니다.")
     ),
     DYE_SELECTOR(
@@ -42,7 +42,7 @@ public enum BingoItem {
             "탐험가 지도",
             NamedTextColor.GREEN,
             Material.PAPER,
-            Map.of(BingoRewardType.DIAMOND, 5),
+            Map.of(BingoRewardType.DIAMOND, 10),
             List.of("구조물을 선택하여 가장 가까운 것을 가리키는 탐험가 지도를 획득합니다.")
     ) {
         @Override
@@ -57,7 +57,7 @@ public enum BingoItem {
             "바이옴 지도",
             NamedTextColor.GREEN,
             Material.PAPER,
-            Map.of(BingoRewardType.DIAMOND, 5),
+            Map.of(BingoRewardType.DIAMOND, 10),
             List.of("바이옴을 선택하여 가장 가까운 곳을 가리키는 지도를 획득합니다.")
     ) {
         @Override

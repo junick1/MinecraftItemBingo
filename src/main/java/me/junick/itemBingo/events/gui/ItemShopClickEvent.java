@@ -52,7 +52,11 @@ public class ItemShopClickEvent implements Listener {
             case COPPER_OXIDIZER -> CustomItems.get(BingoItem.COPPER_OXIDIZER);
             case EXPLORER_MAP -> CustomItems.get(BingoItem.EXPLORER_MAP);
             case BIOME_MAP -> CustomItems.get(BingoItem.BIOME_MAP);
-            case DIAMOND -> new ItemStack(Material.DIAMOND);
+            case DIAMOND -> {
+                var itemStack = new ItemStack(Material.DIAMOND);
+                itemStack.setAmount(10);
+                yield itemStack;
+            }
             default -> null;
         };
     }

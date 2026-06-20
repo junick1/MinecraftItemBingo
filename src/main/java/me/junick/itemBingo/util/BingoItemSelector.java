@@ -114,11 +114,11 @@ public class BingoItemSelector {
                     switch(tag) {
                         case COLOR -> weight -= 0;
                         case SILK_TOUCH -> weight -= 0;
-                        case WAXED -> weight -= 100;
+                        case WAXED -> weight -= 75;
                         case DISC -> weight -= 0;
-                        case COPPER -> weight -= 200;
-                        case THE_END -> weight -= 200;
-                        case THE_NETHER -> weight -= 200;
+                        case COPPER -> weight -= 75;
+                        //case THE_END -> weight -= 200;
+                        //case THE_NETHER -> weight -= 200;
                         case POTTERY_SHERD -> weight -= 0;
                         case SMITHING_TEMPLATE -> weight -= 0;
                     }
