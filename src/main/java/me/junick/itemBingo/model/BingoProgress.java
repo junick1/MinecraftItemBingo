@@ -9,6 +9,10 @@ public class BingoProgress {
     protected Set<Integer> submittedSlots = new HashSet<>();
     protected Map<Integer, Long> submissionTimes = new HashMap<>();
 
+    // Who submitted each slot (used to render a player head on the team board).
+    protected Map<Integer, UUID> submitterIds = new HashMap<>();
+    protected Map<Integer, String> submitterNames = new HashMap<>();
+
     protected EnumMap<BingoRewardType, Integer> currency = new EnumMap<>(BingoRewardType.class);
 
     public BingoProgress() {
@@ -33,6 +37,29 @@ public class BingoProgress {
     public void submit(int idx) {
         submit(idx, true);
     }
+
+    public void submit(int idx, boolean penalty, UUID submitterId, String submitterName) {
+        submit(idx, penalty);
+        if (submitterId != null) {
+            submitterIds.put(idx, submitterId);
+            if (submitterName != null) submitterNames.put(idx, submitterName);
+        }
+    }
+
+    public UUID getSubmitterId(int idx) { return submitterIds.get(idx); }
+    public String getSubmitterName(int idx) { return submitterNames.get(idx); }
+
+    /** Number of slots submitted by the given player (their contribution). */
+    public int getSubmissionCountBy(UUID submitterId) {
+        if (submitterId == null) return 0;
+        int count = 0;
+        for (UUID id : submitterIds.values()) {
+            if (submitterId.equals(id)) count++;
+        }
+        return count;
+    }
+    public Map<Integer, UUID> getSubmitterIds() { return submitterIds; }
+    public Map<Integer, String> getSubmitterNames() { return submitterNames; }
 
     public boolean isSubmitted(int idx) {
         return submittedSlots.contains(idx);

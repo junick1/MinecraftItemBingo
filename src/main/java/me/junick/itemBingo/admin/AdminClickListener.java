@@ -31,7 +31,8 @@ public class AdminClickListener implements Listener {
     private boolean isAdminGuiTitle(String title) {
         return title.equals(AdminGUI.TITLE_TEAM)
                 || title.equals(AdminGUI.TITLE_SHOP)
-                || title.equals(AdminGUI.TITLE_VANILLA);
+                || title.equals(AdminGUI.TITLE_VANILLA)
+                || title.equals(AdminGUI.TITLE_MODE);
     }
 
     private boolean hasAdmin(Player p) {
@@ -77,6 +78,10 @@ public class AdminClickListener implements Listener {
         }
         if (slot == 2) {
             AdminGUI.openVanilla(plugin, p);
+            return;
+        }
+        if (slot == 3) {
+            AdminGUI.openMode(plugin, p);
             return;
         }
 
@@ -137,12 +142,51 @@ public class AdminClickListener implements Listener {
             switch(slot) {
                 case 13 -> Settings.toggleShovelOxidizeCopper();
                 case 14 -> Settings.togglePenaltyInt();
-                case 15 -> Settings.togglePositionSwapMode();
-                case 16 -> Settings.toggleSwapAlert();
-                case 17 -> Settings.toggleSwapTimer();
             }
-            if (13 <= slot && slot <= 17) {
+            if (13 <= slot && slot <= 14) {
                 refreshVanilla();
+            }
+            return;
+        }
+
+        // ===== Mode GUI =====
+        if (title.equals(AdminGUI.TITLE_MODE)) {
+            // Mode switch (cycles Normal -> Swappage -> Fog of War). Changing the
+            // mode changes both which sub-settings show and how the board renders
+            // (fog hides/reveals cells), so re-render all open boards too.
+            if (slot == 13) {
+                Settings.cycleGameMode();
+                refreshMode();
+                GuiSync.refreshAllGameViews();
+                return;
+            }
+
+            switch (Settings.getGameMode()) {
+                case SWAPPAGE -> {
+                    switch (slot) {
+                        case 21 -> Settings.toggleSwapTimer();
+                        case 23 -> Settings.toggleSwapAlert();
+                        default -> { return; }
+                    }
+                    refreshMode();
+                }
+                case FOG_OF_WAR -> {
+                    switch (slot) {
+                        case 20 -> Settings.toggleFogSubmitLock();
+                        case 22 -> Settings.toggleFogRevealAlert();
+                        case 24 -> {
+                            // Diagonal reveal changes which cells are revealed, so
+                            // refresh open boards.
+                            Settings.toggleFogDiagonalReveal();
+                            refreshMode();
+                            GuiSync.refreshAllGameViews();
+                            return;
+                        }
+                        default -> { return; }
+                    }
+                    refreshMode();
+                }
+                default -> { /* Normal: no sub-settings */ }
             }
         }
     }
@@ -159,5 +203,9 @@ public class AdminClickListener implements Listener {
 
     private void refreshVanilla() {
         GuiSync.forEachViewer(AdminGUI.TITLE_VANILLA, vp -> AdminGUI.openVanilla(plugin, vp));
+    }
+
+    private void refreshMode() {
+        GuiSync.forEachViewer(AdminGUI.TITLE_MODE, vp -> AdminGUI.openMode(plugin, vp));
     }
 }

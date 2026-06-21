@@ -10,7 +10,7 @@ public class ExplorerMapEvent extends MapItemListener<BingoStructure> {
     private static final String TITLE = "§b지도 선택";
 
     // Search radius for World#locateNearestStructure, in chunks.
-    private static final int SEARCH_RADIUS_CHUNKS = 100;
+    private static final int SEARCH_RADIUS_CHUNKS = 200;
 
     @Override protected BingoItem triggerItem() { return BingoItem.EXPLORER_MAP; }
     @Override protected String title() { return TITLE; }

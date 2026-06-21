@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 public class ProgressFactory {
     public static BingoProgressAccess of(Player p) {
         TeamManager tm = ItemBingo.getInstance().getTeamManager();
-        int teamId = tm.getTeamId(p);
+        int teamId = tm.effectiveTeamId(p);
 
         if (teamId == TeamManager.NO_TEAM) {
             return new SoloProgressAccess(p);

@@ -1,5 +1,6 @@
 package me.junick.itemBingo.util;
 
+import me.junick.itemBingo.config.Settings;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -124,6 +125,30 @@ public class TeamManager {
 
     public int getTeamId(Player player) {
         return getTeamId(player.getUniqueId());
+    }
+
+    /**
+     * The team a player effectively plays as, honouring the global team-mode
+     * toggle. When team mode is OFF, assignments are ignored entirely and every
+     * player is treated as solo ({@link #NO_TEAM}); when ON, this is just their
+     * real assignment. Gameplay code (progress, feedback, ranking) should use
+     * this rather than {@link #getTeamId(Player)} so the admin toggle is the
+     * single source of truth.
+     */
+    public int effectiveTeamId(Player player) {
+        if (!Settings.isTeamEnabled()) return NO_TEAM;
+        return getTeamId(player);
+    }
+
+    /**
+     * Online players who are not on any team, excluding OPs (who may run/spectate
+     * games without playing). Only meaningful when team mode is ON.
+     */
+    public List<Player> getUnassignedOnlinePlayers() {
+        return Bukkit.getOnlinePlayers().stream()
+                .filter(p -> !p.isOp())
+                .filter(p -> getTeamId(p) == NO_TEAM)
+                .collect(Collectors.toList());
     }
 
     public boolean hasTeam(UUID uuid) {

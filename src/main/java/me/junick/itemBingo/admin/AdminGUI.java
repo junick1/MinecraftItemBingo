@@ -20,6 +20,7 @@ public class AdminGUI {
     public static final String TITLE_TEAM = "§8Admin - Team";
     public static final String TITLE_SHOP = "§8Admin - Shop";
     public static final String TITLE_VANILLA = "§8Admin - Vanilla";
+    public static final String TITLE_MODE = "§8Admin - Mode";
 
     public static void openMain(ItemBingo plugin, Player p) {
         openTeam(plugin, p);
@@ -85,38 +86,101 @@ public class AdminGUI {
                 List.of(Component.text("1: 제출 합, 2: 마지막 제출, 3: 점수제", NamedTextColor.GRAY), Component.text("(기본 1: 제출 합)", NamedTextColor.GRAY))
         ));
 
-        inv.setItem(15, toggleItem(
-                Material.ENDER_EYE,
-                "포지션 스왑 모드",
-                Settings.isPositionSwapMode(),
-                List.of(Component.text("랜덤한 시간마다 위치 교체", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
-        ));
-
-        inv.setItem(16, toggleItem(
-                Material.ENDER_PEARL,
-                "포지션 스왑 모드 - 알림",
-                Settings.isSwapAlert(),
-                List.of(Component.text("바뀌기 3초 전에 알림?", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
-        ));
-
-        inv.setItem(17, toggleItem(
-                Material.ENDER_PEARL,
-                "포지션 스왑 모드 - 타이머",
-                Settings.isSwapTimer(),
-                List.of(Component.text("스왑 타이머 표시?", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
-        ));
-
         inv.setItem(22, placeholder("기타등등", "나중에 더 추가할 것"));
 
         p.openInventory(inv);
+    }
+
+    public static void openMode(ItemBingo plugin, Player p) {
+        Inventory inv = Bukkit.createInventory(null, 27, TITLE_MODE);
+
+        placeTabs(inv, "MODE");
+
+        // First functional row: the mode switch button.
+        inv.setItem(13, modeSwitchItem());
+
+        // Second row onwards: settings specific to the currently selected mode.
+        switch (Settings.getGameMode()) {
+            case NORMAL -> inv.setItem(22, placeholder(
+                    "추가 설정 없음", "일반 모드에는 별도 설정이 없습니다"));
+
+            case SWAPPAGE -> {
+                inv.setItem(21, toggleItem(
+                        Material.CLOCK,
+                        "스왑 타이머",
+                        Settings.isSwapTimer(),
+                        List.of(Component.text("스왑 타이머 표시?", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
+                ));
+                inv.setItem(23, toggleItem(
+                        Material.ENDER_PEARL,
+                        "스왑 경고",
+                        Settings.isSwapAlert(),
+                        List.of(Component.text("바뀌기 3초 전에 알림?", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
+                ));
+            }
+
+            case FOG_OF_WAR -> {
+                inv.setItem(20, toggleItem(
+                        Material.BARRIER,
+                        "공개된 칸만 제출",
+                        Settings.isFogSubmitLock(),
+                        List.of(Component.text("공개되지 않은 칸은 제출 불가", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
+                ));
+                inv.setItem(22, toggleItem(
+                        Material.AMETHYST_SHARD,
+                        "칸 공개 알림",
+                        Settings.isFogRevealAlert(),
+                        List.of(Component.text("새 칸이 공개되면 소리/메시지", NamedTextColor.GRAY), Component.text("(기본 ON)", NamedTextColor.GRAY))
+                ));
+                inv.setItem(24, toggleItem(
+                        Material.RECOVERY_COMPASS,
+                        "대각선 공개",
+                        Settings.isFogDiagonalReveal(),
+                        List.of(Component.text("제출 시 대각선 칸까지 공개", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
+                ));
+            }
+        }
+
+        p.openInventory(inv);
+    }
+
+    /** The mode switch button — clicking it cycles Normal → Swappage → Fog of War. */
+    private static ItemStack modeSwitchItem() {
+        Settings.GameMode mode = Settings.getGameMode();
+        Material mat = switch (mode) {
+            case NORMAL -> Material.WHITE_WOOL;
+            case SWAPPAGE -> Material.ENDER_EYE;
+            case FOG_OF_WAR -> Material.LIGHT_GRAY_STAINED_GLASS;
+        };
+
+        ItemStack it = new ItemStack(mat);
+        ItemMeta meta = it.getItemMeta();
+        meta.displayName((Component.text("게임 모드 : ", NamedTextColor.AQUA)
+                .append(Component.text(mode.getDisplay(), NamedTextColor.GREEN)))
+                .decoration(TextDecoration.ITALIC, false));
+
+        var lore = new java.util.ArrayList<Component>();
+        for (Settings.GameMode m : Settings.GameMode.values()) {
+            boolean cur = (m == mode);
+            lore.add(Component.text((cur ? "▶ " : "   ") + m.getDisplay(),
+                    cur ? NamedTextColor.GOLD : NamedTextColor.DARK_GRAY)
+                    .decoration(TextDecoration.ITALIC, false));
+        }
+        lore.add(Component.empty());
+        lore.add(Component.text("클릭해서 다음 모드로 전환", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+        meta.lore(lore);
+
+        it.setItemMeta(meta);
+        return it;
     }
 
     private static void placeTabs(Inventory inv, String selected) {
         inv.setItem(0, tabItem(Material.WHITE_BANNER, "팀 관련", selected.equals("TEAM")));
         inv.setItem(1, tabItem(Material.GREEN_BANNER, "상점 관련", selected.equals("SHOP")));
         inv.setItem(2, tabItem(Material.ORANGE_BANNER, "바닐라 관련", selected.equals("VANILLA")));
+        inv.setItem(3, tabItem(Material.PURPLE_BANNER, "모드 관련", selected.equals("MODE")));
 
-        for (int i = 3; i < 9; i++) {
+        for (int i = 4; i < 9; i++) {
             inv.setItem(i, filler());
         }
     }

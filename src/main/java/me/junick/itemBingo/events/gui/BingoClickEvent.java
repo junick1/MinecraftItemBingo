@@ -1,6 +1,7 @@
 package me.junick.itemBingo.events.gui;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.enums.BingoItem;
 import me.junick.itemBingo.enums.BingoRewardType;
 import me.junick.itemBingo.gui.BingoGUI;
@@ -13,6 +14,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+import net.kyori.adventure.title.Title;
 import org.bukkit.*;
 import org.bukkit.entity.ComplexEntityPart;
 import org.bukkit.entity.Item;
@@ -25,10 +27,17 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 import javax.naming.Name;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 public class BingoClickEvent implements Listener {
+    /** Reveal subtitle fades in instantly, holds, then fades out (matches the map items). */
+    private static final Title.Times REVEAL_TIMES =
+            Title.Times.times(Duration.ZERO, Duration.ofSeconds(2), Duration.ofMillis(500));
+
     @EventHandler
     public void onBingoClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
@@ -47,6 +56,13 @@ public class BingoClickEvent implements Listener {
         TeamManager tm = ItemBingo.getInstance().getTeamManager();
         int teamId = tm.getTeamId(p);
         boolean teamPlay = (teamId != TeamManager.NO_TEAM);
+
+        // In team mode only assigned players may submit. OPs can still open the
+        // board to spectate, but their interactions are cancelled without effect.
+        if (Settings.isTeamEnabled() && teamId == TeamManager.NO_TEAM) {
+            e.setCancelled(true);
+            return;
+        }
 
         BingoProgressAccess progress = ProgressFactory.of(p);
 
@@ -74,8 +90,12 @@ public class BingoClickEvent implements Listener {
             return;
         }
 
+        // In Fog of War with submit-lock, auto-submit must not "find" hidden cells.
+        Set<Integer> revealed = fogLockedRevealed(board, progress);
+
         for (int idx = 0; idx < board.getItems().size(); idx++) {
             if (progress.isSubmitted(idx)) continue;
+            if (revealed != null && !revealed.contains(idx)) continue;
 
             ItemStack required = board.getItems().get(idx);
             if (!isMatchingItem(clicked, required)) continue;
@@ -89,6 +109,10 @@ public class BingoClickEvent implements Listener {
     private void handleDirectSubmission(InventoryClickEvent e, Player p, BingoBoard board, BingoProgressAccess progress, int slot) {
         int idx = getBingoIndexFromSlot(slot, board);
         if (idx == -1 || progress.isSubmitted(idx)) return;
+
+        // In Fog of War with submit-lock, a still-hidden cell can't be submitted to.
+        Set<Integer> revealed = fogLockedRevealed(board, progress);
+        if (revealed != null && !revealed.contains(idx)) return;
 
         ItemStack submitted = e.getCursor();
         if (!isValidItem(submitted)) return;
@@ -110,6 +134,18 @@ public class BingoClickEvent implements Listener {
     }
 
     /* ========================= Helper Methods ========================= */
+
+    /**
+     * The currently-revealed cells when Fog of War submit-lock is active, or
+     * {@code null} when submissions aren't reveal-gated (not fog mode, or the
+     * submit-lock setting is off). Callers treat {@code null} as "no restriction".
+     */
+    private Set<Integer> fogLockedRevealed(BingoBoard board, BingoProgressAccess progress) {
+        if (!Settings.isFogOfWarMode() || !Settings.isFogSubmitLock()) return null;
+        return FogOfWar.revealedSlots(
+                board.getWidth(), board.getHeight(),
+                progress.getSubmittedSlots(), Settings.isFogDiagonalReveal());
+    }
 
     /** 아이템이 null이 아니고 공기가 아닌지 확인  */
     private boolean isValidItem(ItemStack item) {
@@ -133,14 +169,53 @@ public class BingoClickEvent implements Listener {
 
     /** 제출 완료 처리 (저장, GUI 업데이트, 효과음, 메세지 등) */
     private void completeSubmission(Player p, BingoProgressAccess progress, BingoBoard board, int idx) {
-        progress.submit(idx);
+        boolean fog = Settings.isFogOfWarMode();
+
+        // Snapshot the revealed cells before submitting so we can tell how many
+        // new cells this submission uncovers (for the reveal alert).
+        Set<Integer> revealedBefore = fog
+                ? FogOfWar.revealedSlots(board.getWidth(), board.getHeight(),
+                        progress.getSubmittedSlots(), Settings.isFogDiagonalReveal())
+                : null;
+
+        progress.submit(idx, p);
         progress.addCurrencyAll(BingoRewardType.SLOT, 1);
 
         checkAndAwardLine(p, progress, board.getWidth(), board.getHeight(), idx);
         progress.save();
 
+        int newlyRevealed = 0;
+        if (fog) {
+            Set<Integer> after = FogOfWar.revealedSlots(board.getWidth(), board.getHeight(),
+                    progress.getSubmittedSlots(), Settings.isFogDiagonalReveal());
+            after.removeAll(revealedBefore);
+            newlyRevealed = after.size();
+        }
+
         for (Player viewer : progress.viewers(p)) {
-            updateGUISlot(viewer, board, idx);
+            if (fog) {
+                // A submission can reveal neighbouring cells, so re-render the whole
+                // board (not just submitted icons).
+                BingoGUI.rerenderInPlace(viewer);
+            } else {
+                // Every submitted icon's durability bar reflects overall completion,
+                // which just changed, so refresh all of them (not only the new slot).
+                refreshSubmittedSlots(viewer, board, progress);
+            }
+        }
+
+        if (fog && Settings.isFogRevealAlert() && newlyRevealed > 0) {
+            // Center-screen subtitle (like the map items), leaving the action bar
+            // free for the timer.
+            Title revealTitle = Title.title(
+                    Component.empty(),
+                    Component.text("새로운 칸이 공개되었습니다! (+" + newlyRevealed + ")", NamedTextColor.AQUA),
+                    REVEAL_TIMES
+            );
+            for (Player viewer : progress.viewers(p)) {
+                viewer.showTitle(revealTitle);
+                viewer.playSound(viewer.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1.0f, 1.2f);
+            }
         }
 
         // Submission awards SLOT to every teammate (and possibly LINE to the team),
@@ -179,8 +254,8 @@ public class BingoClickEvent implements Listener {
 
     /* ========================= GUI & Feedback ========================= */
 
-    /** GUI의 해당 슬롯을 제출된 것으로 업데이트 */
-    private void updateGUISlot(Player p, BingoBoard board, int idx) {
+    /** GUI의 모든 제출된 슬롯을 갱신 (진행도 막대가 동기화되도록) */
+    private void refreshSubmittedSlots(Player p, BingoBoard board, BingoProgressAccess progress) {
         String title = LegacyComponentSerializer.legacySection().serialize(p.getOpenInventory().title());
         if (!title.equals(BingoGUI.TITLE)) return;
 
@@ -192,11 +267,20 @@ public class BingoClickEvent implements Listener {
         int offsetX = (9 - width) / 2;
         int offsetY = tight ? 0 : 1;
 
-        int row = idx / width + offsetY;
-        int col = idx % width + offsetX;
-        int slot = row * 9 + col;
+        int total = board.getItems().size();
 
-        inv.setItem(slot, BingoGUI.submittedIcon(board.getItems().get(idx)));
+        for (int idx : progress.getSubmittedSlots()) {
+            int row = idx / width + offsetY;
+            int col = idx % width + offsetX;
+            int slot = row * 9 + col;
+
+            UUID owner = progress.getSubmitterId(idx);
+            inv.setItem(slot, BingoGUI.submittedIcon(
+                    owner,
+                    progress.getSubmitterName(idx),
+                    BingoGUI.progressFraction(progress, owner, total)
+            ));
+        }
     }
 
     /** 제출 피드백 메세지 및 효과음 */
@@ -215,7 +299,7 @@ public class BingoClickEvent implements Listener {
         int total = ItemBingo.currentBingo.getItems().size();
 
         var tm = ItemBingo.getInstance().getTeamManager();
-        int teamId = tm.getTeamId(p);
+        int teamId = tm.effectiveTeamId(p);
         List<Player> team = (teamId != TeamManager.NO_TEAM)
                 ? tm.getOnlinePlayersOnTeam(teamId)
                 : List.of(p);

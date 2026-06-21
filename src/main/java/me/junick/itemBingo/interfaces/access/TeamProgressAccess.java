@@ -23,6 +23,13 @@ public class TeamProgressAccess implements BingoProgressAccess {
 
     @Override public boolean isSubmitted(int idx) { return prog.isSubmitted(idx); }
     @Override public void submit(int idx) { prog.submit(idx); }
+    @Override public void submit(int idx, Player submitter) {
+        prog.submit(idx, true, submitter.getUniqueId(), submitter.getName());
+    }
+
+    @Override public UUID getSubmitterId(int idx) { return prog.getSubmitterId(idx); }
+    @Override public String getSubmitterName(int idx) { return prog.getSubmitterName(idx); }
+    @Override public int getSubmissionCount(UUID submitterId) { return prog.getSubmissionCountBy(submitterId); }
 
     @Override public void addCurrencyAll(BingoRewardType type, int amount) {
         if (type.isPersonal()) {

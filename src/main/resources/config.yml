@@ -17,4 +17,14 @@ game:
   penalty: 0
 
 mode:
-  positionSwap: false
+  # type = NORMAL | SWAPPAGE | FOG_OF_WAR (only one mode is active at a time)
+  type: NORMAL
+  # Swappage (position swap) sub-settings
+  swap:
+    alert: false
+    timer: false
+  # Fog of War sub-settings
+  fog:
+    submitLock: false
+    revealAlert: true
+    diagonalReveal: false

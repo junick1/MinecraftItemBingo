@@ -10,7 +10,7 @@ public class BiomeMapEvent extends MapItemListener<BingoBiome> {
     private static final String TITLE = "§b바이옴 지도 선택";
 
     // Search bounds for World#locateNearestBiome (radius in blocks, sample steps).
-    private static final int SEARCH_RADIUS_BLOCKS = 1000;
+    private static final int SEARCH_RADIUS_BLOCKS = 2000;
     private static final int HORIZONTAL_STEP = 32;
     private static final int VERTICAL_STEP = 32;
 

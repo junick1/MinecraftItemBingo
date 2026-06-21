@@ -74,6 +74,7 @@ public class TeamDataManager {
 
         loadSubmittedSlots(config, progress);
         loadSubmissionTimes(config, progress);
+        loadSubmitters(config, progress);
         loadCurrencies(config, progress);
 
         return progress;
@@ -87,6 +88,7 @@ public class TeamDataManager {
 
         saveSubmittedSlots(progress, config);
         saveSubmissionTimes(progress, config);
+        saveSubmitters(progress, config);
         saveCurrencies(progress, config);
 
         try {
@@ -149,6 +151,21 @@ public class TeamDataManager {
         config.createSection("submissionTimes", timeMap);
     }
 
+    private static void saveSubmitters(TeamBingoProgress progress, YamlConfiguration config) {
+        Map<String, String> idMap = new HashMap<>();
+        for (Map.Entry<Integer, UUID> e : progress.getSubmitterIds().entrySet()) {
+            idMap.put(String.valueOf(e.getKey()), e.getValue().toString());
+        }
+
+        Map<String, String> nameMap = new HashMap<>();
+        for (Map.Entry<Integer, String> e : progress.getSubmitterNames().entrySet()) {
+            nameMap.put(String.valueOf(e.getKey()), e.getValue());
+        }
+
+        config.createSection("submitterIds", idMap);
+        config.createSection("submitterNames", nameMap);
+    }
+
     private static void saveCurrencies(TeamBingoProgress progress, YamlConfiguration config) {
         Map<String, Integer> currencyMap = new HashMap<>();
         for (BingoRewardType type : BingoRewardType.values()) {
@@ -173,6 +190,24 @@ public class TeamDataManager {
             int index = Integer.parseInt(key);
             long time = section.getInt(key, 0);
             progress.getSubmissionTimes().put(index, time);
+        }
+    }
+
+    private static void loadSubmitters(YamlConfiguration config, TeamBingoProgress progress) {
+        ConfigurationSection idSection = config.getConfigurationSection("submitterIds");
+        if (idSection == null) return;
+
+        ConfigurationSection nameSection = config.getConfigurationSection("submitterNames");
+
+        for (String key : idSection.getKeys(false)) {
+            try {
+                int idx = Integer.parseInt(key);
+                UUID id = UUID.fromString(idSection.getString(key));
+                progress.getSubmitterIds().put(idx, id);
+
+                String name = nameSection != null ? nameSection.getString(key) : null;
+                if (name != null) progress.getSubmitterNames().put(idx, name);
+            } catch (IllegalArgumentException ignored) {}
         }
     }
 

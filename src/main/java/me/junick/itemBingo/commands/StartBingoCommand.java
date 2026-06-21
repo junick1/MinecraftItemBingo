@@ -1,7 +1,10 @@
 package me.junick.itemBingo.commands;
 
+import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.BundleManager;
+import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.util.ConfirmationManager;
+import me.junick.itemBingo.util.TeamManager;
 import me.junick.itemBingo.util.TimerManager;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -34,6 +37,18 @@ public class StartBingoCommand implements CommandExecutor, TabCompleter {
 
         if (!ConfirmationManager.confirm(sender, "startbingo")) {
             sender.sendMessage("§c§l[경고] §f게임을 시작하면 모든 플레이어의 인벤토리가 비워지고 리스폰됩니다.");
+
+            // In team mode, warn about players who haven't been assigned to a team
+            // (OPs excluded) — they won't be able to see or submit to the board.
+            if (Settings.isTeamEnabled()) {
+                TeamManager tm = ItemBingo.getInstance().getTeamManager();
+                List<Player> unassigned = tm.getUnassignedOnlinePlayers();
+                if (!unassigned.isEmpty()) {
+                    String names = unassigned.stream().map(Player::getName).collect(java.util.stream.Collectors.joining(", "));
+                    sender.sendMessage("§c§l[경고] §f팀에 배정되지 않은 플레이어가 있습니다: §e" + names);
+                }
+            }
+
             sender.sendMessage("§e계속하려면 10초 안에 §f/startbingo " + seconds + "§e을(를) 다시 입력하세요.");
             return true;
         }

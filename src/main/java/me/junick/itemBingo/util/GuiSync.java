@@ -71,7 +71,16 @@ public final class GuiSync {
      * currency each player should see.
      */
     public static void refreshAllGameViews() {
-        forEachViewer(BingoGUI.TITLE, BingoGUI::open);
+        // A team-mode change can revoke someone's right to see the board (e.g. an
+        // unassigned player once team mode turns on), so close their board instead
+        // of reopening it.
+        forEachViewer(BingoGUI.TITLE, vp -> {
+            if (BingoGUI.canView(vp)) {
+                BingoGUI.open(vp);
+            } else {
+                vp.closeInventory();
+            }
+        });
         forEachViewer(ItemShopGUI.TITLE, ItemShopGUI::open);
         forEachViewer(EffectShopGUI.TITLE, EffectShopGUI::open);
     }
