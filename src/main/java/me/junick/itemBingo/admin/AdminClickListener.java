@@ -3,6 +3,12 @@ package me.junick.itemBingo.admin;
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.BundleManager;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.gui.DiamondExchangeGUI;
+import me.junick.itemBingo.gui.EffectShopGUI;
+import me.junick.itemBingo.gui.ItemShopGUI;
+import me.junick.itemBingo.gui.MenuGUI;
+import me.junick.itemBingo.gui.ShopGUI;
+import me.junick.itemBingo.util.GuiSync;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Sound;
@@ -78,7 +84,10 @@ public class AdminClickListener implements Listener {
         if (title.equals(AdminGUI.TITLE_TEAM)) {
             if (slot == 13) {
                 Settings.toggleTeamEnabled();
-                AdminGUI.openTeam(plugin, p);
+                refreshTeam();
+                // Team mode flips every player between solo and team progress/
+                // currency, so refresh all open boards and shops.
+                GuiSync.refreshAllGameViews();
             }
             return;
         }
@@ -87,7 +96,16 @@ public class AdminClickListener implements Listener {
         if (title.equals(AdminGUI.TITLE_SHOP)) {
             if (slot == 11) {
                 Settings.toggleShopEnabled();
-                AdminGUI.openShop(plugin, p);
+                // Shop turned off entirely → kick anyone out of the shop menus.
+                if (!Settings.isShopEnabled()) {
+                    GuiSync.closeViewers(ShopGUI.TITLE);
+                    GuiSync.closeViewers(EffectShopGUI.TITLE);
+                    GuiSync.closeViewers(ItemShopGUI.TITLE);
+                    GuiSync.closeViewers(DiamondExchangeGUI.TITLE);
+                }
+                // The main menu shows a shop enabled/disabled indicator — resync it.
+                GuiSync.forEachViewer(MenuGUI.TITLE, MenuGUI::openMain);
+                refreshShop();
                 return;
             }
 
@@ -96,13 +114,19 @@ public class AdminClickListener implements Listener {
 
             if (slot == 13) {
                 Settings.toggleEffectShopEnabled();
-                AdminGUI.openShop(plugin, p);
+                if (!Settings.isEffectShopEnabled()) {
+                    GuiSync.closeViewers(EffectShopGUI.TITLE);
+                }
+                refreshShop();
                 return;
             }
 
             if (slot == 15) {
                 Settings.toggleItemShopEnabled();
-                AdminGUI.openShop(plugin, p);
+                if (!Settings.isItemShopEnabled()) {
+                    GuiSync.closeViewers(ItemShopGUI.TITLE);
+                }
+                refreshShop();
                 return;
             }
             return;
@@ -118,8 +142,22 @@ public class AdminClickListener implements Listener {
                 case 17 -> Settings.toggleSwapTimer();
             }
             if (13 <= slot && slot <= 17) {
-                AdminGUI.openVanilla(plugin, p);
+                refreshVanilla();
             }
         }
+    }
+
+    // Re-render each admin tab for *every* admin currently viewing it, so two
+    // people with the panel open stay in sync instead of seeing stale toggles.
+    private void refreshTeam() {
+        GuiSync.forEachViewer(AdminGUI.TITLE_TEAM, vp -> AdminGUI.openTeam(plugin, vp));
+    }
+
+    private void refreshShop() {
+        GuiSync.forEachViewer(AdminGUI.TITLE_SHOP, vp -> AdminGUI.openShop(plugin, vp));
+    }
+
+    private void refreshVanilla() {
+        GuiSync.forEachViewer(AdminGUI.TITLE_VANILLA, vp -> AdminGUI.openVanilla(plugin, vp));
     }
 }

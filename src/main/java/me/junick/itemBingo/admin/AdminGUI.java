@@ -161,7 +161,9 @@ public class AdminGUI {
     private static ItemStack toggleIntItem(Material mat, String name, int count, List<Component> desc) {
         ItemStack it = new ItemStack(mat);
         ItemMeta meta = it.getItemMeta();
-        meta.displayName((Component.text(name + " : ", NamedTextColor.AQUA).append(Component.text(String.valueOf(count), NamedTextColor.GREEN))).decoration(TextDecoration.ITALIC, false));
+        // Stored value is 0-indexed, but the lore describes the options as 1, 2, 3,
+        // so display the human-readable 1-indexed value (matching the stack amount).
+        meta.displayName((Component.text(name + " : ", NamedTextColor.AQUA).append(Component.text(String.valueOf(count + 1), NamedTextColor.GREEN))).decoration(TextDecoration.ITALIC, false));
         it.setAmount(count + 1);
 
         var lore = new java.util.ArrayList<Component>();

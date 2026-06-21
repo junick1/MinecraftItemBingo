@@ -144,6 +144,10 @@ public class BingoClickEvent implements Listener {
             updateGUISlot(viewer, board, idx);
         }
 
+        // Submission awards SLOT to every teammate (and possibly LINE to the team),
+        // so refresh any teammate who has a shop open to show the new balance.
+        GuiSync.refreshShops(progress.viewers(p));
+
         sendFeedback(p, progress, board.getItems().get(idx).getType());
     }
 

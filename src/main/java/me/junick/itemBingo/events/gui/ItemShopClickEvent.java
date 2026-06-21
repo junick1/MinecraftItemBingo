@@ -8,6 +8,7 @@ import me.junick.itemBingo.gui.ShopGUI;
 import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
 import me.junick.itemBingo.model.PlayerBingoProgress;
 import me.junick.itemBingo.util.CustomItems;
+import me.junick.itemBingo.util.GuiSync;
 import me.junick.itemBingo.util.PlayerDataManager;
 import me.junick.itemBingo.util.ProgressFactory;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -108,7 +109,9 @@ public class ItemShopClickEvent implements Listener {
 
         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
         p.sendMessage("§e[상점] §a" + item.getDisplay() + "§f(을)를 구매했습니다!");
-        ItemShopGUI.open(p);
+        // Purchase can spend team-shared currency, so refresh every teammate's
+        // open shop (includes the buyer) to reflect the new balance.
+        GuiSync.refreshShops(prog.viewers(p));
     }
 
     private boolean canAfford(BingoProgressAccess prog, Player p, BingoItem item) {

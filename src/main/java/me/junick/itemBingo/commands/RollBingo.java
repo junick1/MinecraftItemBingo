@@ -6,6 +6,7 @@ import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.util.BingoItemSelector;
 import me.junick.itemBingo.util.BingoStorage;
 import me.junick.itemBingo.util.ConfirmationManager;
+import me.junick.itemBingo.util.GuiSync;
 import me.junick.itemBingo.util.PlayerDataManager;
 import me.junick.itemBingo.util.TeamDataManager;
 import org.bukkit.Material;
@@ -54,6 +55,10 @@ public class RollBingo implements CommandExecutor, TabCompleter {
             BingoBoard board = new BingoBoard(width, height, items);
             ItemBingo.currentBingo = board;
             BingoStorage.save(board);
+
+            // Reset wiped every board + currency, so refresh anyone looking at
+            // the old board or a shop (their balances just dropped to zero).
+            GuiSync.refreshAllGameViews();
 
             sender.sendMessage("§a" + width + "x" + height + " 빙고판이 생성되었습니다!");
         } catch (NumberFormatException e) {

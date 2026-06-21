@@ -1,6 +1,7 @@
 package me.junick.itemBingo.commands;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.util.GuiSync;
 import me.junick.itemBingo.util.TeamManager;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -30,6 +31,10 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // Set whenever a subcommand actually changes team membership; drives the
+        // GUI refresh below since a player's board/shop dataset depends on it.
+        boolean mutated = false;
+
         switch (args[0].toLowerCase()) {
             case "help" -> help(sender, label);
 
@@ -47,11 +52,13 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
                     return true;
                 }
                 tm().setTeamCount(n);
+                mutated = true;
                 Bukkit.broadcast(Component.text("§e[Team] §fTeam # set to §a" + n + "§f."));
             }
 
             case "clear" -> {
                 tm().clearAll();
+                mutated = true;
                 Bukkit.broadcast(Component.text("§e[Team] §fAll team assignments has been reset."));
             }
 
@@ -75,6 +82,7 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
                 }
 
                 tm().assign(target.getUniqueId(), teamId);
+                mutated = true;
                 Bukkit.broadcast(Component.text("§e[팀] §f" + name(target) + "§f 님이 §bTeam " + teamOneBased + "§f로 배정되었습니다."));
             }
 
@@ -91,6 +99,7 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
                 }
 
                 tm().unassign(target.getUniqueId());
+                mutated = true;
                 Bukkit.broadcast(Component.text("§e[팀] §f" + name(target) + "§f 님의 팀 배정이 해제되었습니다."));
             }
 
@@ -111,6 +120,7 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
 
                 Collection<? extends OfflinePlayer> all = Bukkit.getOnlinePlayers();
                 tm().assignRandomEven(all, keep);
+                mutated = true;
 
                 Bukkit.broadcast(Component.text("§e[팀] §f랜덤 팀 배정 완료! (keep=" + keep + ", reset=" + reset + ")"));
                 info(sender);
@@ -120,6 +130,7 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
                 // /teams fill
                 Collection<? extends OfflinePlayer> all = Bukkit.getOnlinePlayers();
                 tm().assignRandomEven(all, true);
+                mutated = true;
                 Bukkit.broadcast(Component.text("§e[팀] §f남은 인원만 랜덤 배정 완료!"));
                 info(sender);
             }
@@ -143,6 +154,12 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage("§cUnknown argument.");
                 help(sender, label);
             }
+        }
+
+        // Membership changed → refresh every open board/shop so each player sees
+        // their new team's progress and currency instead of the stale dataset.
+        if (mutated) {
+            GuiSync.refreshAllGameViews();
         }
         return true;
     }
