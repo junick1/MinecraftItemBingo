@@ -20,6 +20,14 @@ public class MenuGUI {
     public static final String TITLE = "§6빙고 메뉴";
 
     public static void openMain(Player p) {
+        openMain(p, true);
+    }
+
+    /**
+     * @param playSound false when re-rendering an already-open menu (e.g. a live
+     *                  refresh), so the open sound isn't replayed on every update.
+     */
+    public static void openMain(Player p, boolean playSound) {
         ItemBingo plugin = ItemBingo.getInstance();
 
         Inventory inv = Bukkit.createInventory(null, 27, TITLE);
@@ -36,7 +44,9 @@ public class MenuGUI {
                 ? IconGenerator.icon(Material.EMERALD, "§a빙고 상점", "§7빙고 상점을 엽니다.")
                 : IconGenerator.icon(Material.GRAY_DYE, "§7빙고 상점 §8(비활성화)", "§c관리자에 의해 비활성화되었습니다."));
 
-        p.playSound(p.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.0f);
+        if (playSound) {
+            p.playSound(p.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.0f);
+        }
         p.openInventory(inv);
     }
 }

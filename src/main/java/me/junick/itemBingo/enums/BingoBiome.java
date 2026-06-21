@@ -1,10 +1,11 @@
 package me.junick.itemBingo.enums;
 
+import me.junick.itemBingo.interfaces.MapOption;
 import org.bukkit.Material;
 import org.bukkit.World.Environment;
 import org.bukkit.block.Biome;
 
-public enum BingoBiome {
+public enum BingoBiome implements MapOption {
     DESERT(Biome.DESERT, "사막", Material.SAND, Environment.NORMAL),
     BADLANDS(Biome.BADLANDS, "악지(메사)", Material.RED_SAND, Environment.NORMAL),
     JUNGLE(Biome.JUNGLE, "정글", Material.JUNGLE_LOG, Environment.NORMAL),

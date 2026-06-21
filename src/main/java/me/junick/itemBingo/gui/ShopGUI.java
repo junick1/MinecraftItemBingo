@@ -2,8 +2,8 @@ package me.junick.itemBingo.gui;
 
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
-import me.junick.itemBingo.interfaces.access.SoloProgressAccess;
 import me.junick.itemBingo.util.IconGenerator;
+import me.junick.itemBingo.util.ProgressFactory;
 import me.junick.itemBingo.util.TeamManager;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -44,6 +44,8 @@ public class ShopGUI {
         redGlass.setItemMeta(glassMeta);
 
         for (int i = 0; i < inv.getSize(); i++) inv.setItem(i, grayGlass);
+
+        inv.setItem(4, IconGenerator.currencyIcon(p, ProgressFactory.of(p)));
 
         inv.setItem(11, IconGenerator.icon(
             Material.BEACON,

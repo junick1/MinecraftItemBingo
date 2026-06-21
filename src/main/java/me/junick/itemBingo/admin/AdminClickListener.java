@@ -104,7 +104,7 @@ public class AdminClickListener implements Listener {
                     GuiSync.closeViewers(DiamondExchangeGUI.TITLE);
                 }
                 // The main menu shows a shop enabled/disabled indicator — resync it.
-                GuiSync.forEachViewer(MenuGUI.TITLE, MenuGUI::openMain);
+                GuiSync.forEachViewer(MenuGUI.TITLE, vp -> MenuGUI.openMain(vp, false));
                 refreshShop();
                 return;
             }

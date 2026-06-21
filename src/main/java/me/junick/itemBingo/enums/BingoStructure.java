@@ -1,10 +1,11 @@
 package me.junick.itemBingo.enums;
 
+import me.junick.itemBingo.interfaces.MapOption;
 import org.bukkit.Material;
 import org.bukkit.World.Environment;
 import org.bukkit.generator.structure.Structure;
 
-public enum BingoStructure {
+public enum BingoStructure implements MapOption {
     VILLAGE_PLAINS(Structure.VILLAGE_PLAINS, "평원 마을", Material.STRIPPED_OAK_WOOD, Environment.NORMAL),
     VILLAGE_SAVANNA(Structure.VILLAGE_SAVANNA, "사바나 마을", Material.STRIPPED_ACACIA_WOOD, Environment.NORMAL),
     VILLAGE_SNOWY(Structure.VILLAGE_SNOWY, "snowy 마을", Material.STRIPPED_SPRUCE_WOOD, Environment.NORMAL),

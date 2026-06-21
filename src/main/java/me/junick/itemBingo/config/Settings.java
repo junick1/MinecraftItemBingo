@@ -72,7 +72,15 @@ public class Settings {
     public static void toggleSwapTimer() { swapTimer = !swapTimer; }
 
     public enum Penalty {
-        TOTAL_SUBMISSION, LAST_SUBMISSION, CODEFORCES
+        TOTAL_SUBMISSION("제출 합"),
+        LAST_SUBMISSION("마지막 제출"),
+        CODEFORCES("점수제");
+
+        private final String display;
+
+        Penalty(String display) { this.display = display; }
+
+        public String getDisplay() { return display; }
     }
 
     public static Penalty getPenaltySystem() {
@@ -82,6 +90,11 @@ public class Settings {
             case 2 -> Penalty.CODEFORCES;
             default -> throw new IllegalStateException("Unexpected value: " + getPenaltyInt());
         };
+    }
+
+    /** Korean label for the currently selected penalty mode (for GUI display). */
+    public static String getPenaltyDisplay() {
+        return getPenaltySystem().getDisplay();
     }
 
 }

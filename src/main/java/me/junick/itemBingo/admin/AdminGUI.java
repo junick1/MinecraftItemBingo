@@ -77,11 +77,12 @@ public class AdminGUI {
                 List.of(Component.text("삽으로 우클릭하면 구리를 1단계 산화시킴", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
         ));
 
-        inv.setItem(14, toggleIntItem(
+        inv.setItem(14, toggleChoiceItem(
                 Material.IRON_SHOVEL,
                 "패널티",
-                Settings.getPenaltyInt(),
-                List.of(Component.text("1: 제출 합, 2: 마지막 제출, 3: 점수제", NamedTextColor.GRAY), Component.text("(기본 1)", NamedTextColor.GRAY))
+                Settings.getPenaltyDisplay(),
+                Settings.getPenaltyInt() + 1,
+                List.of(Component.text("1: 제출 합, 2: 마지막 제출, 3: 점수제", NamedTextColor.GRAY), Component.text("(기본 1: 제출 합)", NamedTextColor.GRAY))
         ));
 
         inv.setItem(15, toggleItem(
@@ -158,13 +159,16 @@ public class AdminGUI {
         return it;
     }
 
-    private static ItemStack toggleIntItem(Material mat, String name, int count, List<Component> desc) {
+    /**
+     * A multi-state toggle that shows the selected option's label (e.g. the
+     * penalty mode name) rather than a raw number. {@code amount} controls the
+     * stack size used as a subtle visual indicator of the current option.
+     */
+    private static ItemStack toggleChoiceItem(Material mat, String name, String valueLabel, int amount, List<Component> desc) {
         ItemStack it = new ItemStack(mat);
         ItemMeta meta = it.getItemMeta();
-        // Stored value is 0-indexed, but the lore describes the options as 1, 2, 3,
-        // so display the human-readable 1-indexed value (matching the stack amount).
-        meta.displayName((Component.text(name + " : ", NamedTextColor.AQUA).append(Component.text(String.valueOf(count + 1), NamedTextColor.GREEN))).decoration(TextDecoration.ITALIC, false));
-        it.setAmount(count + 1);
+        meta.displayName((Component.text(name + " : ", NamedTextColor.AQUA).append(Component.text(valueLabel, NamedTextColor.GREEN))).decoration(TextDecoration.ITALIC, false));
+        it.setAmount(Math.max(1, amount));
 
         var lore = new java.util.ArrayList<Component>();
         for (Component d : desc) {

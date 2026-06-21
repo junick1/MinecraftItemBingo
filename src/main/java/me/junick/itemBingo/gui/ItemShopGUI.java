@@ -68,10 +68,13 @@ public class ItemShopGUI {
             lore.add(Component.text("가격: ", NamedTextColor.YELLOW)
                     .decoration(TextDecoration.ITALIC, false));
 
+            boolean affordable = true;
             for (Map.Entry<BingoRewardType, Integer> entry : itemEnum.getAllPrices().entrySet()) {
                 BingoRewardType type = entry.getKey();
                 int cost = entry.getValue();
                 if (cost <= 0) continue;
+
+                if (proga.getCurrency(p, type) < cost) affordable = false;
 
                 lore.add(
                         Component.text(" • ", NamedTextColor.WHITE)
@@ -80,6 +83,11 @@ public class ItemShopGUI {
                                 .decoration(TextDecoration.ITALIC, false)
                 );
             }
+
+            lore.add(Component.empty());
+            lore.add(affordable
+                    ? Component.text("✔ 구매 가능", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false)
+                    : Component.text("✖ 포인트가 부족합니다", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
 
             ItemStack item = new ItemStack(itemEnum.getIcon());
             ItemMeta meta = item.getItemMeta();
@@ -92,7 +100,10 @@ public class ItemShopGUI {
                     itemEnum.name()
             );
 
-            meta.addEnchant(Enchantment.AQUA_AFFINITY, 1, true);
+            // Glow only what the player can actually buy, as an at-a-glance cue.
+            if (affordable) {
+                meta.addEnchant(Enchantment.AQUA_AFFINITY, 1, true);
+            }
             meta.addItemFlags(ItemFlag.HIDE_ENCHANTS, ItemFlag.HIDE_ATTRIBUTES);
             item.setItemMeta(meta);
 

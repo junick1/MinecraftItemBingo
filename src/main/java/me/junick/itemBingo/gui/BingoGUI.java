@@ -14,6 +14,8 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
@@ -78,9 +80,6 @@ public class BingoGUI {
         List<ItemStack> items = board.getItems();
         BingoTagLoader tagLoader = ItemBingo.getInstance().getTagLoader();
 
-        // The "submitted" pane is identical for every slot — build it once.
-        ItemStack submittedPane = createSubmittedPane();
-
         int offsetX = (GUI_WIDTH - board.getWidth()) / 2;
         int offsetY = tightMode ? 0 : 1;
 
@@ -92,7 +91,7 @@ public class BingoGUI {
                 int slot = (y + offsetY) * GUI_WIDTH + offsetX + x;
 
                 if (progress.isSubmitted(index)) {
-                    inv.setItem(slot, submittedPane);
+                    inv.setItem(slot, submittedIcon(items.get(index)));
                 } else {
                     inv.setItem(slot, withTagLore(items.get(index), tagLoader));
                 }
@@ -100,13 +99,36 @@ public class BingoGUI {
         }
     }
 
-    private static ItemStack createSubmittedPane() {
-        return createPane(
-                Material.BARRIER,
-                Component.text("제출됨", NamedTextColor.GREEN)
-                        .decoration(TextDecoration.ITALIC, false)
-                        .decoration(TextDecoration.BOLD, true)
+    /**
+     * The icon shown for an already-submitted slot: the real item, glowing, with
+     * a green "제출됨" name. Both the initial render and live updates after a
+     * submission go through here so a submitted slot always looks the same.
+     */
+    public static ItemStack submittedIcon(ItemStack original) {
+//        ItemStack item = original.clone();
+        ItemStack item = new ItemStack(Material.BARRIER);
+        item.setAmount(1);
+
+        ItemMeta meta = item.getItemMeta();
+
+
+        meta.displayName(Component.text("✔ 제출됨", NamedTextColor.GREEN)
+                .decoration(TextDecoration.ITALIC, false)
+                .decoration(TextDecoration.BOLD, true));
+        meta.lore(List.of(Component.text("이미 제출한 칸입니다.", NamedTextColor.GRAY)
+                .decoration(TextDecoration.ITALIC, false)));
+
+        meta.setEnchantmentGlintOverride(true);
+        meta.addItemFlags(
+                ItemFlag.HIDE_ENCHANTS,
+                ItemFlag.HIDE_ATTRIBUTES,
+                ItemFlag.HIDE_UNBREAKABLE,
+                ItemFlag.HIDE_DYE,
+                ItemFlag.HIDE_ARMOR_TRIM
         );
+
+        item.setItemMeta(meta);
+        return item;
     }
 
     private static ItemStack createPane(Material material, Component name) {

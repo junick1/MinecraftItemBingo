@@ -13,7 +13,7 @@ vanilla:
   shovelOxidizeCopper: false
 
 game:
-  # 0 = TOTAL_SUBMISSION, 1 = LAST_SUBMISSION, 2 = CODEFORCES
+  # 0 = TOTAL_SUBMISSION (ICPC), 1 = LAST_SUBMISSION (AtCoder), 2 = CODEFORCES
   penalty: 0
 
 mode:

@@ -23,7 +23,6 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 
 import javax.naming.Name;
 import java.util.ArrayList;
@@ -197,11 +196,7 @@ public class BingoClickEvent implements Listener {
         int col = idx % width + offsetX;
         int slot = row * 9 + col;
 
-        ItemStack green = new ItemStack(Material.BARRIER);
-        ItemMeta meta = green.getItemMeta();
-        meta.displayName(Component.text("§a제출됨"));
-        green.setItemMeta(meta);
-        inv.setItem(slot, green);
+        inv.setItem(slot, BingoGUI.submittedIcon(board.getItems().get(idx)));
     }
 
     /** 제출 피드백 메세지 및 효과음 */

@@ -91,6 +91,18 @@ public class EffectShopGUI {
                     .append(Component.text("]", NamedTextColor.GRAY))
                     .decoration(TextDecoration.ITALIC, false));
 
+            boolean maxed = lvl >= eff.getMaxLevel();
+            boolean affordable = proga.getCurrency(p, BingoRewardType.SLOT) >= 2;
+
+            lore.add(Component.empty());
+            if (maxed) {
+                lore.add(Component.text("✔ 최대 레벨", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+            } else if (affordable) {
+                lore.add(Component.text("✔ 업그레이드 가능", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+            } else {
+                lore.add(Component.text("✖ 포인트가 부족합니다", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+            }
+
             ItemStack item = IconGenerator.icon(eff.getIcon(), eff.getDisplay(), lore);
             ItemMeta meta = item.getItemMeta();
             meta.getPersistentDataContainer().set(KEY_EFFECT, PersistentDataType.STRING, eff.name());
