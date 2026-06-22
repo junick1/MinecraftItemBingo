@@ -75,7 +75,9 @@ public class BingoGUI {
             if (!BingoViewport.has(p.getUniqueId())) {
                 BingoViewport.centerOn(p.getUniqueId(), board);
             }
-            Inventory inv = Bukkit.createInventory(null, GUI_WIDTH * MAX_HEIGHT, TITLE);
+            // The adaptive viewport may use fewer than 6 rows (e.g. a short, wide board).
+            int guiRows = BingoViewport.layout(p.getUniqueId(), board).guiRows();
+            Inventory inv = Bukkit.createInventory(null, GUI_WIDTH * guiRows, TITLE);
             renderScroll(inv, board, progress, p);
             p.openInventory(inv);
             return;
@@ -173,21 +175,24 @@ public class BingoGUI {
     }
 
     /**
-     * Renders an oversized board through the scrollable viewport: an all-filler
-     * base, then the four edge arrows (only the directions that can still scroll —
-     * the rest stay filler, i.e. "hidden"), then the visible board cells. Used by
-     * both the initial open and every live re-render, so a scroll always lands in a
-     * fully consistent state.
+     * Renders an oversized board through the adaptive scrollable viewport: an
+     * all-filler base, then the live scroll arrows and the recenter button at the
+     * slots the {@link BingoViewport.Layout} chose, then the visible board cells.
+     * Used by both the initial open and every live re-render, so a scroll always
+     * lands in a fully consistent state.
      */
     private static void renderScroll(Inventory inv, BingoBoard board, BingoProgressAccess progress, Player viewer) {
         BingoViewport.Layout layout = BingoViewport.layout(viewer.getUniqueId(), board);
 
         fillBackground(inv);
 
-        if (layout.up())    inv.setItem(BingoViewport.SLOT_UP,    arrow(Component.text("▲ 위로", NamedTextColor.WHITE)));
-        if (layout.down())  inv.setItem(BingoViewport.SLOT_DOWN,  arrow(Component.text("▼ 아래로", NamedTextColor.WHITE)));
-        if (layout.left())  inv.setItem(BingoViewport.SLOT_LEFT,  arrow(Component.text("◀ 왼쪽", NamedTextColor.WHITE)));
-        if (layout.right()) inv.setItem(BingoViewport.SLOT_RIGHT, arrow(Component.text("▶ 오른쪽", NamedTextColor.WHITE)));
+        // Only the directions that can still scroll show an arrow; the rest stay
+        // filler ("hidden"). The recenter button is always present.
+        if (layout.upActive())    inv.setItem(layout.upSlot(),    arrow(Component.text("▲ 위로", NamedTextColor.WHITE)));
+        if (layout.downActive())  inv.setItem(layout.downSlot(),  arrow(Component.text("▼ 아래로", NamedTextColor.WHITE)));
+        if (layout.leftActive())  inv.setItem(layout.leftSlot(),  arrow(Component.text("◀ 왼쪽", NamedTextColor.WHITE)));
+        if (layout.rightActive()) inv.setItem(layout.rightSlot(), arrow(Component.text("▶ 오른쪽", NamedTextColor.WHITE)));
+        if (layout.recenterSlot() >= 0) inv.setItem(layout.recenterSlot(), recenterButton());
 
         BingoTagLoader tagLoader = ItemBingo.getInstance().getTagLoader();
         int total = board.getItems().size();
@@ -238,6 +243,18 @@ public class BingoGUI {
         ItemMeta meta = item.getItemMeta();
         meta.displayName(name.decoration(TextDecoration.ITALIC, false));
         meta.lore(List.of(Component.text("클릭하여 한 칸 스크롤", NamedTextColor.DARK_GRAY)
+                .decoration(TextDecoration.ITALIC, false)));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /** Jumps the viewport back to the middle of the board; handled by slot in the click listener. */
+    private static ItemStack recenterButton() {
+        ItemStack item = new ItemStack(Material.COMPASS);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(Component.text("⊙ 가운데로", NamedTextColor.YELLOW)
+                .decoration(TextDecoration.ITALIC, false));
+        meta.lore(List.of(Component.text("빙고판 중앙으로 이동합니다.", NamedTextColor.DARK_GRAY)
                 .decoration(TextDecoration.ITALIC, false)));
         item.setItemMeta(meta);
         return item;

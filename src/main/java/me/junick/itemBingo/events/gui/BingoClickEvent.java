@@ -77,31 +77,34 @@ public class BingoClickEvent implements Listener {
 
         e.setCancelled(true);
 
-        // Oversized boards render in a scrollable viewport; the four edge arrows
-        // pan the view by one cell rather than submitting anything.
-        if (BingoViewport.needsScroll(board) && BingoViewport.isArrowSlot(slot)) {
-            // A fast double-tap fires a normal click AND a synthetic DOUBLE_CLICK on
-            // the same slot; ignore the latter so one tap scrolls exactly one cell.
-            if (e.getClick() == ClickType.DOUBLE_CLICK) return;
-            handleScrollClick(p, board, slot);
-            return;
+        // Oversized boards render in a scrollable viewport; its control slots
+        // (scroll arrows + recenter) pan the view rather than submitting anything.
+        if (BingoViewport.needsScroll(board)) {
+            BingoViewport.Layout layout = BingoViewport.layout(p.getUniqueId(), board);
+            BingoViewport.Control ctrl = BingoViewport.controlAt(layout, slot);
+            if (ctrl != BingoViewport.Control.NONE) {
+                // A fast double-tap fires a normal click AND a synthetic DOUBLE_CLICK on
+                // the same slot; ignore the latter so one tap scrolls exactly one cell.
+                if (e.getClick() != ClickType.DOUBLE_CLICK) {
+                    handleControlClick(p, board, layout, ctrl);
+                }
+                return; // control slots never submit
+            }
         }
 
         handleDirectSubmission(e, p, board, progress, slot);
     }
 
-    /** Pans the viewport one cell in the clicked arrow's direction (no-op if that edge is hidden). */
-    private void handleScrollClick(Player p, BingoBoard board, int slot) {
-        BingoViewport.Layout layout = BingoViewport.layout(p.getUniqueId(), board);
-        int dRow = 0, dCol = 0;
-        switch (slot) {
-            case BingoViewport.SLOT_UP    -> { if (!layout.up())    return; dRow = -1; }
-            case BingoViewport.SLOT_DOWN  -> { if (!layout.down())  return; dRow = 1; }
-            case BingoViewport.SLOT_LEFT  -> { if (!layout.left())  return; dCol = -1; }
-            case BingoViewport.SLOT_RIGHT -> { if (!layout.right()) return; dCol = 1; }
+    /** Pans (or recenters) the viewport; a hidden/edge arrow is a no-op. */
+    private void handleControlClick(Player p, BingoBoard board, BingoViewport.Layout layout, BingoViewport.Control ctrl) {
+        switch (ctrl) {
+            case UP    -> { if (!layout.upActive())    return; BingoViewport.scroll(p.getUniqueId(), board, -1, 0); }
+            case DOWN  -> { if (!layout.downActive())  return; BingoViewport.scroll(p.getUniqueId(), board, 1, 0); }
+            case LEFT  -> { if (!layout.leftActive())  return; BingoViewport.scroll(p.getUniqueId(), board, 0, -1); }
+            case RIGHT -> { if (!layout.rightActive()) return; BingoViewport.scroll(p.getUniqueId(), board, 0, 1); }
+            case RECENTER -> BingoViewport.centerOn(p.getUniqueId(), board);
             default -> { return; }
         }
-        BingoViewport.scroll(p.getUniqueId(), board, dRow, dCol);
         BingoGUI.rerenderInPlace(p);
         p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
     }
