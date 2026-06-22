@@ -5,6 +5,7 @@ import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.enums.BingoItem;
 import me.junick.itemBingo.enums.BingoRewardType;
 import me.junick.itemBingo.gui.BingoGUI;
+import me.junick.itemBingo.gui.BingoViewport;
 import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
 import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.model.PlayerBingoProgress;
@@ -75,7 +76,31 @@ public class BingoClickEvent implements Listener {
         }
 
         e.setCancelled(true);
+
+        // Oversized boards render in a scrollable viewport; the four edge arrows
+        // pan the view by one cell rather than submitting anything.
+        if (BingoViewport.needsScroll(board) && BingoViewport.isArrowSlot(slot)) {
+            handleScrollClick(p, board, slot);
+            return;
+        }
+
         handleDirectSubmission(e, p, board, progress, slot);
+    }
+
+    /** Pans the viewport one cell in the clicked arrow's direction (no-op if that edge is hidden). */
+    private void handleScrollClick(Player p, BingoBoard board, int slot) {
+        BingoViewport.Layout layout = BingoViewport.layout(p.getUniqueId(), board);
+        int dRow = 0, dCol = 0;
+        switch (slot) {
+            case BingoViewport.SLOT_UP    -> { if (!layout.up())    return; dRow = -1; }
+            case BingoViewport.SLOT_DOWN  -> { if (!layout.down())  return; dRow = 1; }
+            case BingoViewport.SLOT_LEFT  -> { if (!layout.left())  return; dCol = -1; }
+            case BingoViewport.SLOT_RIGHT -> { if (!layout.right()) return; dCol = 1; }
+            default -> { return; }
+        }
+        BingoViewport.scroll(p.getUniqueId(), board, dRow, dCol);
+        BingoGUI.rerenderInPlace(p);
+        p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 0.5f, 1.2f);
     }
 
     private void handleShiftSubmission(InventoryClickEvent e, Player p, BingoBoard board, BingoProgressAccess progress) {
@@ -105,12 +130,20 @@ public class BingoClickEvent implements Listener {
 
             consumeItem(e, clicked);
             completeSubmission(p, progress, board, idx);
+
+            // Auto-submit can land on a cell the player can't currently see, so
+            // re-center the viewport on it (edges push it as close to center as
+            // possible). completeSubmission already re-rendered, so just refocus.
+            if (BingoViewport.needsScroll(board)) {
+                BingoViewport.focusOn(p.getUniqueId(), board, idx);
+                BingoGUI.rerenderInPlace(p);
+            }
             return;
         }
     }
 
     private void handleDirectSubmission(InventoryClickEvent e, Player p, BingoBoard board, BingoProgressAccess progress, int slot) {
-        int idx = getBingoIndexFromSlot(slot, board);
+        int idx = getBingoIndexFromSlot(slot, board, p);
         if (idx == -1 || progress.isSubmitted(idx)) return;
 
         // In Fog of War with submit-lock, a still-hidden cell can't be submitted to.
@@ -222,10 +255,12 @@ public class BingoClickEvent implements Listener {
             // open board (not just the submitter's team) to show the new barrier.
             GuiSync.forEachViewer(BingoGUI.TITLE, BingoGUI::rerenderInPlace);
         } else {
+            boolean scroll = BingoViewport.needsScroll(board);
             for (Player viewer : progress.viewers(p)) {
-                if (fog) {
-                    // A submission can reveal neighbouring cells, so re-render the whole
-                    // board (not just submitted icons).
+                if (fog || scroll) {
+                    // A submission can reveal neighbouring cells (fog), and a scrolling
+                    // board only ever shows part of the grid, so re-render the whole
+                    // viewport rather than trying to repaint individual board slots.
                     BingoGUI.rerenderInPlace(viewer);
                 } else {
                     // Every submitted icon's durability bar reflects overall completion,
@@ -257,7 +292,12 @@ public class BingoClickEvent implements Listener {
     }
 
     /** 슬롯을 빙고판 인덱스로 변환 */
-    private int getBingoIndexFromSlot(int slot, BingoBoard board) {
+    private int getBingoIndexFromSlot(int slot, BingoBoard board, Player p) {
+        // Oversized boards map slots through the player's current scroll position.
+        if (BingoViewport.needsScroll(board)) {
+            return BingoViewport.slotToIndex(slot, board, BingoViewport.layout(p.getUniqueId(), board));
+        }
+
         int width = board.getWidth();
         int height = board.getHeight();
         boolean tight = height > 4;

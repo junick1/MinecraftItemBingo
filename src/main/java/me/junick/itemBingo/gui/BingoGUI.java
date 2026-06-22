@@ -67,6 +67,20 @@ public class BingoGUI {
 
         BingoProgressAccess progress = ProgressFactory.of(p);
 
+        // Oversized boards (beyond the 9x6 inventory limit) render through the
+        // scrollable viewport instead of the centered full-board layout below.
+        if (BingoViewport.needsScroll(board)) {
+            // Restore the player's last scroll position; on a fresh board (no saved
+            // position — cleared by applyNewBoard) start centered on the board.
+            if (!BingoViewport.has(p.getUniqueId())) {
+                BingoViewport.centerOn(p.getUniqueId(), board);
+            }
+            Inventory inv = Bukkit.createInventory(null, GUI_WIDTH * MAX_HEIGHT, TITLE);
+            renderScroll(inv, board, progress, p);
+            p.openInventory(inv);
+            return;
+        }
+
         int boardWidth = board.getWidth();
         int boardHeight = board.getHeight();
         boolean tightMode = boardHeight > 4;
@@ -110,8 +124,17 @@ public class BingoGUI {
         if (board == null) return;
 
         BingoProgressAccess progress = ProgressFactory.of(p);
+        Inventory inv = p.getOpenInventory().getTopInventory();
+
+        if (BingoViewport.needsScroll(board)) {
+            // Re-renders arrows + cells from scratch (cells scroll in/out of view),
+            // so a full redraw is needed rather than only repainting board slots.
+            renderScroll(inv, board, progress, p);
+            return;
+        }
+
         boolean tightMode = board.getHeight() > 4;
-        placeBingoItems(p.getOpenInventory().getTopInventory(), board, progress, tightMode, p);
+        placeBingoItems(inv, board, progress, tightMode, p);
     }
 
     private static void placeBingoItems(
@@ -144,23 +167,80 @@ public class BingoGUI {
                 if (index >= items.size()) continue;
 
                 int slot = (y + offsetY) * GUI_WIDTH + offsetX + x;
-
-                if (progress.isSubmitted(index)) {
-                    UUID owner = progress.getSubmitterId(index);
-                    inv.setItem(slot, submittedIcon(
-                            owner,
-                            progress.getSubmitterName(index),
-                            progressFraction(progress, owner, total)
-                    ));
-                } else if (locked.contains(index)) {
-                    inv.setItem(slot, lockedIcon());
-                } else if (fog && !revealed.contains(index)) {
-                    inv.setItem(slot, hiddenCell());
-                } else {
-                    inv.setItem(slot, withTagLore(items.get(index), tagLoader));
-                }
+                inv.setItem(slot, cellIcon(board, progress, index, fog, revealed, locked, tagLoader, total));
             }
         }
+    }
+
+    /**
+     * Renders an oversized board through the scrollable viewport: an all-filler
+     * base, then the four edge arrows (only the directions that can still scroll —
+     * the rest stay filler, i.e. "hidden"), then the visible board cells. Used by
+     * both the initial open and every live re-render, so a scroll always lands in a
+     * fully consistent state.
+     */
+    private static void renderScroll(Inventory inv, BingoBoard board, BingoProgressAccess progress, Player viewer) {
+        BingoViewport.Layout layout = BingoViewport.layout(viewer.getUniqueId(), board);
+
+        fillBackground(inv);
+
+        if (layout.up())    inv.setItem(BingoViewport.SLOT_UP,    arrow(Component.text("▲ 위로", NamedTextColor.WHITE)));
+        if (layout.down())  inv.setItem(BingoViewport.SLOT_DOWN,  arrow(Component.text("▼ 아래로", NamedTextColor.WHITE)));
+        if (layout.left())  inv.setItem(BingoViewport.SLOT_LEFT,  arrow(Component.text("◀ 왼쪽", NamedTextColor.WHITE)));
+        if (layout.right()) inv.setItem(BingoViewport.SLOT_RIGHT, arrow(Component.text("▶ 오른쪽", NamedTextColor.WHITE)));
+
+        BingoTagLoader tagLoader = ItemBingo.getInstance().getTagLoader();
+        int total = board.getItems().size();
+        boolean fog = Settings.isFogOfWarMode();
+        Set<Integer> revealed = fog
+                ? FogOfWar.revealedSlots(board.getWidth(), board.getHeight(),
+                        progress.getSubmittedSlots(), Settings.isFogDiagonalReveal())
+                : null;
+        Set<Integer> locked = Lockout.lockedSlots(viewer);
+
+        for (int index = 0; index < board.getItems().size(); index++) {
+            int slot = BingoViewport.indexToSlot(index, board, layout);
+            if (slot < 0) continue;
+            inv.setItem(slot, cellIcon(board, progress, index, fog, revealed, locked, tagLoader, total));
+        }
+    }
+
+    /**
+     * The icon for a single board cell, shared by the centered layout and the
+     * scrollable viewport so a cell looks identical in either: a submitted icon,
+     * a Lockout barrier, a Fog of War placeholder, or the required item itself.
+     */
+    private static ItemStack cellIcon(
+            BingoBoard board,
+            BingoProgressAccess progress,
+            int index,
+            boolean fog,
+            Set<Integer> revealed,
+            Set<Integer> locked,
+            BingoTagLoader tagLoader,
+            int total
+    ) {
+        if (progress.isSubmitted(index)) {
+            UUID owner = progress.getSubmitterId(index);
+            return submittedIcon(owner, progress.getSubmitterName(index), progressFraction(progress, owner, total));
+        } else if (locked.contains(index)) {
+            return lockedIcon();
+        } else if (fog && !revealed.contains(index)) {
+            return hiddenCell();
+        } else {
+            return withTagLore(board.getItems().get(index), tagLoader);
+        }
+    }
+
+    /** A scroll-arrow button (one per live edge); cosmetic only — handled by slot in the click listener. */
+    private static ItemStack arrow(Component name) {
+        ItemStack item = new ItemStack(Material.ARROW);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(name.decoration(TextDecoration.ITALIC, false));
+        meta.lore(List.of(Component.text("클릭하여 한 칸 스크롤", NamedTextColor.DARK_GRAY)
+                .decoration(TextDecoration.ITALIC, false)));
+        item.setItemMeta(meta);
+        return item;
     }
 
     /**

@@ -53,6 +53,15 @@ commands:
   teammate:
     description: Check teammates
     usage: /teammate
+  chat:
+    description: Set your default chat channel (team/all)
+    usage: /chat <team|t|all|a>
+  ac:
+    description: Send a one-off message to all chat
+    usage: /ac <message>
+  tc:
+    description: Send a one-off message to team chat
+    usage: /tc <message>
   admin:
     description: Open ItemBingo admin panel
     usage: /admin

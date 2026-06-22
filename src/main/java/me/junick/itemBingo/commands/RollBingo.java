@@ -16,6 +16,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RollBingo implements CommandExecutor, TabCompleter {
+    // Boards beyond 9x6 no longer fit the inventory directly; BingoGUI renders
+    // them through a scrollable viewport, so the roll cap can be much larger.
+    private static final int MAX_WIDTH = 25;
+    private static final int MAX_HEIGHT = 25;
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (args.length != 2) {
@@ -27,8 +32,8 @@ public class RollBingo implements CommandExecutor, TabCompleter {
             int width = Integer.parseInt(args[0]);
             int height = Integer.parseInt(args[1]);
 
-            if (width < 1 || width > 9 || height < 1 || height > 6) {
-                sender.sendMessage("§c가로는 1~9, 세로는 1~6 사이여야 합니다.");
+            if (width < 1 || width > MAX_WIDTH || height < 1 || height > MAX_HEIGHT) {
+                sender.sendMessage("§c가로는 1~" + MAX_WIDTH + ", 세로는 1~" + MAX_HEIGHT + " 사이여야 합니다.");
                 return true;
             }
 
@@ -55,10 +60,10 @@ public class RollBingo implements CommandExecutor, TabCompleter {
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
         List<String> completions = new ArrayList<>();
         if (args.length == 1) {
-            for (int i = 1; i <= 9; i++) completions.add(String.valueOf(i));
+            for (int i = 1; i <= MAX_WIDTH; i++) completions.add(String.valueOf(i));
         }
         if (args.length == 2) {
-            for (int i = 1; i <= 6; i++) completions.add(String.valueOf(i));
+            for (int i = 1; i <= MAX_HEIGHT; i++) completions.add(String.valueOf(i));
         }
         return completions;
     }

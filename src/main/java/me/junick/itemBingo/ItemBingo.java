@@ -5,6 +5,8 @@ import me.junick.itemBingo.admin.AdminCommand;
 import me.junick.itemBingo.commands.*;
 import me.junick.itemBingo.config.BundleManager;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.gui.BingoViewport;
+import me.junick.itemBingo.events.ChatListener;
 import me.junick.itemBingo.events.EffectListener;
 import me.junick.itemBingo.events.LavaMovement;
 import me.junick.itemBingo.events.LungeMovement;
@@ -42,6 +44,8 @@ public final class ItemBingo extends JavaPlugin {
 
         teamManager = new TeamManager(this);
 
+        ChatManager.load();
+
         KEY_EFFECT = new NamespacedKey(this, "effect");
         KEY_BUNDLE_TEMPLATE = new NamespacedKey(this, "bundle_template");
 
@@ -66,6 +70,7 @@ public final class ItemBingo extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ShovelOxidizeEvent(), this);
 
         Bukkit.getPluginManager().registerEvents(new EffectListener(), this);
+        Bukkit.getPluginManager().registerEvents(new ChatListener(), this);
         Bukkit.getPluginManager().registerEvents(new BundleClickEvent(), this);
         Bukkit.getPluginManager().registerEvents(new PresetClickEvent(), this);
         Bukkit.getPluginManager().registerEvents(new PresetEditorClickEvent(), this);
@@ -81,6 +86,12 @@ public final class ItemBingo extends JavaPlugin {
         getCommand("teams").setTabCompleter(tc);
 
         getCommand("teammate").setExecutor(new TeammateCommand());
+
+        ChatCommand chat = new ChatCommand();
+        getCommand("chat").setExecutor(chat);
+        getCommand("chat").setTabCompleter(chat);
+        getCommand("ac").setExecutor(new AllChatCommand());
+        getCommand("tc").setExecutor(new TeamChatCommand());
 
         getCommand("bingo").setExecutor(new ViewBingo());
         getCommand("rank").setExecutor(new RankCommand());
@@ -145,6 +156,10 @@ public final class ItemBingo extends JavaPlugin {
         currentBingo = board;
         BingoStorage.save(board);
 
+        // The old scroll positions don't map onto the new board, so forget them;
+        // each player re-centers on their next open.
+        BingoViewport.clearAll();
+
         // Reset wiped every board + currency, so refresh anyone looking at the old
         // board or a shop (their balances just dropped to zero).
         GuiSync.refreshAllGameViews();
@@ -161,5 +176,6 @@ public final class ItemBingo extends JavaPlugin {
 
         TimerManager.saveState();
         Settings.save(this);
+        ChatManager.save();
     }
 }
