@@ -26,6 +26,18 @@ commands:
   menu:
     description: Open Bingo main menu
     usage: /menu
+  chest:
+    description: Open your team/private storage chest
+    usage: /chest
+  tpa:
+    description: Request to teleport to a teammate
+    usage: /tpa <player>
+  tpaccept:
+    description: Accept a pending teleport request
+    usage: /tpaccept [player]
+  tpdeny:
+    description: Reject a pending teleport request
+    usage: /tpdeny [player]
   bingo:
     description: View the bingo board
     usage: /bingo

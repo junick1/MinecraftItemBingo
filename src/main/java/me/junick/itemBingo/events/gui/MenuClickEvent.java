@@ -3,6 +3,7 @@ package me.junick.itemBingo.events.gui;
 import me.junick.itemBingo.gui.BingoGUI;
 import me.junick.itemBingo.gui.MenuGUI;
 import me.junick.itemBingo.gui.ShopGUI;
+import me.junick.itemBingo.util.ChestManager;
 import me.junick.itemBingo.util.RankMessageGenerator;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
@@ -36,6 +37,10 @@ public class MenuClickEvent implements Listener {
         } else if (name.contains("상점")) {
             p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
             ShopGUI.open(p);
+        } else if (name.contains("창고")) {
+            p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+            p.closeInventory();
+            ChestManager.open(p);
         }
     }
 }

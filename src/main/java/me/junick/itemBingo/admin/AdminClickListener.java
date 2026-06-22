@@ -7,18 +7,16 @@ import me.junick.itemBingo.gui.EffectShopGUI;
 import me.junick.itemBingo.gui.ItemShopGUI;
 import me.junick.itemBingo.gui.MenuGUI;
 import me.junick.itemBingo.gui.ShopGUI;
+import me.junick.itemBingo.util.ChestManager;
 import me.junick.itemBingo.util.GuiSync;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Sound;
-import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
-
-import java.util.Set;
 
 public class AdminClickListener implements Listener {
     private final ItemBingo plugin;
@@ -28,7 +26,7 @@ public class AdminClickListener implements Listener {
     }
 
     private boolean isAdminGuiTitle(String title) {
-        return title.equals(AdminGUI.TITLE_TEAM)
+        return title.equals(AdminGUI.TITLE_GAME)
                 || title.equals(AdminGUI.TITLE_SHOP)
                 || title.equals(AdminGUI.TITLE_VANILLA)
                 || title.equals(AdminGUI.TITLE_MODE);
@@ -66,9 +64,9 @@ public class AdminClickListener implements Listener {
 
         int slot = e.getRawSlot();
 
-        // ===== 탭 이동 (0,1,2) =====
+        // ===== 탭 이동 (0,1,2,3) =====
         if (slot == 0) {
-            AdminGUI.openTeam(plugin, p);
+            AdminGUI.openGame(plugin, p);
             return;
         }
         if (slot == 1) {
@@ -84,21 +82,48 @@ public class AdminClickListener implements Listener {
             return;
         }
 
-        // ===== Team GUI =====
-        if (title.equals(AdminGUI.TITLE_TEAM)) {
-            if (slot == 13) {
-                Settings.toggleTeamEnabled();
-                refreshTeam();
-                // Team mode flips every player between solo and team progress/
-                // currency, so refresh all open boards and shops.
-                GuiSync.refreshAllGameViews();
+        // ===== Game GUI =====
+        if (title.equals(AdminGUI.TITLE_GAME)) {
+            switch (slot) {
+                case 20 -> {
+                    Settings.toggleTeamEnabled();
+                    // Team mode flips solo/team progress + currency, the chest
+                    // key/title, and whether /tpa is usable — resync everything.
+                    ChestManager.invalidateOpenChests();
+                    refreshGame();
+                    refreshMenu();
+                    GuiSync.refreshAllGameViews();
+                }
+                case 22 -> {
+                    if (e.isRightClick()) {
+                        Settings.cycleChestRowsDown();
+                    } else {
+                        Settings.cycleChestRowsUp();
+                    }
+                    // Capacity changed: rebuild open chests at the new size and
+                    // refresh the menu's chest-button enabled indicator.
+                    ChestManager.invalidateOpenChests();
+                    refreshGame();
+                    refreshMenu();
+                }
+                case 24 -> {
+                    // /tpa toggle only applies when team mode is on.
+                    if (Settings.isTeamEnabled()) {
+                        Settings.toggleTpaEnabled();
+                        refreshGame();
+                    }
+                }
+                case 31 -> {
+                    Settings.togglePenaltyInt();
+                    refreshGame();
+                }
             }
             return;
         }
 
         // ===== Shop GUI =====
         if (title.equals(AdminGUI.TITLE_SHOP)) {
-            if (slot == 11) {
+            if (slot == 20) {
                 Settings.toggleShopEnabled();
                 // Shop turned off entirely → kick anyone out of the shop menus.
                 if (!Settings.isShopEnabled()) {
@@ -108,7 +133,7 @@ public class AdminClickListener implements Listener {
                     GuiSync.closeViewers(DiamondExchangeGUI.TITLE);
                 }
                 // The main menu shows a shop enabled/disabled indicator — resync it.
-                GuiSync.forEachViewer(MenuGUI.TITLE, vp -> MenuGUI.openMain(vp, false));
+                refreshMenu();
                 refreshShop();
                 return;
             }
@@ -116,7 +141,7 @@ public class AdminClickListener implements Listener {
             // 상점이 OFF면 하위 토글은 건드릴 수 없게
             if (!Settings.isShopEnabled()) return;
 
-            if (slot == 13) {
+            if (slot == 22) {
                 Settings.toggleEffectShopEnabled();
                 if (!Settings.isEffectShopEnabled()) {
                     GuiSync.closeViewers(EffectShopGUI.TITLE);
@@ -125,7 +150,7 @@ public class AdminClickListener implements Listener {
                 return;
             }
 
-            if (slot == 15) {
+            if (slot == 24) {
                 Settings.toggleItemShopEnabled();
                 if (!Settings.isItemShopEnabled()) {
                     GuiSync.closeViewers(ItemShopGUI.TITLE);
@@ -138,11 +163,8 @@ public class AdminClickListener implements Listener {
 
         // ===== Vanilla GUI =====
         if (title.equals(AdminGUI.TITLE_VANILLA)) {
-            switch(slot) {
-                case 13 -> Settings.toggleShovelOxidizeCopper();
-                case 14 -> Settings.togglePenaltyInt();
-            }
-            if (13 <= slot && slot <= 14) {
+            if (slot == 22) {
+                Settings.toggleShovelOxidizeCopper();
                 refreshVanilla();
             }
             return;
@@ -150,10 +172,10 @@ public class AdminClickListener implements Listener {
 
         // ===== Mode GUI =====
         if (title.equals(AdminGUI.TITLE_MODE)) {
-            // Mode switch (cycles Normal -> Swappage -> Fog of War). Changing the
-            // mode changes both which sub-settings show and how the board renders
-            // (fog hides/reveals cells), so re-render all open boards too.
-            if (slot == 13) {
+            // Mode switch (cycles Normal -> Swappage -> Fog of War -> Lockout).
+            // Changing the mode changes both which sub-settings show and how the
+            // board renders (fog hides/reveals cells), so re-render boards too.
+            if (slot == 20) {
                 Settings.cycleGameMode();
                 refreshMode();
                 GuiSync.refreshAllGameViews();
@@ -163,17 +185,17 @@ public class AdminClickListener implements Listener {
             switch (Settings.getGameMode()) {
                 case SWAPPAGE -> {
                     switch (slot) {
-                        case 21 -> Settings.toggleSwapTimer();
-                        case 23 -> Settings.toggleSwapAlert();
+                        case 30 -> Settings.toggleSwapTimer();
+                        case 32 -> Settings.toggleSwapAlert();
                         default -> { return; }
                     }
                     refreshMode();
                 }
                 case FOG_OF_WAR -> {
                     switch (slot) {
-                        case 20 -> Settings.toggleFogSubmitLock();
-                        case 22 -> Settings.toggleFogRevealAlert();
-                        case 24 -> {
+                        case 29 -> Settings.toggleFogSubmitLock();
+                        case 31 -> Settings.toggleFogRevealAlert();
+                        case 33 -> {
                             // Diagonal reveal changes which cells are revealed, so
                             // refresh open boards.
                             Settings.toggleFogDiagonalReveal();
@@ -185,15 +207,15 @@ public class AdminClickListener implements Listener {
                     }
                     refreshMode();
                 }
-                default -> { /* Normal: no sub-settings */ }
+                default -> { /* Normal / Lockout: no sub-settings */ }
             }
         }
     }
 
     // Re-render each admin tab for *every* admin currently viewing it, so two
     // people with the panel open stay in sync instead of seeing stale toggles.
-    private void refreshTeam() {
-        GuiSync.forEachViewer(AdminGUI.TITLE_TEAM, vp -> AdminGUI.openTeam(plugin, vp));
+    private void refreshGame() {
+        GuiSync.forEachViewer(AdminGUI.TITLE_GAME, vp -> AdminGUI.openGame(plugin, vp));
     }
 
     private void refreshShop() {
@@ -206,5 +228,9 @@ public class AdminClickListener implements Listener {
 
     private void refreshMode() {
         GuiSync.forEachViewer(AdminGUI.TITLE_MODE, vp -> AdminGUI.openMode(plugin, vp));
+    }
+
+    private void refreshMenu() {
+        GuiSync.forEachViewer(MenuGUI.TITLE, vp -> MenuGUI.openMain(vp, false));
     }
 }

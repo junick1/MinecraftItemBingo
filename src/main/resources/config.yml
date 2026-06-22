@@ -15,6 +15,11 @@ vanilla:
 game:
   # 0 = TOTAL_SUBMISSION (ICPC), 1 = LAST_SUBMISSION (AtCoder), 2 = CODEFORCES
   penalty: 0
+  # Storage chest rows: 0 = disabled, 1..6 = that many rows.
+  # When team mode is ON this is the shared team chest; when OFF it is a private per-player chest.
+  chestRows: 0
+  # /tpa teammate teleport. Only effective while team mode is ON.
+  tpaEnabled: false
 
 mode:
   # type = NORMAL | SWAPPAGE | FOG_OF_WAR (only one mode is active at a time)

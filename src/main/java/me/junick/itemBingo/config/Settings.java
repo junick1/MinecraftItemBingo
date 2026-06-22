@@ -12,6 +12,20 @@ public class Settings {
     private static int penaltySystem;
 
     /**
+     * Number of rows (each 9 slots) for the shared/private storage chest.
+     * {@code 0} means the chest feature is disabled; valid range is 0..6.
+     */
+    private static int chestRows;
+
+    /**
+     * Whether the /tpa teammate-teleport system is enabled. This value is stored
+     * and toggled independently of team mode, but it is only <em>effective</em>
+     * when team mode is ON — when team mode is OFF the admin panel shows it as
+     * DISABLED while preserving whatever it was last set to.
+     */
+    private static boolean tpaEnabled;
+
+    /**
      * The three game modes are mutually exclusive — only one is active at a time.
      * Each mode has its own set of sub-settings (the rows below the mode switch in
      * the admin "모드" tab).
@@ -52,6 +66,8 @@ public class Settings {
         itemShopEnabled = config.getBoolean("shop.itemShopEnabled", false);
         shovelOxidizeCopper = config.getBoolean("vanilla.shovelOxidizeCopper", false);
         penaltySystem = config.getInt("game.penalty", 0);
+        chestRows = Math.max(0, Math.min(6, config.getInt("game.chestRows", 0)));
+        tpaEnabled = config.getBoolean("game.tpaEnabled", false);
 
         // Mode: prefer the new "mode.type" key, falling back to the legacy
         // "mode.positionSwap" boolean so existing configs keep working.
@@ -88,6 +104,8 @@ public class Settings {
         config.set("shop.itemShopEnabled", itemShopEnabled);
         config.set("vanilla.shovelOxidizeCopper", shovelOxidizeCopper);
         config.set("game.penalty", penaltySystem);
+        config.set("game.chestRows", chestRows);
+        config.set("game.tpaEnabled", tpaEnabled);
 
         config.set("mode.type", gameMode.name());
         config.set("mode.swap.alert", swapAlert);
@@ -111,6 +129,24 @@ public class Settings {
     public static boolean isItemShopEnabled() { return itemShopEnabled; }
     public static boolean isShovelOxidizeCopper() { return shovelOxidizeCopper; }
     public static int getPenaltyInt() { return penaltySystem; }
+
+    // ===== Storage chest =====
+    /** Rows (0 = disabled, otherwise 1..6) for the storage chest. */
+    public static int getChestRows() { return chestRows; }
+    public static boolean isChestEnabled() { return chestRows > 0; }
+    public static int getChestSlots() { return chestRows * 9; }
+
+    /** Left-click cycle: disabled → 1 → 2 → … → 6 → disabled. */
+    public static void cycleChestRowsUp() { chestRows = (chestRows + 1) % 7; }
+    /** Right-click cycle: disabled → 6 → 5 → … → 1 → disabled. */
+    public static void cycleChestRowsDown() { chestRows = (chestRows + 6) % 7; }
+
+    // ===== TPA =====
+    /** The stored toggle, regardless of whether team mode makes it effective. */
+    public static boolean isTpaEnabled() { return tpaEnabled; }
+    /** TPA only works when team mode is ON and the toggle is set. */
+    public static boolean isTpaEffective() { return teamEnabled && tpaEnabled; }
+    public static void toggleTpaEnabled() { tpaEnabled = !tpaEnabled; }
 
     // ===== Game mode =====
     public static GameMode getGameMode() { return gameMode; }

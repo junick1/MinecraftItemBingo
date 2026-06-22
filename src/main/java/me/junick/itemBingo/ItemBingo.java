@@ -45,6 +45,7 @@ public final class ItemBingo extends JavaPlugin {
         teamManager = new TeamManager(this);
 
         ChatManager.load();
+        ChestManager.init(this);
 
         KEY_EFFECT = new NamespacedKey(this, "effect");
         KEY_BUNDLE_TEMPLATE = new NamespacedKey(this, "bundle_template");
@@ -74,12 +75,21 @@ public final class ItemBingo extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new BundleClickEvent(), this);
         Bukkit.getPluginManager().registerEvents(new PresetClickEvent(), this);
         Bukkit.getPluginManager().registerEvents(new PresetEditorClickEvent(), this);
+        Bukkit.getPluginManager().registerEvents(ChestManager.listener(), this);
         EffectApplier.start();
 
         // /admin
         getCommand("admin").setExecutor(new AdminCommand(this));
 
         getCommand("menu").setExecutor(new MenuCommand());
+
+        getCommand("chest").setExecutor(new ChestCommand());
+
+        TpaCommand tpa = new TpaCommand();
+        getCommand("tpa").setExecutor(tpa);
+        getCommand("tpa").setTabCompleter(tpa);
+        getCommand("tpaccept").setExecutor(new TpaAcceptCommand());
+        getCommand("tpdeny").setExecutor(new TpaDenyCommand());
 
         TeamsCommand tc = new TeamsCommand();
         getCommand("teams").setExecutor(tc);
@@ -152,6 +162,7 @@ public final class ItemBingo extends JavaPlugin {
         BundleManager.resetPlayerList();
         PlayerDataManager.resetAll();
         TeamDataManager.resetAll();
+        ChestManager.resetAll();
 
         currentBingo = board;
         BingoStorage.save(board);
@@ -177,5 +188,6 @@ public final class ItemBingo extends JavaPlugin {
         TimerManager.saveState();
         Settings.save(this);
         ChatManager.save();
+        ChestManager.save();
     }
 }
