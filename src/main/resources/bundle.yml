@@ -1,0 +1,349 @@
+selected_template: 0
+templates:
+  template1:
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:netherite_sword
+    count: 1
+    components:
+      minecraft:unbreakable: '{}'
+      minecraft:enchantments: '{"minecraft:bane_of_arthropods":10,"minecraft:fire_aspect":1,"minecraft:looting":3,"minecraft:sharpness":10,"minecraft:smite":10,"minecraft:sweeping_edge":10}'
+      minecraft:item_name: '{bold:1b,color:"yellow",italic:0b,text:"엑스칼리버"}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:netherite_pickaxe
+    count: 1
+    components:
+      minecraft:unbreakable: '{}'
+      minecraft:enchantments: '{"minecraft:efficiency":10,"minecraft:fortune":3}'
+      minecraft:item_name: '{bold:1b,color:"green",italic:0b,text:"드릴"}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:netherite_axe
+    count: 1
+    components:
+      minecraft:unbreakable: '{}'
+      minecraft:enchantments: '{"minecraft:efficiency":10}'
+      minecraft:item_name: '{bold:1b,color:"aqua",italic:0b,text:"딱따구리"}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:diamond_pickaxe
+    count: 1
+    components:
+      minecraft:unbreakable: '{}'
+      minecraft:enchantments: '{"minecraft:efficiency":10,"minecraft:silk_touch":1}'
+      minecraft:item_name: '{bold:1b,color:"gold",italic:0b,text:"장인의 손"}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:netherite_helmet
+    count: 1
+    components:
+      minecraft:unbreakable: '{}'
+      minecraft:enchantments: '{"minecraft:aqua_affinity":1,"minecraft:blast_protection":10,"minecraft:fire_protection":10,"minecraft:projectile_protection":10,"minecraft:protection":10,"minecraft:respiration":3,"minecraft:thorns":3}'
+      minecraft:item_name: '{bold:1b,color:"red",italic:0b,text:"머리보호대"}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:netherite_chestplate
+    count: 1
+    components:
+      minecraft:unbreakable: '{}'
+      minecraft:enchantments: '{"minecraft:blast_protection":10,"minecraft:fire_protection":10,"minecraft:projectile_protection":10,"minecraft:protection":10,"minecraft:thorns":3}'
+      minecraft:item_name: '{bold:1b,color:"red",italic:0b,text:"평범한 티셔츠"}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:netherite_leggings
+    count: 1
+    components:
+      minecraft:unbreakable: '{}'
+      minecraft:enchantments: '{"minecraft:blast_protection":10,"minecraft:fire_protection":10,"minecraft:projectile_protection":10,"minecraft:protection":10,"minecraft:swift_sneak":3,"minecraft:thorns":3}'
+      minecraft:item_name: '{bold:1b,color:"red",italic:0b,text:"청바지"}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:netherite_boots
+    count: 1
+    components:
+      minecraft:unbreakable: '{}'
+      minecraft:enchantments: '{"minecraft:blast_protection":10,"minecraft:depth_strider":3,"minecraft:feather_falling":10,"minecraft:fire_protection":10,"minecraft:projectile_protection":10,"minecraft:protection":10,"minecraft:soul_speed":1,"minecraft:thorns":3}'
+      minecraft:item_name: '{bold:1b,color:"red",italic:0b,text:"구두"}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:elytra
+    count: 1
+    components:
+      minecraft:unbreakable: '{}'
+      minecraft:item_name: '{bold:1b,color:"light_purple",italic:0b,text:"딱지날개"}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:firework_rocket
+    count: 64
+    components:
+      minecraft:fireworks: '{flight_duration:3b}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:firework_rocket
+    count: 64
+    components:
+      minecraft:fireworks: '{flight_duration:3b}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:firework_rocket
+    count: 64
+    components:
+      minecraft:fireworks: '{flight_duration:3b}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:firework_rocket
+    count: 64
+    components:
+      minecraft:fireworks: '{flight_duration:3b}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:bundle
+    count: 1
+    components:
+      minecraft:bundle_contents: '[{components:{"minecraft:consumable":{consume_seconds:0.5f},"minecraft:food":{nutrition:20,saturation:20.0f},"minecraft:item_name":{bold:1b,color:"#FF9D00",extra:[{bold:1b,color:"#FFAB00",italic:0b,text:"무"},{bold:1b,color:"#FFB900",italic:0b,text:"산
+        "},{bold:1b,color:"#FFC700",italic:0b,text:"황"},{bold:1b,color:"#FFD500",italic:0b,text:"금
+        "},{bold:1b,color:"#FFE300",italic:0b,text:"당"},{bold:1b,color:"#FFFF00",italic:0b,text:"근"}],italic:0b,text:"테"}},count:64,id:"minecraft:golden_carrot"},{count:64,id:"minecraft:crafting_table"},{count:64,id:"minecraft:furnace"},{count:64,id:"minecraft:stonecutter"},{count:64,id:"minecraft:oak_planks"},{components:{"minecraft:consumable":{consume_seconds:1.0f,on_consume_effects:[{effects:[{amplifier:10b,duration:10,id:"minecraft:instant_damage",show_icon:1b}],type:"minecraft:apply_effects"}]},"minecraft:food":{can_always_eat:1b,nutrition:1,saturation:1.0f},"minecraft:item_name":{bold:1b,color:"dark_red",italic:0b,shadow_color:-43691,text:"즉사
+        독"}},count:64,id:"minecraft:coal"},{components:{"minecraft:consumable":{consume_seconds:1.0f,on_consume_effects:[{type:"minecraft:clear_all_effects"}]},"minecraft:food":{can_always_eat:1b,nutrition:1,saturation:1.0f},"minecraft:item_name":{bold:1b,color:"yellow",italic:0b,shadow_color:-22016,text:"상태
+        제거기"}},count:64,id:"minecraft:feather"},{id:"minecraft:water_bucket"}]'
+    schema_version: 1
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  template2:
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:diamond_pickaxe
+    count: 1
+    components:
+      minecraft:unbreakable: '{}'
+      minecraft:enchantments: '{"minecraft:efficiency":10,"minecraft:silk_touch":1}'
+      minecraft:item_name: '{bold:1b,color:"gold",italic:0b,text:"장인의 손"}'
+    schema_version: 1
+  - ==: org.bukkit.inventory.ItemStack
+    DataVersion: 4903
+    id: minecraft:bundle
+    count: 1
+    components:
+      minecraft:bundle_contents: '[{components:{"minecraft:consumable":{consume_seconds:0.5f},"minecraft:food":{nutrition:20,saturation:20.0f},"minecraft:item_name":{bold:1b,color:"#FF9D00",extra:[{bold:1b,color:"#FFAB00",italic:0b,text:"무"},{bold:1b,color:"#FFB900",italic:0b,text:"산
+        "},{bold:1b,color:"#FFC700",italic:0b,text:"황"},{bold:1b,color:"#FFD500",italic:0b,text:"금
+        "},{bold:1b,color:"#FFE300",italic:0b,text:"당"},{bold:1b,color:"#FFFF00",italic:0b,text:"근"}],italic:0b,text:"테"}},count:64,id:"minecraft:golden_carrot"},{count:64,id:"minecraft:crafting_table"},{count:64,id:"minecraft:furnace"},{count:64,id:"minecraft:stonecutter"},{count:64,id:"minecraft:oak_planks"},{components:{"minecraft:consumable":{consume_seconds:1.0f,on_consume_effects:[{effects:[{amplifier:10b,duration:10,id:"minecraft:instant_damage",show_icon:1b}],type:"minecraft:apply_effects"}]},"minecraft:food":{can_always_eat:1b,nutrition:1,saturation:1.0f},"minecraft:item_name":{bold:1b,color:"dark_red",italic:0b,shadow_color:-43691,text:"즉사
+        독"}},count:64,id:"minecraft:coal"},{components:{"minecraft:consumable":{consume_seconds:1.0f,on_consume_effects:[{type:"minecraft:clear_all_effects"}]},"minecraft:food":{can_always_eat:1b,nutrition:1,saturation:1.0f},"minecraft:item_name":{bold:1b,color:"yellow",italic:0b,shadow_color:-22016,text:"상태
+        제거기"}},count:64,id:"minecraft:feather"},{id:"minecraft:water_bucket"}]'
+    schema_version: 1
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  template3:
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  template4:
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  template5:
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  template6:
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  template7:
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  template8:
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null
+  - null

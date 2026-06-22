@@ -1,7 +1,6 @@
 package me.junick.itemBingo.admin;
 
 import me.junick.itemBingo.ItemBingo;
-import me.junick.itemBingo.config.BundleManager;
 import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.gui.DiamondExchangeGUI;
 import me.junick.itemBingo.gui.EffectShopGUI;

@@ -1,15 +1,9 @@
 package me.junick.itemBingo.commands;
 
 import me.junick.itemBingo.ItemBingo;
-import me.junick.itemBingo.config.BundleManager;
 import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.util.BingoItemSelector;
-import me.junick.itemBingo.util.BingoStorage;
 import me.junick.itemBingo.util.ConfirmationManager;
-import me.junick.itemBingo.util.GuiSync;
-import me.junick.itemBingo.util.PlayerDataManager;
-import me.junick.itemBingo.util.TeamDataManager;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -48,17 +42,7 @@ public class RollBingo implements CommandExecutor, TabCompleter {
 
             List<ItemStack> items = BingoItemSelector.getWeightedRandomSurvivalItems(count);
 
-            BundleManager.resetPlayerList();
-            PlayerDataManager.resetAll();
-            TeamDataManager.resetAll();
-
-            BingoBoard board = new BingoBoard(width, height, items);
-            ItemBingo.currentBingo = board;
-            BingoStorage.save(board);
-
-            // Reset wiped every board + currency, so refresh anyone looking at
-            // the old board or a shop (their balances just dropped to zero).
-            GuiSync.refreshAllGameViews();
+            ItemBingo.applyNewBoard(new BingoBoard(width, height, items));
 
             sender.sendMessage("§a" + width + "x" + height + " 빙고판이 생성되었습니다!");
         } catch (NumberFormatException e) {

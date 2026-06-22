@@ -3,6 +3,7 @@ package me.junick.itemBingo;
 import me.junick.itemBingo.admin.AdminClickListener;
 import me.junick.itemBingo.admin.AdminCommand;
 import me.junick.itemBingo.commands.*;
+import me.junick.itemBingo.config.BundleManager;
 import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.events.EffectListener;
 import me.junick.itemBingo.events.LavaMovement;
@@ -28,15 +29,21 @@ public final class ItemBingo extends JavaPlugin {
 
     public static BingoBoard currentBingo = null;
     public static NamespacedKey KEY_EFFECT;
+    public static NamespacedKey KEY_BUNDLE_TEMPLATE;
 
     @Override
     public void onEnable() {
         instance = this;
+
+        // Extract the default bundle templates on first run (does not overwrite admin edits).
+        saveResource("bundle.yml", false);
+
         tagLoader = new BingoTagLoader(this);
 
         teamManager = new TeamManager(this);
 
         KEY_EFFECT = new NamespacedKey(this, "effect");
+        KEY_BUNDLE_TEMPLATE = new NamespacedKey(this, "bundle_template");
 
         // Plugin startup logic
         Bukkit.getPluginManager().registerEvents(new AdminClickListener(this), this);
@@ -59,7 +66,9 @@ public final class ItemBingo extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ShovelOxidizeEvent(), this);
 
         Bukkit.getPluginManager().registerEvents(new EffectListener(), this);
-        Bukkit.getPluginManager().registerEvents(new SetBundleCommand(), this);
+        Bukkit.getPluginManager().registerEvents(new BundleClickEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new PresetClickEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new PresetEditorClickEvent(), this);
         EffectApplier.start();
 
         // /admin
@@ -77,8 +86,22 @@ public final class ItemBingo extends JavaPlugin {
         getCommand("rank").setExecutor(new RankCommand());
         getCommand("shop").setExecutor(new ShopCommand());
 
-        getCommand("rollbingo").setExecutor(new RollBingo());
+        RollBingo rb = new RollBingo();
+        getCommand("rollbingo").setExecutor(rb);
+        getCommand("rollbingo").setTabCompleter(rb);
         getCommand("timer").setExecutor(new TimerCommand());
+
+        NewBingoCommand nb = new NewBingoCommand();
+        getCommand("newbingo").setExecutor(nb);
+        getCommand("newbingo").setTabCompleter(nb);
+
+        SetBingoCommand sb = new SetBingoCommand();
+        getCommand("setbingo").setExecutor(sb);
+        getCommand("setbingo").setTabCompleter(sb);
+
+        EditBingoCommand eb = new EditBingoCommand();
+        getCommand("editbingo").setExecutor(eb);
+        getCommand("editbingo").setTabCompleter(eb);
 
         getCommand("startbingo").setExecutor(new StartBingoCommand());
         getCommand("pointadd").setExecutor((CommandExecutor)new PointCommand());
@@ -107,6 +130,24 @@ public final class ItemBingo extends JavaPlugin {
 
         getLogger().info("ItemBingo plugin has been enabled!");
 
+    }
+
+    /**
+     * Installs {@code board} as the active game: wipes all per-player/team progress and the
+     * once-per-game bundle list, persists the board, and refreshes any open board/shop GUIs.
+     * Shared by {@code /rollbingo} (fresh roll) and {@code /setbingo} (saved preset).
+     */
+    public static void applyNewBoard(BingoBoard board) {
+        BundleManager.resetPlayerList();
+        PlayerDataManager.resetAll();
+        TeamDataManager.resetAll();
+
+        currentBingo = board;
+        BingoStorage.save(board);
+
+        // Reset wiped every board + currency, so refresh anyone looking at the old
+        // board or a shop (their balances just dropped to zero).
+        GuiSync.refreshAllGameViews();
     }
 
     @Override

@@ -8,6 +8,21 @@ commands:
     usage: /rollbingo <width> <height>
     permission: itembingo.command.rollbingo
     permission-message: You do not have permission to use this command.
+  newbingo:
+    description: Roll and save a board as a reusable preset
+    usage: /newbingo <id> <width> <height>
+    permission: itembingo.command.newbingo
+    permission-message: You do not have permission to use this command.
+  setbingo:
+    description: Apply a saved board preset (GUI, or directly by id)
+    usage: /setbingo [id]
+    permission: itembingo.command.setbingo
+    permission-message: You do not have permission to use this command.
+  editbingo:
+    description: Edit a saved board preset in-game (GUI picker, or directly by id)
+    usage: /editbingo [id]
+    permission: itembingo.command.editbingo
+    permission-message: You do not have permission to use this command.
   menu:
     description: Open Bingo main menu
     usage: /menu
