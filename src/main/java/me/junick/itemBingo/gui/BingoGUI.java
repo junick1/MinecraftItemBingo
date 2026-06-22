@@ -9,6 +9,7 @@ import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.model.PlayerBingoProgress;
 import me.junick.itemBingo.util.BingoTagLoader;
 import me.junick.itemBingo.util.FogOfWar;
+import me.junick.itemBingo.util.Lockout;
 import me.junick.itemBingo.util.PlayerDataManager;
 import me.junick.itemBingo.util.ProgressFactory;
 import me.junick.itemBingo.util.TeamManager;
@@ -83,7 +84,7 @@ public class BingoGUI {
         );
 
         fillBackground(inv);
-        placeBingoItems(inv, board, progress, tightMode);
+        placeBingoItems(inv, board, progress, tightMode, p);
 
         p.openInventory(inv);
     }
@@ -110,14 +111,15 @@ public class BingoGUI {
 
         BingoProgressAccess progress = ProgressFactory.of(p);
         boolean tightMode = board.getHeight() > 4;
-        placeBingoItems(p.getOpenInventory().getTopInventory(), board, progress, tightMode);
+        placeBingoItems(p.getOpenInventory().getTopInventory(), board, progress, tightMode, p);
     }
 
     private static void placeBingoItems(
             Inventory inv,
             BingoBoard board,
             BingoProgressAccess progress,
-            boolean tightMode
+            boolean tightMode,
+            Player viewer
     ) {
         List<ItemStack> items = board.getItems();
         BingoTagLoader tagLoader = ItemBingo.getInstance().getTagLoader();
@@ -133,6 +135,9 @@ public class BingoGUI {
                         progress.getSubmittedSlots(), Settings.isFogDiagonalReveal())
                 : null;
 
+        // In Lockout, cells claimed by another team show as plain barriers.
+        Set<Integer> locked = Lockout.lockedSlots(viewer);
+
         for (int y = 0; y < board.getHeight(); y++) {
             for (int x = 0; x < board.getWidth(); x++) {
                 int index = y * board.getWidth() + x;
@@ -147,6 +152,8 @@ public class BingoGUI {
                             progress.getSubmitterName(index),
                             progressFraction(progress, owner, total)
                     ));
+                } else if (locked.contains(index)) {
+                    inv.setItem(slot, lockedIcon());
                 } else if (fog && !revealed.contains(index)) {
                     inv.setItem(slot, hiddenCell());
                 } else {
@@ -167,6 +174,31 @@ public class BingoGUI {
         meta.addEnchant(Enchantment.AQUA_AFFINITY, 1, true);
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
         meta.setHideTooltip(true);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * The icon shown for a Lockout cell already claimed by another team: a plain
+     * barrier with no durability bar (unlike the submitted-cell icon, which is a
+     * netherite axe styled as a barrier whose durability tracks progress). It just
+     * signals "another team got here first — this cell is gone".
+     */
+    private static ItemStack lockedIcon() {
+        ItemStack item = new ItemStack(Material.BARRIER);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(Component.text("✘ 선점됨", NamedTextColor.RED)
+                .decoration(TextDecoration.ITALIC, false)
+                .decoration(TextDecoration.BOLD, true));
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.text("다른 팀이 먼저 제출한 칸입니다.", NamedTextColor.GRAY)
+                .decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.text("더 이상 제출할 수 없습니다.", NamedTextColor.DARK_GRAY)
+                .decoration(TextDecoration.ITALIC, false));
+        meta.lore(lore);
+
         item.setItemMeta(meta);
         return item;
     }

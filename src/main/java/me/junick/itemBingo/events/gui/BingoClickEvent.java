@@ -92,10 +92,13 @@ public class BingoClickEvent implements Listener {
 
         // In Fog of War with submit-lock, auto-submit must not "find" hidden cells.
         Set<Integer> revealed = fogLockedRevealed(board, progress);
+        // In Lockout, auto-submit must skip cells another team already claimed.
+        Set<Integer> locked = lockoutBlocked(p);
 
         for (int idx = 0; idx < board.getItems().size(); idx++) {
             if (progress.isSubmitted(idx)) continue;
             if (revealed != null && !revealed.contains(idx)) continue;
+            if (locked != null && locked.contains(idx)) continue;
 
             ItemStack required = board.getItems().get(idx);
             if (!isMatchingItem(clicked, required)) continue;
@@ -113,6 +116,13 @@ public class BingoClickEvent implements Listener {
         // In Fog of War with submit-lock, a still-hidden cell can't be submitted to.
         Set<Integer> revealed = fogLockedRevealed(board, progress);
         if (revealed != null && !revealed.contains(idx)) return;
+
+        // In Lockout, a cell another team already claimed is off-limits.
+        Set<Integer> locked = lockoutBlocked(p);
+        if (locked != null && locked.contains(idx)) {
+            sendLockedMessage(p);
+            return;
+        }
 
         ItemStack submitted = e.getCursor();
         if (!isValidItem(submitted)) return;
@@ -145,6 +155,21 @@ public class BingoClickEvent implements Listener {
         return FogOfWar.revealedSlots(
                 board.getWidth(), board.getHeight(),
                 progress.getSubmittedSlots(), Settings.isFogDiagonalReveal());
+    }
+
+    /**
+     * In Lockout mode, the cells already claimed by another team — which {@code p}
+     * can no longer submit. {@code null} when not in Lockout mode (no restriction).
+     */
+    private Set<Integer> lockoutBlocked(Player p) {
+        if (!Settings.isLockoutMode()) return null;
+        return Lockout.lockedSlots(p);
+    }
+
+    /** 다른 팀이 선점한 칸 제출 시도 메세지 */
+    private void sendLockedMessage(Player p) {
+        p.sendMessage("§c다른 팀이 이미 선점한 칸입니다!");
+        playErrorSound(p);
     }
 
     /** 아이템이 null이 아니고 공기가 아닌지 확인  */
@@ -192,15 +217,21 @@ public class BingoClickEvent implements Listener {
             newlyRevealed = after.size();
         }
 
-        for (Player viewer : progress.viewers(p)) {
-            if (fog) {
-                // A submission can reveal neighbouring cells, so re-render the whole
-                // board (not just submitted icons).
-                BingoGUI.rerenderInPlace(viewer);
-            } else {
-                // Every submitted icon's durability bar reflects overall completion,
-                // which just changed, so refresh all of them (not only the new slot).
-                refreshSubmittedSlots(viewer, board, progress);
+        if (Settings.isLockoutMode()) {
+            // The claim locks this cell out for every other team, so re-render every
+            // open board (not just the submitter's team) to show the new barrier.
+            GuiSync.forEachViewer(BingoGUI.TITLE, BingoGUI::rerenderInPlace);
+        } else {
+            for (Player viewer : progress.viewers(p)) {
+                if (fog) {
+                    // A submission can reveal neighbouring cells, so re-render the whole
+                    // board (not just submitted icons).
+                    BingoGUI.rerenderInPlace(viewer);
+                } else {
+                    // Every submitted icon's durability bar reflects overall completion,
+                    // which just changed, so refresh all of them (not only the new slot).
+                    refreshSubmittedSlots(viewer, board, progress);
+                }
             }
         }
 

@@ -104,6 +104,9 @@ public class AdminGUI {
             case NORMAL -> inv.setItem(22, placeholder(
                     "추가 설정 없음", "일반 모드에는 별도 설정이 없습니다"));
 
+            case LOCKOUT -> inv.setItem(22, placeholder(
+                    "추가 설정 없음", "선점 모드에는 별도 설정이 없습니다"));
+
             case SWAPPAGE -> {
                 inv.setItem(21, toggleItem(
                         Material.CLOCK,
@@ -151,6 +154,7 @@ public class AdminGUI {
             case NORMAL -> Material.WHITE_WOOL;
             case SWAPPAGE -> Material.ENDER_EYE;
             case FOG_OF_WAR -> Material.LIGHT_GRAY_STAINED_GLASS;
+            case LOCKOUT -> Material.IRON_BARS;
         };
 
         ItemStack it = new ItemStack(mat);

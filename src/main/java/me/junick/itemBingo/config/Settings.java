@@ -19,7 +19,8 @@ public class Settings {
     public enum GameMode {
         NORMAL("일반"),
         SWAPPAGE("Swappage"),
-        FOG_OF_WAR("Fog of War");
+        FOG_OF_WAR("Fog of War"),
+        LOCKOUT("Lockout");
 
         private final String display;
 
@@ -115,13 +116,15 @@ public class Settings {
     public static GameMode getGameMode() { return gameMode; }
     public static boolean isPositionSwapMode() { return gameMode == GameMode.SWAPPAGE; }
     public static boolean isFogOfWarMode() { return gameMode == GameMode.FOG_OF_WAR; }
+    public static boolean isLockoutMode() { return gameMode == GameMode.LOCKOUT; }
 
-    /** Cycle Normal → Swappage → Fog of War → Normal. */
+    /** Cycle Normal → Swappage → Fog of War → Lockout → Normal. */
     public static void cycleGameMode() {
         gameMode = switch (gameMode) {
             case NORMAL -> GameMode.SWAPPAGE;
             case SWAPPAGE -> GameMode.FOG_OF_WAR;
-            case FOG_OF_WAR -> GameMode.NORMAL;
+            case FOG_OF_WAR -> GameMode.LOCKOUT;
+            case LOCKOUT -> GameMode.NORMAL;
         };
     }
 
