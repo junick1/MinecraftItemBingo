@@ -80,6 +80,9 @@ public class BingoClickEvent implements Listener {
         // Oversized boards render in a scrollable viewport; the four edge arrows
         // pan the view by one cell rather than submitting anything.
         if (BingoViewport.needsScroll(board) && BingoViewport.isArrowSlot(slot)) {
+            // A fast double-tap fires a normal click AND a synthetic DOUBLE_CLICK on
+            // the same slot; ignore the latter so one tap scrolls exactly one cell.
+            if (e.getClick() == ClickType.DOUBLE_CLICK) return;
             handleScrollClick(p, board, slot);
             return;
         }
