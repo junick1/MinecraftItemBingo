@@ -1,6 +1,8 @@
 package me.junick.itemBingo.events;
 
+import io.papermc.paper.event.player.PlayerArmSwingEvent;
 import me.junick.itemBingo.ItemBingo;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.entity.Player;
@@ -27,20 +29,23 @@ public class LungeMovement implements Listener {
         if (!event.getAction().isLeftClick()) {
             return;
         }
+        Bukkit.broadcastMessage("샌즈 1");
 
         // 2. 아이템이 우리가 설정한 그 "창"인지 확인합니다 (이름이나 PDC 사용)
         if (item == null || !item.getType().name().toLowerCase().contains("spear")) return;
+        Bukkit.broadcastMessage("샌즈 2");
 
         // 아리스의 추천: 이름으로 판별하기 (PDC를 쓰면 더 좋지만 일단 이름으로!)
         if (!item.getItemMeta().getDisplayName().contains("특정한 창 이름")) return;
 
+        Bukkit.broadcastMessage("샌즈 3");
         // 3. ⭐ 핵심: 플레이어의 공격 쿨타임이 꽉 찼는지 확인합니다!
         // getCooledAttackStrength는 0.0 ~ 1.0 사이의 값을 반환해요. 1.0이 완충 상태입니다.
-        if (player.getCooledAttackStrength(0.5f) < 0.9f) {
+        if (player.getCooledAttackStrength(0.0f) > 0.9f) {
             // 아직 쿨타임 중이라면 발동시키지 않아요!
             return;
         }
-
+        Bukkit.broadcastMessage("샌즈 4");
 
         var init_velocity = player.getLocation().getDirection().normalize().multiply(1.0);
         var velocity = player.getLocation().getDirection().normalize().multiply(0.1);
@@ -48,6 +53,7 @@ public class LungeMovement implements Listener {
         var initial = player.getVelocity();
         player.setVelocity(initial.add(init_velocity));
 
+        Bukkit.broadcastMessage("샌즈 5");
         new BukkitRunnable() {
             int timer = 0;
             final int duration = 10; // 10틱 동안 지속 (0.5초)
@@ -75,7 +81,7 @@ public class LungeMovement implements Listener {
 
 
         // 5. (선택 사항) 돌진 후 공격 쿨타임을 강제로 초기화하고 싶다면?
-        // player.resetCooldown();
+        player.resetCooldown();
     }
 
 }
