@@ -30,7 +30,7 @@ public class BiomeMapEvent extends MapItemListener<BingoBiome> {
     @Override
     protected Location locate(World world, Location from, BingoBiome option) {
         // Runs on the main thread: Bukkit world/chunk access is not thread-safe.
-        var res = world.locateNearestBiome(from, SEARCH_RADIUS_BLOCKS, HORIZONTAL_STEP, VERTICAL_STEP, option.getBiome());
+        var res = world.locateNearestBiome(from, SEARCH_RADIUS_BLOCKS, HORIZONTAL_STEP, VERTICAL_STEP, option.getBiomes());
         return res == null ? null : res.getLocation();
     }
 
