@@ -7,6 +7,7 @@ import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.records.ranking.RankingEntry;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -49,7 +50,7 @@ public class BingoScoreboard {
         objective.getScore(Messages.legacy(loc(), "scoreboard.hidden1")).setScore(3);
         objective.getScore(Messages.legacy(loc(), "scoreboard.hidden2")).setScore(2);
         objective.getScore("  ").setScore(1);
-        Bukkit.getOnlinePlayers().forEach(p -> p.setScoreboard(BOARD));
+        assignToViewers();
     }
 
     private static void initializeObjective() {
@@ -91,7 +92,21 @@ public class BingoScoreboard {
             objective.getScore(placeholder).setScore(scoreRow);
         }
 
-        Bukkit.getOnlinePlayers().forEach(p -> p.setScoreboard(BOARD));
+        assignToViewers();
+    }
+
+    /**
+     * Points every online player at the shared sidebar, but only if they aren't
+     * already viewing it. The sidebar is a single shared {@link Scoreboard}, so
+     * score changes propagate to current viewers for free — re-assigning the same
+     * board every tick just sends redundant packets. Guarding on the current
+     * board means a freshly joined player is picked up within a tick while
+     * everyone else is left untouched.
+     */
+    private static void assignToViewers() {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (p.getScoreboard() != BOARD) p.setScoreboard(BOARD);
+        }
     }
 
     private static String formatEntry(int rank, String name, int score, long totalSeconds) {

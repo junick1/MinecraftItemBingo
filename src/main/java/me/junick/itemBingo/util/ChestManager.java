@@ -203,15 +203,20 @@ public final class ChestManager implements Listener {
         if (!(e.getInventory().getHolder() instanceof ChestHolder holder)) return;
 
         Inventory inv = e.getInventory();
+        // Capture the closing player's moves into the backing array immediately, so
+        // even if other viewers remain the latest state is held in memory (and gets
+        // persisted on the next empty-out or on disable).
         syncToBacking(holder.getKey(), inv);
 
         // The closing player is still counted as a viewer during this event, so
-        // check on the next tick whether the chest is now empty of viewers.
+        // check on the next tick whether the chest is now empty of viewers. Only
+        // then do we drop the live inventory and write chests.yml — re-serializing
+        // every chest on each close while teammates are still browsing is wasteful.
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (inv.getViewers().isEmpty()) {
                 live.remove(holder.getKey());
+                save();
             }
-            save();
         });
     }
 

@@ -23,28 +23,8 @@ public class TeamRankingProvider implements RankingProvider {
             allProgress.put(teamId, TeamDataManager.get(teamId));
         }
 
-        Settings.Penalty penalty = Settings.getPenaltySystem();
-
-        List<Map.Entry<Integer, TeamBingoProgress>> entries =
-                new ArrayList<>(allProgress.entrySet());
-
-        entries.sort(Map.Entry.comparingByValue(RankingSupport.comparator(penalty)));
-
-        int realLimit = (limit <= 0)
-                ? entries.size()
-                : Math.min(limit, entries.size());
-
-        List<RankingEntry> out = new ArrayList<>();
-
-        for (int i = 0; i < realLimit; i++) {
-            int teamId = entries.get(i).getKey();
-            TeamBingoProgress prog = entries.get(i).getValue();
-
-            String name = buildTeamName(teamId, tm);
-
-            out.add(RankingSupport.toEntry(name, prog, penalty));
-        }
-        return out;
+        return RankingSupport.rank(allProgress, limit, Settings.getPenaltySystem(),
+                teamId -> buildTeamName(teamId, tm));
     }
 
     private String buildTeamName(int teamId, TeamManager tm) {

@@ -16,7 +16,6 @@ import me.junick.itemBingo.events.items.*;
 import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.util.*;
 import org.bukkit.*;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ItemBingo extends JavaPlugin {
@@ -136,10 +135,10 @@ public final class ItemBingo extends JavaPlugin {
         getCommand("editbingo").setTabCompleter(eb);
 
         getCommand("startbingo").setExecutor(new StartBingoCommand());
-        getCommand("pointadd").setExecutor((CommandExecutor)new PointCommand());
-        getCommand("customitem").setExecutor((CommandExecutor)new CustomItemCommand());
-        getCommand("setbundle").setExecutor((CommandExecutor)new SetBundleCommand());
-        getCommand("bundle").setExecutor((CommandExecutor)new BundleCommand());
+        getCommand("pointadd").setExecutor(new PointCommand());
+        getCommand("customitem").setExecutor(new CustomItemCommand());
+        getCommand("setbundle").setExecutor(new SetBundleCommand());
+        getCommand("bundle").setExecutor(new BundleCommand());
 
 //        MaterialExporter.exportToFile();
 

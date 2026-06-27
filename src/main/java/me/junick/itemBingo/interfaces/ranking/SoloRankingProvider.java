@@ -20,24 +20,10 @@ public class SoloRankingProvider implements RankingProvider {
             allProgress.put(p.getUniqueId(), PlayerDataManager.get(p));
         }
 
-        Settings.Penalty penalty = Settings.getPenaltySystem();
-
-        List<Map.Entry<UUID, PlayerBingoProgress>> entries = new ArrayList<>(allProgress.entrySet());
-        entries.sort(Map.Entry.comparingByValue(RankingSupport.comparator(penalty)));
-
-        int realLimit = (limit <= 0) ? entries.size() : Math.min(limit, entries.size());
-
-        List<RankingEntry> out = new ArrayList<>();
-        for (int i = 0; i < realLimit; i++) {
-            UUID id = entries.get(i).getKey();
-            PlayerBingoProgress prog = entries.get(i).getValue();
-
+        return RankingSupport.rank(allProgress, limit, Settings.getPenaltySystem(), id -> {
             OfflinePlayer op = Bukkit.getOfflinePlayer(id);
-            String name = (op.getName() != null) ? op.getName()
+            return (op.getName() != null) ? op.getName()
                     : Messages.legacy(Settings.getDefaultLanguage(), "rank.unknown-player");
-
-            out.add(RankingSupport.toEntry(name, prog, penalty));
-        }
-        return out;
+        });
     }
 }

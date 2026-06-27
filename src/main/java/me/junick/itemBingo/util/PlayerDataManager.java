@@ -52,7 +52,8 @@ public class PlayerDataManager {
 
         Map<UUID, PlayerBingoProgress> all = new HashMap<>();
         for (UUID uuid : listAllUUIDs()) {
-            all.put(uuid, load(uuid));
+            // Prefer the live in-memory progress over a fresh disk parse.
+            all.put(uuid, data.getOrDefault(uuid, load(uuid)));
         }
 
         allDataCache = all;
@@ -108,7 +109,6 @@ public class PlayerDataManager {
             invalidateAllDataCache();
         } catch (IOException e) {
             Bukkit.getLogger().severe("[ItemBingo] Failed to save data for " + uuid + ": " + e.getMessage());
-            e.printStackTrace();
         }
     }
 
