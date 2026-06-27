@@ -1,6 +1,8 @@
 package me.junick.itemBingo.commands;
 
 import me.junick.itemBingo.enums.BingoItem;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.util.CustomItems;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -16,26 +18,26 @@ public class CustomItemCommand implements CommandExecutor, Listener {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!(sender instanceof Player p)) {
-            sender.sendMessage("§c이 명령어는 플레이어만 사용할 수 있습니다.");
+            sender.sendMessage(Messages.get(sender, "command.players-only"));
             return true;
         }
-        Inventory inv = Bukkit.createInventory(null, 54, "커스텀 아이템");
-        inv.addItem();
-        var copper = CustomItems.get(BingoItem.COPPER_OXIDIZER);
+        SupportedLocale loc = Messages.localeOf(p);
+        Inventory inv = Bukkit.createInventory(null, 54, Messages.get(loc, "command.customitem.title"));
+        var copper = CustomItems.get(BingoItem.COPPER_OXIDIZER, loc);
         copper.setAmount(64);
-        var filler = CustomItems.get(BingoItem.BINGO_FILLER);
+        var filler = CustomItems.get(BingoItem.BINGO_FILLER, loc);
         filler.setAmount(64);
-        var dye = CustomItems.get(BingoItem.DYE_SELECTOR);
+        var dye = CustomItems.get(BingoItem.DYE_SELECTOR, loc);
         dye.setAmount(64);
         inv.addItem(copper);
         inv.addItem(filler);
         inv.addItem(dye);
-        inv.addItem(CustomItems.get(BingoItem.EXPLORER_MAP));
-        inv.addItem(CustomItems.get(BingoItem.EXPLORER_MAP));
-        inv.addItem(CustomItems.get(BingoItem.EXPLORER_MAP));
-        inv.addItem(CustomItems.get(BingoItem.BIOME_MAP));
-        inv.addItem(CustomItems.get(BingoItem.BIOME_MAP));
-        inv.addItem(CustomItems.get(BingoItem.BIOME_MAP));
+        inv.addItem(CustomItems.get(BingoItem.EXPLORER_MAP, loc));
+        inv.addItem(CustomItems.get(BingoItem.EXPLORER_MAP, loc));
+        inv.addItem(CustomItems.get(BingoItem.EXPLORER_MAP, loc));
+        inv.addItem(CustomItems.get(BingoItem.BIOME_MAP, loc));
+        inv.addItem(CustomItems.get(BingoItem.BIOME_MAP, loc));
+        inv.addItem(CustomItems.get(BingoItem.BIOME_MAP, loc));
         p.openInventory(inv);
         return true;
     }

@@ -1,11 +1,10 @@
 package me.junick.itemBingo.gui;
 
-import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.util.IconGenerator;
 import me.junick.itemBingo.util.TimerManager;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -14,11 +13,16 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class MenuGUI {
-    public static final String TITLE = "§6빙고 메뉴";
+    /** Title message key. GUI identity is the {@link BingoGuiHolder} marker, not the title. */
+    public static final String TITLE_KEY = "gui.menu.title";
+
+    /** Button slots (used by {@code MenuClickEvent} for locale-independent routing). */
+    public static final int SLOT_RANK = 10;
+    public static final int SLOT_BOARD = 12;
+    public static final int SLOT_SHOP = 14;
+    public static final int SLOT_CHEST = 16;
+    public static final int SLOT_RESULTS = 22;
 
     public static void openMain(Player p) {
         openMain(p, true);
@@ -29,9 +33,11 @@ public class MenuGUI {
      *                  refresh), so the open sound isn't replayed on every update.
      */
     public static void openMain(Player p, boolean playSound) {
-        ItemBingo plugin = ItemBingo.getInstance();
+        SupportedLocale loc = Messages.localeOf(p);
 
-        Inventory inv = Bukkit.createInventory(null, 27, TITLE);
+        BingoGuiHolder holder = new BingoGuiHolder(BingoGuiHolder.Gui.MENU);
+        Inventory inv = Bukkit.createInventory(holder, 27, Messages.get(loc, TITLE_KEY));
+        holder.setInventory(inv);
 
         ItemStack grayGlass = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta grayMeta = grayGlass.getItemMeta(); grayMeta.setHideTooltip(true); grayGlass.setItemMeta(grayMeta);
@@ -39,19 +45,22 @@ public class MenuGUI {
             inv.setItem(i, grayGlass);
         }
 
-        inv.setItem(10, IconGenerator.icon(Material.OAK_SIGN, "§e랭킹 보기", "§7현재 빙고 랭킹을 확인합니다."));
-        inv.setItem(12, IconGenerator.icon(Material.MAP, "§b빙고판 보기", "§7현재 빙고판을 확인합니다."));
-        inv.setItem(14, Settings.isShopEnabled()
-                ? IconGenerator.icon(Material.EMERALD, "§a빙고 상점", "§7빙고 상점을 엽니다.")
-                : IconGenerator.icon(Material.GRAY_DYE, "§7빙고 상점 §8(비활성화)", "§c관리자에 의해 비활성화되었습니다."));
-        inv.setItem(16, Settings.isChestEnabled()
-                ? IconGenerator.icon(Material.ENDER_CHEST, "§d창고", Settings.isTeamEnabled() ? "§7팀 공유 창고를 엽니다." : "§7개인 창고를 엽니다.")
-                : IconGenerator.icon(Material.GRAY_DYE, "§7창고 §8(비활성화)", "§c관리자에 의해 비활성화되었습니다."));
+        inv.setItem(SLOT_RANK, IconGenerator.icon(Material.OAK_SIGN,
+                Messages.legacy(loc, "gui.menu.rank.name"), Messages.legacy(loc, "gui.menu.rank.lore")));
+        inv.setItem(SLOT_BOARD, IconGenerator.icon(Material.MAP,
+                Messages.legacy(loc, "gui.menu.board.name"), Messages.legacy(loc, "gui.menu.board.lore")));
+        inv.setItem(SLOT_SHOP, Settings.isShopEnabled()
+                ? IconGenerator.icon(Material.EMERALD, Messages.legacy(loc, "gui.menu.shop.name"), Messages.legacy(loc, "gui.menu.shop.lore"))
+                : IconGenerator.icon(Material.GRAY_DYE, Messages.legacy(loc, "gui.menu.shop-disabled.name"), Messages.legacy(loc, "common.disabled-by-admin")));
+        inv.setItem(SLOT_CHEST, Settings.isChestEnabled()
+                ? IconGenerator.icon(Material.ENDER_CHEST, Messages.legacy(loc, "gui.menu.chest.name"),
+                        Settings.isTeamEnabled() ? Messages.legacy(loc, "gui.menu.chest.lore-team") : Messages.legacy(loc, "gui.menu.chest.lore-solo"))
+                : IconGenerator.icon(Material.GRAY_DYE, Messages.legacy(loc, "gui.menu.chest-disabled.name"), Messages.legacy(loc, "common.disabled-by-admin")));
 
         // Last game's results — only available once the timer stops.
-        inv.setItem(22, TimerManager.isRunning()
-                ? IconGenerator.icon(Material.GRAY_DYE, "§7게임 결과 §8(진행 중)", "§c게임이 끝난 후 확인할 수 있습니다.")
-                : IconGenerator.icon(Material.KNOWLEDGE_BOOK, "§6게임 결과", "§7지난 게임의 결과를 확인합니다."));
+        inv.setItem(SLOT_RESULTS, TimerManager.isRunning()
+                ? IconGenerator.icon(Material.GRAY_DYE, Messages.legacy(loc, "gui.menu.results-running.name"), Messages.legacy(loc, "gui.menu.results-running.lore"))
+                : IconGenerator.icon(Material.KNOWLEDGE_BOOK, Messages.legacy(loc, "gui.menu.results.name"), Messages.legacy(loc, "gui.menu.results.lore")));
 
         if (playSound) {
             p.playSound(p.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.0f);

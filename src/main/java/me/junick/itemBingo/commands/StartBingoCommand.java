@@ -3,6 +3,7 @@ package me.junick.itemBingo.commands;
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.BundleManager;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.util.ConfirmationManager;
 import me.junick.itemBingo.util.TeamManager;
 import me.junick.itemBingo.util.TimerManager;
@@ -23,7 +24,7 @@ public class StartBingoCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
         if (args.length != 1) {
-            sender.sendMessage("§c사용법: /startbingo <초>");
+            sender.sendMessage(Messages.get(sender, "command.startbingo.usage"));
             return true;
         }
 
@@ -31,12 +32,12 @@ public class StartBingoCommand implements CommandExecutor, TabCompleter {
         try {
             seconds = Integer.parseInt(args[0]);
         } catch (NumberFormatException e) {
-            sender.sendMessage("§c올바른 정수를 입력하세요.");
+            sender.sendMessage(Messages.get(sender, "command.startbingo.invalid-number"));
             return true;
         }
 
         if (!ConfirmationManager.confirm(sender, "startbingo")) {
-            sender.sendMessage("§c§l[경고] §f게임을 시작하면 모든 플레이어의 인벤토리가 비워지고 리스폰됩니다.");
+            sender.sendMessage(Messages.get(sender, "command.startbingo.warn"));
 
             // In team mode, warn about players who haven't been assigned to a team
             // (OPs excluded) — they won't be able to see or submit to the board.
@@ -45,11 +46,11 @@ public class StartBingoCommand implements CommandExecutor, TabCompleter {
                 List<Player> unassigned = tm.getUnassignedOnlinePlayers();
                 if (!unassigned.isEmpty()) {
                     String names = unassigned.stream().map(Player::getName).collect(java.util.stream.Collectors.joining(", "));
-                    sender.sendMessage("§c§l[경고] §f팀에 배정되지 않은 플레이어가 있습니다: §e" + names);
+                    sender.sendMessage(Messages.get(sender, "command.startbingo.unassigned", "names", names));
                 }
             }
 
-            sender.sendMessage("§e계속하려면 10초 안에 §f/startbingo " + seconds + "§e을(를) 다시 입력하세요.");
+            sender.sendMessage(Messages.get(sender, "command.startbingo.confirm", "seconds", seconds));
             return true;
         }
 
@@ -62,7 +63,7 @@ public class StartBingoCommand implements CommandExecutor, TabCompleter {
             BundleManager.getBundle(player);
         }
 
-        sender.sendMessage("§a빙고가 " + seconds + "초 동안 시작되었습니다.");
+        sender.sendMessage(Messages.get(sender, "command.startbingo.started", "seconds", seconds));
         return true;
     }
 

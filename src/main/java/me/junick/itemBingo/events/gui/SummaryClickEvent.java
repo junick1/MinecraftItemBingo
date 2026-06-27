@@ -1,6 +1,6 @@
 package me.junick.itemBingo.events.gui;
 
-import me.junick.itemBingo.gui.SummaryGUI;
+import me.junick.itemBingo.gui.BingoGuiHolder;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -17,7 +17,7 @@ public class SummaryClickEvent implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
-        if (!SummaryGUI.TITLE.equals(e.getView().getTitle())) return;
+        if (!BingoGuiHolder.is(e.getView().getTopInventory(), BingoGuiHolder.Gui.SUMMARY)) return;
 
         e.setCancelled(true);
 

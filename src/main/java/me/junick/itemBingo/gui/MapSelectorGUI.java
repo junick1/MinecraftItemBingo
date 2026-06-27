@@ -1,6 +1,8 @@
 package me.junick.itemBingo.gui;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.interfaces.MapOption;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -19,11 +21,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Generic selector for the custom map items. Lays out one icon per option, with
- * a reserved control row holding a close button, and marks each selectable
- * option with a persistent-data tag (rather than relying on its icon material).
- * Options not usable in the player's current dimension are greyed out and left
- * untagged, so they can't be selected at all.
+ * Generic selector for the custom map items. Identified by a {@link BingoGuiHolder}
+ * of type {@code MAP_SELECTOR} whose {@code context} is the trigger item's name, so
+ * the biome and explorer selectors are distinguished without relying on the (now
+ * localized) title. Options not usable in the player's current dimension are greyed
+ * out and left untagged, so they can't be selected at all.
  */
 public class MapSelectorGUI {
 
@@ -40,7 +42,8 @@ public class MapSelectorGUI {
         return new NamespacedKey(ItemBingo.getInstance(), "map_cancel");
     }
 
-    public static <T extends Enum<T> & MapOption> void open(Player player, String title, T[] options, Environment env) {
+    public static <T extends Enum<T> & MapOption> void open(Player player, String titleKey, String context, T[] options, Environment env) {
+        SupportedLocale loc = Messages.localeOf(player);
         int count = options.length;
 
         // One row per 9 options, plus a reserved bottom row for controls.
@@ -49,14 +52,16 @@ public class MapSelectorGUI {
         int size = rows * COLS;
         int capacity = size - COLS; // last row reserved for controls
 
-        Inventory inv = Bukkit.createInventory(null, size, title);
+        BingoGuiHolder holder = new BingoGuiHolder(BingoGuiHolder.Gui.MAP_SELECTOR, context);
+        Inventory inv = Bukkit.createInventory(holder, size, Messages.get(loc, titleKey));
+        holder.setInventory(inv);
 
         NamespacedKey key = optionKey();
         ItemStack filler = filler();
 
         for (int i = 0; i < capacity; i++) {
             if (i < count) {
-                inv.setItem(i, optionIcon(options[i], env, key));
+                inv.setItem(i, optionIcon(options[i], env, key, loc));
             } else {
                 inv.setItem(i, filler);
             }
@@ -67,30 +72,30 @@ public class MapSelectorGUI {
         for (int i = capacity; i < size; i++) {
             inv.setItem(i, filler);
         }
-        inv.setItem(size - 5, closeButton());
+        inv.setItem(size - 5, closeButton(loc));
 
         player.openInventory(inv);
     }
 
-    private static <T extends Enum<T> & MapOption> ItemStack optionIcon(T opt, Environment env, NamespacedKey key) {
+    private static <T extends Enum<T> & MapOption> ItemStack optionIcon(T opt, Environment env, NamespacedKey key, SupportedLocale loc) {
         boolean usable = opt.getDimension() == env;
 
         ItemStack item = new ItemStack(usable ? opt.getIcon() : Material.GRAY_DYE);
         ItemMeta meta = item.getItemMeta();
 
-        meta.itemName(Component.text(opt.getName(), usable ? NamedTextColor.LIGHT_PURPLE : NamedTextColor.DARK_GRAY)
+        meta.itemName(Component.text(opt.displayName(loc), usable ? NamedTextColor.LIGHT_PURPLE : NamedTextColor.DARK_GRAY)
                 .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
-        lore.add(Component.text("차원: " + dimensionName(opt.getDimension()), NamedTextColor.GRAY)
+        lore.add(Messages.get(loc, "items.mapselector.dimension", "dim", dimensionName(opt.getDimension(), loc))
                 .decoration(TextDecoration.ITALIC, false));
         lore.add(Component.empty());
         if (usable) {
-            lore.add(Component.text("클릭하여 지도 생성", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+            lore.add(Messages.get(loc, "items.mapselector.click-to-create").decoration(TextDecoration.ITALIC, false));
             // Only usable options are tagged → out-of-dimension picks are impossible.
             meta.getPersistentDataContainer().set(key, PersistentDataType.STRING, opt.name());
         } else {
-            lore.add(Component.text("✖ 현재 차원에서 사용할 수 없습니다", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+            lore.add(Messages.get(loc, "items.mapselector.wrong-dimension").decoration(TextDecoration.ITALIC, false));
         }
         meta.lore(lore);
 
@@ -98,11 +103,11 @@ public class MapSelectorGUI {
         return item;
     }
 
-    private static ItemStack closeButton() {
+    private static ItemStack closeButton(SupportedLocale loc) {
         ItemStack it = new ItemStack(Material.BARRIER);
         ItemMeta meta = it.getItemMeta();
-        meta.itemName(Component.text("닫기", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
-        meta.lore(List.of(Component.text("선택을 취소하고 닫습니다.", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)));
+        meta.itemName(Messages.get(loc, "items.mapselector.close.name").decoration(TextDecoration.ITALIC, false));
+        meta.lore(List.of(Messages.get(loc, "items.mapselector.close.lore").decoration(TextDecoration.ITALIC, false)));
         meta.getPersistentDataContainer().set(cancelKey(), PersistentDataType.BYTE, (byte) 1);
         it.setItemMeta(meta);
         return it;
@@ -116,11 +121,12 @@ public class MapSelectorGUI {
         return it;
     }
 
-    public static String dimensionName(Environment env) {
-        return switch (env) {
-            case NETHER -> "네더";
-            case THE_END -> "엔드";
-            default -> "오버월드";
+    public static String dimensionName(Environment env, SupportedLocale loc) {
+        String key = switch (env) {
+            case NETHER -> "dimension.nether";
+            case THE_END -> "dimension.the_end";
+            default -> "dimension.normal";
         };
+        return Messages.legacy(loc, key);
     }
 }

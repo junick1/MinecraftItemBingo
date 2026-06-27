@@ -1,6 +1,7 @@
 package me.junick.itemBingo.commands;
 
 import me.junick.itemBingo.enums.BingoRewardType;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.util.PlayerDataManager;
 import me.junick.itemBingo.util.ProgressFactory;
 import org.bukkit.Bukkit;
@@ -20,12 +21,12 @@ public class PointCommand
 implements CommandExecutor, TabCompleter {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
         if (args.length != 3) {
-            sender.sendMessage("§c사용법: /pointadd <플레이어> <diamond|line|slot> <수량>");
+            sender.sendMessage(Messages.get(sender, "command.point.usage"));
             return true;
         }
         var p = Bukkit.getPlayer(args[0]);
         if (p == null) {
-            sender.sendMessage("§c플레이어를 찾을 수 없습니다: " + args[0]);
+            sender.sendMessage(Messages.get(sender, "command.point.no-player", "player", args[0]));
             return true;
         }
         int amount;
@@ -33,7 +34,7 @@ implements CommandExecutor, TabCompleter {
             amount = Integer.parseInt(args[2]);
         }
         catch (NumberFormatException e) {
-            sender.sendMessage("§c올바른 숫자를 입력하세요.");
+            sender.sendMessage(Messages.get(sender, "command.invalid-number"));
             return true;
         }
         var prog = ProgressFactory.of(p);
@@ -42,7 +43,8 @@ implements CommandExecutor, TabCompleter {
             case "line" -> prog.addCurrency(p, BingoRewardType.LINE, amount);
             case "slot" -> prog.addCurrency(p, BingoRewardType.SLOT, amount);
         }
-        sender.sendMessage(String.format("%s에게 %s %d개를 주었다", p.getName(), args[1].toLowerCase(), amount));
+        sender.sendMessage(Messages.get(sender, "command.point.given",
+                "player", p.getName(), "type", args[1].toLowerCase(), "amount", amount));
         return true;
     }
 

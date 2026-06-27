@@ -1,5 +1,6 @@
 package me.junick.itemBingo.interfaces;
 
+import me.junick.itemBingo.i18n.SupportedLocale;
 import org.bukkit.Material;
 import org.bukkit.World.Environment;
 
@@ -9,8 +10,8 @@ import org.bukkit.World.Environment;
  * written once, generically, instead of duplicated per map type.
  */
 public interface MapOption {
-    /** Korean display name. */
-    String getName();
+    /** Localized display name. */
+    String displayName(SupportedLocale loc);
 
     /** Icon shown in the selector GUI. */
     Material getIcon();

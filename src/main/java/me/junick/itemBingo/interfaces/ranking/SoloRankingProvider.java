@@ -1,6 +1,7 @@
 package me.junick.itemBingo.interfaces.ranking;
 
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.model.PlayerBingoProgress;
 import me.junick.itemBingo.records.ranking.RankingEntry;
 import me.junick.itemBingo.util.PlayerDataManager;
@@ -32,7 +33,8 @@ public class SoloRankingProvider implements RankingProvider {
             PlayerBingoProgress prog = entries.get(i).getValue();
 
             OfflinePlayer op = Bukkit.getOfflinePlayer(id);
-            String name = (op.getName() != null) ? op.getName() : "알 수 없는 플레이어";
+            String name = (op.getName() != null) ? op.getName()
+                    : Messages.legacy(Settings.getDefaultLanguage(), "rank.unknown-player");
 
             out.add(RankingSupport.toEntry(name, prog, penalty));
         }

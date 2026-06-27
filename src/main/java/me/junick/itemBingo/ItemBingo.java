@@ -5,6 +5,7 @@ import me.junick.itemBingo.admin.AdminCommand;
 import me.junick.itemBingo.commands.*;
 import me.junick.itemBingo.config.BundleManager;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.gui.BingoViewport;
 import me.junick.itemBingo.events.ChatListener;
 import me.junick.itemBingo.events.EffectListener;
@@ -37,6 +38,9 @@ public final class ItemBingo extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
+        // Load localized message bundles before anything user-facing runs.
+        Messages.init(this);
+
         // Extract the default bundle templates on first run (does not overwrite admin edits).
         saveResource("bundle.yml", false);
 
@@ -45,6 +49,7 @@ public final class ItemBingo extends JavaPlugin {
         teamManager = new TeamManager(this);
 
         ChatManager.load();
+        LanguageManager.load();
         ChestManager.init(this);
 
         KEY_EFFECT = new NamespacedKey(this, "effect");
@@ -103,6 +108,10 @@ public final class ItemBingo extends JavaPlugin {
         getCommand("chat").setTabCompleter(chat);
         getCommand("ac").setExecutor(new AllChatCommand());
         getCommand("tc").setExecutor(new TeamChatCommand());
+
+        LanguageCommand lang = new LanguageCommand();
+        getCommand("language").setExecutor(lang);
+        getCommand("language").setTabCompleter(lang);
 
         getCommand("bingo").setExecutor(new ViewBingo());
         getCommand("rank").setExecutor(new RankCommand());
@@ -191,5 +200,6 @@ public final class ItemBingo extends JavaPlugin {
         Settings.save(this);
         ChatManager.save();
         ChestManager.save();
+        LanguageManager.save();
     }
 }

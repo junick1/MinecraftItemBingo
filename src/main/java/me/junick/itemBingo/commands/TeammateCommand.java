@@ -1,6 +1,8 @@
 package me.junick.itemBingo.commands;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.util.TeamManager;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
@@ -16,30 +18,32 @@ public class TeammateCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
         if (!(sender instanceof Player p)) {
-            sender.sendMessage("§c이 명령어는 플레이어만 사용할 수 있습니다.");
+            sender.sendMessage(Messages.get(sender, "command.players-only"));
             return true;
         }
 
+        SupportedLocale loc = Messages.localeOf(p);
         TeamManager tm = ItemBingo.getInstance().getTeamManager();
 
         int teamId = tm.getTeamId(p);
         if (teamId == TeamManager.NO_TEAM) {
-            sender.sendMessage("§c팀에 속해 있지 않습니다!");
+            p.sendMessage(Messages.get(p, "command.teammate.no-team"));
             return true;
         }
 
         if (teamId < 0 || teamId >= tm.getTeamCount()) {
-            sender.sendMessage("§c오류! 팀 번호가 범위를 벗어났습니다. (1.." + tm.getTeamCount() + ")");
+            p.sendMessage(Messages.get(p, "command.teammate.out-of-range", "count", tm.getTeamCount()));
             return true;
         }
 
         List<Player> online = tm.getOnlinePlayersOnTeam(teamId);
-        p.sendMessage("§b[팀 " + (teamId + 1) + "] §f(" + online.size() + "명) §7" + joinNames(online));
+        String names = online.isEmpty() ? Messages.legacy(loc, "command.teammate.none") : joinNames(online);
+        p.sendMessage(Messages.get(p, "command.teammate.list",
+                "team", teamId + 1, "count", online.size(), "names", names));
         return true;
     }
 
     private String joinNames(List<? extends OfflinePlayer> ps) {
-        if (ps == null || ps.isEmpty()) return "§7(없음)";
         return ps.stream().map(this::name).collect(Collectors.joining("§7, §f"));
     }
 

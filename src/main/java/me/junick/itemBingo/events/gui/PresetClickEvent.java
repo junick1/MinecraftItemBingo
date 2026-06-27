@@ -3,11 +3,12 @@ package me.junick.itemBingo.events.gui;
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.PresetManager;
 import me.junick.itemBingo.config.PresetManager.PresetInfo;
+import me.junick.itemBingo.gui.BingoGuiHolder;
 import me.junick.itemBingo.gui.PresetEditorGUI;
 import me.junick.itemBingo.gui.PresetGUI;
 import me.junick.itemBingo.gui.PresetGUI.Mode;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.model.BingoBoard;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -27,9 +28,10 @@ public class PresetClickEvent implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
-        String title = LegacyComponentSerializer.legacySection().serialize(e.getView().title());
-        Mode mode = PresetGUI.modeOf(title);
-        if (mode == null) return;
+
+        BingoGuiHolder holder = BingoGuiHolder.of(e.getView().getTopInventory());
+        if (holder == null || holder.type() != BingoGuiHolder.Gui.PRESET) return;
+        Mode mode = Mode.valueOf(holder.context());
 
         e.setCancelled(true); // read-only browser — nothing is ever moved
 
@@ -55,12 +57,12 @@ public class PresetClickEvent implements Listener {
         // Apply mode.
         PresetInfo info = PresetManager.getInfo(id);
         if (info == null) {
-            p.sendMessage("§c프리셋을 찾을 수 없습니다: " + id);
+            p.sendMessage(Messages.get(p, "command.setbingo.not-found", "id", id));
             return;
         }
         if (!info.isComplete()) {
-            p.sendMessage("§c미완성 프리셋입니다 (" + info.filled() + "/" + info.slotCount()
-                    + "). §7/editbingo " + id + " §c에서 먼저 완료하세요.");
+            p.sendMessage(Messages.get(p, "command.setbingo.incomplete",
+                    "filled", info.filled(), "slots", info.slotCount(), "id", id));
             return;
         }
 
@@ -68,6 +70,7 @@ public class PresetClickEvent implements Listener {
         ItemBingo.applyNewBoard(board);
         p.closeInventory();
         p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 1.2f);
-        p.sendMessage("§a프리셋 '" + id + "' (" + board.getWidth() + "x" + board.getHeight() + ")을(를) 적용했습니다!");
+        p.sendMessage(Messages.get(p, "command.setbingo.applied",
+                "id", id, "width", board.getWidth(), "height", board.getHeight()));
     }
 }

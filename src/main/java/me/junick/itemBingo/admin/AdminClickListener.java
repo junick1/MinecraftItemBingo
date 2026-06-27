@@ -2,22 +2,21 @@ package me.junick.itemBingo.admin;
 
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
-import me.junick.itemBingo.gui.DiamondExchangeGUI;
-import me.junick.itemBingo.gui.EffectShopGUI;
-import me.junick.itemBingo.gui.ItemShopGUI;
+import me.junick.itemBingo.gui.BingoGuiHolder;
+import me.junick.itemBingo.gui.BingoGuiHolder.Gui;
 import me.junick.itemBingo.gui.MenuGUI;
-import me.junick.itemBingo.gui.ShopGUI;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.util.BingoScoreboard;
 import me.junick.itemBingo.util.ChestManager;
 import me.junick.itemBingo.util.GuiSync;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.inventory.Inventory;
+import org.jetbrains.annotations.Nullable;
 
 public class AdminClickListener implements Listener {
     private final ItemBingo plugin;
@@ -26,11 +25,14 @@ public class AdminClickListener implements Listener {
         this.plugin = plugin;
     }
 
-    private boolean isAdminGuiTitle(String title) {
-        return title.equals(AdminGUI.TITLE_GAME)
-                || title.equals(AdminGUI.TITLE_SHOP)
-                || title.equals(AdminGUI.TITLE_VANILLA)
-                || title.equals(AdminGUI.TITLE_MODE);
+    /** The admin screen {@code top} belongs to, or {@code null} if it isn't an admin GUI. */
+    private static @Nullable Gui adminGui(Inventory top) {
+        BingoGuiHolder h = BingoGuiHolder.of(top);
+        if (h == null) return null;
+        return switch (h.type()) {
+            case ADMIN_GAME, ADMIN_SHOP, ADMIN_VANILLA, ADMIN_MODE -> h.type();
+            default -> null;
+        };
     }
 
     private boolean hasAdmin(Player p) {
@@ -39,7 +41,7 @@ public class AdminClickListener implements Listener {
 
     @EventHandler
     public void onInventoryClose(InventoryCloseEvent event) {
-        if (isAdminGuiTitle(event.getView().getTitle())) {
+        if (adminGui(event.getView().getTopInventory()) != null) {
             Settings.save(ItemBingo.getInstance());
         }
     }
@@ -48,8 +50,8 @@ public class AdminClickListener implements Listener {
     public void onAdminClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
 
-        String title = e.getView().getTitle();
-        if (!isAdminGuiTitle(title)) return;
+        Gui screen = adminGui(e.getView().getTopInventory());
+        if (screen == null) return;
 
         e.setCancelled(true);
 
@@ -57,7 +59,7 @@ public class AdminClickListener implements Listener {
 
         if (!hasAdmin(p)) {
             p.closeInventory();
-            p.sendMessage(Component.text("No permissions.", NamedTextColor.RED));
+            p.sendMessage(Messages.get(p, "admin.no-permission"));
             return;
         }
 
@@ -65,7 +67,7 @@ public class AdminClickListener implements Listener {
 
         int slot = e.getRawSlot();
 
-        // ===== 탭 이동 (0,1,2,3) =====
+        // ===== Tab navigation (0,1,2,3) =====
         if (slot == 0) {
             AdminGUI.openGame(plugin, p);
             return;
@@ -84,7 +86,7 @@ public class AdminClickListener implements Listener {
         }
 
         // ===== Game GUI =====
-        if (title.equals(AdminGUI.TITLE_GAME)) {
+        if (screen == Gui.ADMIN_GAME) {
             switch (slot) {
                 case 20 -> {
                     Settings.toggleTeamEnabled();
@@ -130,15 +132,15 @@ public class AdminClickListener implements Listener {
         }
 
         // ===== Shop GUI =====
-        if (title.equals(AdminGUI.TITLE_SHOP)) {
+        if (screen == Gui.ADMIN_SHOP) {
             if (slot == 20) {
                 Settings.toggleShopEnabled();
                 // Shop turned off entirely → kick anyone out of the shop menus.
                 if (!Settings.isShopEnabled()) {
-                    GuiSync.closeViewers(ShopGUI.TITLE);
-                    GuiSync.closeViewers(EffectShopGUI.TITLE);
-                    GuiSync.closeViewers(ItemShopGUI.TITLE);
-                    GuiSync.closeViewers(DiamondExchangeGUI.TITLE);
+                    GuiSync.closeViewers(Gui.SHOP);
+                    GuiSync.closeViewers(Gui.EFFECT_SHOP);
+                    GuiSync.closeViewers(Gui.ITEM_SHOP);
+                    GuiSync.closeViewers(Gui.DIAMOND_EXCHANGE);
                 }
                 // The main menu shows a shop enabled/disabled indicator — resync it.
                 refreshMenu();
@@ -146,13 +148,13 @@ public class AdminClickListener implements Listener {
                 return;
             }
 
-            // 상점이 OFF면 하위 토글은 건드릴 수 없게
+            // Sub-toggles are locked while the shop is OFF.
             if (!Settings.isShopEnabled()) return;
 
             if (slot == 22) {
                 Settings.toggleEffectShopEnabled();
                 if (!Settings.isEffectShopEnabled()) {
-                    GuiSync.closeViewers(EffectShopGUI.TITLE);
+                    GuiSync.closeViewers(Gui.EFFECT_SHOP);
                 }
                 refreshShop();
                 return;
@@ -161,7 +163,7 @@ public class AdminClickListener implements Listener {
             if (slot == 24) {
                 Settings.toggleItemShopEnabled();
                 if (!Settings.isItemShopEnabled()) {
-                    GuiSync.closeViewers(ItemShopGUI.TITLE);
+                    GuiSync.closeViewers(Gui.ITEM_SHOP);
                 }
                 refreshShop();
                 return;
@@ -170,7 +172,7 @@ public class AdminClickListener implements Listener {
         }
 
         // ===== Vanilla GUI =====
-        if (title.equals(AdminGUI.TITLE_VANILLA)) {
+        if (screen == Gui.ADMIN_VANILLA) {
             if (slot == 22) {
                 Settings.toggleShovelOxidizeCopper();
                 refreshVanilla();
@@ -179,7 +181,7 @@ public class AdminClickListener implements Listener {
         }
 
         // ===== Mode GUI =====
-        if (title.equals(AdminGUI.TITLE_MODE)) {
+        if (screen == Gui.ADMIN_MODE) {
             // Mode switch (cycles Normal -> Swappage -> Fog of War -> Lockout).
             // Changing the mode changes both which sub-settings show and how the
             // board renders (fog hides/reveals cells), so re-render boards too.
@@ -223,22 +225,22 @@ public class AdminClickListener implements Listener {
     // Re-render each admin tab for *every* admin currently viewing it, so two
     // people with the panel open stay in sync instead of seeing stale toggles.
     private void refreshGame() {
-        GuiSync.forEachViewer(AdminGUI.TITLE_GAME, vp -> AdminGUI.openGame(plugin, vp));
+        GuiSync.forEachViewer(Gui.ADMIN_GAME, vp -> AdminGUI.openGame(plugin, vp));
     }
 
     private void refreshShop() {
-        GuiSync.forEachViewer(AdminGUI.TITLE_SHOP, vp -> AdminGUI.openShop(plugin, vp));
+        GuiSync.forEachViewer(Gui.ADMIN_SHOP, vp -> AdminGUI.openShop(plugin, vp));
     }
 
     private void refreshVanilla() {
-        GuiSync.forEachViewer(AdminGUI.TITLE_VANILLA, vp -> AdminGUI.openVanilla(plugin, vp));
+        GuiSync.forEachViewer(Gui.ADMIN_VANILLA, vp -> AdminGUI.openVanilla(plugin, vp));
     }
 
     private void refreshMode() {
-        GuiSync.forEachViewer(AdminGUI.TITLE_MODE, vp -> AdminGUI.openMode(plugin, vp));
+        GuiSync.forEachViewer(Gui.ADMIN_MODE, vp -> AdminGUI.openMode(plugin, vp));
     }
 
     private void refreshMenu() {
-        GuiSync.forEachViewer(MenuGUI.TITLE, vp -> MenuGUI.openMain(vp, false));
+        GuiSync.forEachViewer(Gui.MENU, vp -> MenuGUI.openMain(vp, false));
     }
 }

@@ -2,6 +2,10 @@ package me.junick.itemBingo.admin;
 
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.gui.BingoGuiHolder;
+import me.junick.itemBingo.gui.BingoGuiHolder.Gui;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -12,166 +16,147 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The admin configuration panel. Four tabs (Game / Shop / Vanilla / Mode), each a
+ * 54-slot inventory identified by a {@link BingoGuiHolder} marker (not its title,
+ * which is now localized). Toggle/label text is resolved per the opening admin's
+ * locale.
+ */
 public class AdminGUI {
 
     /** Every admin tab is the same size for a consistent, polished look. */
     public static final int SIZE = 54;
-
-    public static final String TITLE_MAIN = "§8ItemBingo Admin";
-    public static final String TITLE_GAME = "§8Admin - Game";
-    public static final String TITLE_SHOP = "§8Admin - Shop";
-    public static final String TITLE_VANILLA = "§8Admin - Vanilla";
-    public static final String TITLE_MODE = "§8Admin - Mode";
 
     public static void openMain(ItemBingo plugin, Player p) {
         openGame(plugin, p);
     }
 
     public static void openGame(ItemBingo plugin, Player p) {
-        Inventory inv = Bukkit.createInventory(null, SIZE, TITLE_GAME);
-        decorate(inv, "GAME");
+        SupportedLocale loc = Messages.localeOf(p);
+        Inventory inv = create(p, Gui.ADMIN_GAME, "admin.game.title", loc);
 
         // Team mode on/off.
-        inv.setItem(20, toggleItem(
-                Material.REDSTONE_TORCH,
-                "팀 모드",
-                Settings.isTeamEnabled(),
-                List.of(Component.text("팀 모드 ON/OFF", NamedTextColor.GRAY))
-        ));
+        inv.setItem(20, toggleItem(loc, Material.REDSTONE_TORCH,
+                Messages.legacy(loc, "admin.game.team"), Settings.isTeamEnabled(),
+                descs(loc, "admin.game.team-desc")));
 
         // Shared/private storage chest capacity.
-        inv.setItem(22, chestCapacityItem());
+        inv.setItem(22, chestCapacityItem(loc));
 
         // /tpa — only meaningful when team mode is on.
-        inv.setItem(24, tpaItem());
+        inv.setItem(24, tpaItem(loc));
 
-        // Score calculation (penalty) — moved here from the Vanilla tab.
-        inv.setItem(31, toggleChoiceItem(
-                Material.COMPARATOR,
-                "점수 계산 방식",
-                Settings.getPenaltyDisplay(),
+        // Score calculation (penalty).
+        inv.setItem(31, toggleChoiceItem(loc, Material.COMPARATOR,
+                Messages.legacy(loc, "admin.game.penalty"), Settings.getPenaltyDisplay(loc),
                 Settings.getPenaltyInt() + 1,
-                List.of(Component.text("1: 제출 합, 2: 마지막 제출, 3: 점수제", NamedTextColor.GRAY), Component.text("(기본 1: 제출 합)", NamedTextColor.GRAY))
-        ));
+                descs(loc, "admin.game.penalty-desc1", "admin.game.penalty-desc2")));
 
-        // Hide the ranking sidebar + /rank during the game (revealed when the timer stops).
-        inv.setItem(33, toggleItem(
-                Material.BOOK,
-                "랭킹 숨기기",
-                Settings.isHideLeaderboard(),
-                List.of(Component.text("게임 중 랭킹판과 /rank 숨김", NamedTextColor.GRAY), Component.text("타이머 종료 후 공개 (기본 OFF)", NamedTextColor.GRAY))
-        ));
+        // Hide the ranking sidebar + /rank during the game.
+        inv.setItem(33, toggleItem(loc, Material.BOOK,
+                Messages.legacy(loc, "admin.game.hide-rank"), Settings.isHideLeaderboard(),
+                descs(loc, "admin.game.hide-rank-desc1", "admin.game.hide-rank-desc2")));
 
         p.openInventory(inv);
     }
 
     public static void openShop(ItemBingo plugin, Player p) {
-        Inventory inv = Bukkit.createInventory(null, SIZE, TITLE_SHOP);
-        decorate(inv, "SHOP");
+        SupportedLocale loc = Messages.localeOf(p);
+        Inventory inv = create(p, Gui.ADMIN_SHOP, "admin.shop.title", loc);
 
         boolean shopOn = Settings.isShopEnabled();
 
-        inv.setItem(20, toggleItem(
-                Material.EMERALD,
-                "상점",
-                shopOn,
-                List.of(Component.text("상점 기능 전체 ON/OFF", NamedTextColor.GRAY))
-        ));
+        inv.setItem(20, toggleItem(loc, Material.EMERALD,
+                Messages.legacy(loc, "admin.shop.shop"), shopOn, descs(loc, "admin.shop.shop-desc")));
 
         inv.setItem(22, shopOn
-                ? toggleItem(Material.POTION, "이펙트 상점", Settings.isEffectShopEnabled(), List.of(Component.text("이펙트 상점 ON/OFF", NamedTextColor.GRAY)))
-                : disabledItem(Material.GRAY_DYE, "이펙트 상점", List.of(Component.text("상점이 OFF라 변경할 수 없음", NamedTextColor.GRAY))));
+                ? toggleItem(loc, Material.POTION, Messages.legacy(loc, "admin.shop.effect"), Settings.isEffectShopEnabled(), descs(loc, "admin.shop.effect-desc"))
+                : disabledItem(loc, Material.GRAY_DYE, Messages.legacy(loc, "admin.shop.effect"), descs(loc, "admin.shop.locked-reason")));
 
         inv.setItem(24, shopOn
-                ? toggleItem(Material.CHEST, "아이템 상점", Settings.isItemShopEnabled(), List.of(Component.text("아이템 상점 ON/OFF", NamedTextColor.GRAY)))
-                : disabledItem(Material.GRAY_DYE, "아이템 상점", List.of(Component.text("상점이 OFF라 변경할 수 없음", NamedTextColor.GRAY))));
+                ? toggleItem(loc, Material.CHEST, Messages.legacy(loc, "admin.shop.item"), Settings.isItemShopEnabled(), descs(loc, "admin.shop.item-desc"))
+                : disabledItem(loc, Material.GRAY_DYE, Messages.legacy(loc, "admin.shop.item"), descs(loc, "admin.shop.locked-reason")));
 
         p.openInventory(inv);
     }
 
     public static void openVanilla(ItemBingo plugin, Player p) {
-        Inventory inv = Bukkit.createInventory(null, SIZE, TITLE_VANILLA);
-        decorate(inv, "VANILLA");
+        SupportedLocale loc = Messages.localeOf(p);
+        Inventory inv = create(p, Gui.ADMIN_VANILLA, "admin.vanilla.title", loc);
 
-        inv.setItem(22, toggleItem(
-                Material.IRON_SHOVEL,
-                "삽 우클릭으로 구리 산화",
-                Settings.isShovelOxidizeCopper(),
-                List.of(Component.text("삽으로 우클릭하면 구리를 1단계 산화시킴", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
-        ));
+        inv.setItem(22, toggleItem(loc, Material.IRON_SHOVEL,
+                Messages.legacy(loc, "admin.vanilla.shovel-copper"), Settings.isShovelOxidizeCopper(),
+                descs(loc, "admin.vanilla.shovel-copper-desc1", "admin.vanilla.shovel-copper-desc2")));
 
-        inv.setItem(31, placeholder("기타등등", "나중에 더 추가할 것"));
+        inv.setItem(31, placeholder(loc, "admin.vanilla.placeholder", "admin.vanilla.placeholder-desc"));
 
         p.openInventory(inv);
     }
 
     public static void openMode(ItemBingo plugin, Player p) {
-        Inventory inv = Bukkit.createInventory(null, SIZE, TITLE_MODE);
-        decorate(inv, "MODE");
+        SupportedLocale loc = Messages.localeOf(p);
+        Inventory inv = create(p, Gui.ADMIN_MODE, "admin.mode.title", loc);
 
         // The mode switch button.
-        inv.setItem(20, modeSwitchItem());
+        inv.setItem(20, modeSwitchItem(loc));
 
         // Settings specific to the currently selected mode.
         switch (Settings.getGameMode()) {
-            case NORMAL -> inv.setItem(31, placeholder(
-                    "추가 설정 없음", "일반 모드에는 별도 설정이 없습니다"));
+            case NORMAL -> inv.setItem(31, placeholder(loc, "admin.mode.none-name", "admin.mode.none-normal-desc"));
 
-            case LOCKOUT -> inv.setItem(31, placeholder(
-                    "추가 설정 없음", "선점 모드에는 별도 설정이 없습니다"));
+            case LOCKOUT -> inv.setItem(31, placeholder(loc, "admin.mode.none-name", "admin.mode.none-lockout-desc"));
 
             case SWAPPAGE -> {
-                inv.setItem(30, toggleItem(
-                        Material.CLOCK,
-                        "스왑 타이머",
-                        Settings.isSwapTimer(),
-                        List.of(Component.text("스왑 타이머 표시?", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
-                ));
-                inv.setItem(32, toggleItem(
-                        Material.ENDER_PEARL,
-                        "스왑 경고",
-                        Settings.isSwapAlert(),
-                        List.of(Component.text("바뀌기 3초 전에 알림?", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
-                ));
+                inv.setItem(30, toggleItem(loc, Material.CLOCK,
+                        Messages.legacy(loc, "admin.mode.swap-timer"), Settings.isSwapTimer(),
+                        descs(loc, "admin.mode.swap-timer-desc1", "admin.default-off")));
+                inv.setItem(32, toggleItem(loc, Material.ENDER_PEARL,
+                        Messages.legacy(loc, "admin.mode.swap-alert"), Settings.isSwapAlert(),
+                        descs(loc, "admin.mode.swap-alert-desc1", "admin.default-off")));
             }
 
             case FOG_OF_WAR -> {
-                inv.setItem(29, toggleItem(
-                        Material.BARRIER,
-                        "공개된 칸만 제출",
-                        Settings.isFogSubmitLock(),
-                        List.of(Component.text("공개되지 않은 칸은 제출 불가", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
-                ));
-                inv.setItem(31, toggleItem(
-                        Material.AMETHYST_SHARD,
-                        "칸 공개 알림",
-                        Settings.isFogRevealAlert(),
-                        List.of(Component.text("새 칸이 공개되면 소리/메시지", NamedTextColor.GRAY), Component.text("(기본 ON)", NamedTextColor.GRAY))
-                ));
-                inv.setItem(33, toggleItem(
-                        Material.RECOVERY_COMPASS,
-                        "대각선 공개",
-                        Settings.isFogDiagonalReveal(),
-                        List.of(Component.text("제출 시 대각선 칸까지 공개", NamedTextColor.GRAY), Component.text("(기본 OFF)", NamedTextColor.GRAY))
-                ));
+                inv.setItem(29, toggleItem(loc, Material.BARRIER,
+                        Messages.legacy(loc, "admin.mode.fog-submit"), Settings.isFogSubmitLock(),
+                        descs(loc, "admin.mode.fog-submit-desc1", "admin.default-off")));
+                inv.setItem(31, toggleItem(loc, Material.AMETHYST_SHARD,
+                        Messages.legacy(loc, "admin.mode.fog-reveal"), Settings.isFogRevealAlert(),
+                        descs(loc, "admin.mode.fog-reveal-desc1", "admin.default-on")));
+                inv.setItem(33, toggleItem(loc, Material.RECOVERY_COMPASS,
+                        Messages.legacy(loc, "admin.mode.fog-diagonal"), Settings.isFogDiagonalReveal(),
+                        descs(loc, "admin.mode.fog-diagonal-desc1", "admin.default-off")));
             }
         }
 
         p.openInventory(inv);
     }
 
-    /**
-     * The storage-chest capacity control. Same ender-chest icon regardless of
-     * team mode; only the label switches between "공유 창고" (shared) and "개인 창고"
-     * (private). Left-click raises rows (cycling back to disabled), right-click
-     * lowers them (cycling back to 6).
-     */
-    private static ItemStack chestCapacityItem() {
+    /* ========================= builders ========================= */
+
+    private static Inventory create(Player p, Gui type, String titleKey, SupportedLocale loc) {
+        BingoGuiHolder holder = new BingoGuiHolder(type);
+        Inventory inv = Bukkit.createInventory(holder, SIZE, Messages.get(loc, titleKey));
+        holder.setInventory(inv);
+        decorate(inv, type, loc);
+        return inv;
+    }
+
+    /** Builds a list of gray lore lines from message keys (values carry their own §7). */
+    private static List<Component> descs(SupportedLocale loc, String... keys) {
+        List<Component> out = new ArrayList<>(keys.length);
+        for (String k : keys) out.add(Messages.get(loc, k));
+        return out;
+    }
+
+    private static ItemStack chestCapacityItem(SupportedLocale loc) {
         int rows = Settings.getChestRows();
-        String label = Settings.isTeamEnabled() ? "공유 창고 용량" : "개인 창고 용량";
-        String value = rows == 0 ? "비활성화" : rows + "줄";
+        String label = Messages.legacy(loc, Settings.isTeamEnabled() ? "admin.game.chest-team" : "admin.game.chest-solo");
+        String value = rows == 0
+                ? Messages.legacy(loc, "admin.game.chest-disabled")
+                : Messages.legacy(loc, "admin.game.chest-rows", "rows", rows);
 
         ItemStack it = new ItemStack(Material.ENDER_CHEST);
         it.setAmount(Math.max(1, rows));
@@ -180,25 +165,20 @@ public class AdminGUI {
                 .append(Component.text(value, rows == 0 ? NamedTextColor.RED : NamedTextColor.GREEN)))
                 .decoration(TextDecoration.ITALIC, false));
 
-        var lore = new java.util.ArrayList<Component>();
-        lore.add(Component.text(Settings.isTeamEnabled()
-                ? "팀이 함께 사용하는 공유 창고" : "플레이어 개인 전용 창고", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
-        lore.add(Component.text("비활성화, 1줄 ~ 6줄", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+        var lore = new ArrayList<Component>();
+        lore.add(Messages.get(loc, Settings.isTeamEnabled() ? "admin.game.chest-desc-team" : "admin.game.chest-desc-solo")
+                .decoration(TextDecoration.ITALIC, false));
+        lore.add(Messages.get(loc, "admin.game.chest-range").decoration(TextDecoration.ITALIC, false));
         lore.add(Component.empty());
-        lore.add(Component.text("좌클릭: 늘리기", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
-        lore.add(Component.text("우클릭: 줄이기", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+        lore.add(Messages.get(loc, "admin.game.chest-up").decoration(TextDecoration.ITALIC, false));
+        lore.add(Messages.get(loc, "admin.game.chest-down").decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
 
         it.setItemMeta(meta);
         return it;
     }
 
-    /**
-     * The /tpa toggle. TPA only works while team mode is ON, so when team mode is
-     * OFF this shows DISABLED (distinct from a normal OFF) while preserving the
-     * stored value underneath.
-     */
-    private static ItemStack tpaItem() {
+    private static ItemStack tpaItem(SupportedLocale loc) {
         ItemStack it = new ItemStack(Material.ENDER_PEARL);
         ItemMeta meta = it.getItemMeta();
 
@@ -207,8 +187,8 @@ public class AdminGUI {
                     .append(Component.text("DISABLED", NamedTextColor.DARK_GRAY)))
                     .decoration(TextDecoration.ITALIC, false));
             meta.lore(List.of(
-                    Component.text("팀원에게 텔레포트 요청", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
-                    Component.text("팀 모드가 켜져야 사용할 수 있습니다", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)
+                    Messages.get(loc, "admin.game.tpa-desc").decoration(TextDecoration.ITALIC, false),
+                    Messages.get(loc, "admin.game.tpa-needs-team").decoration(TextDecoration.ITALIC, false)
             ));
             it.setItemMeta(meta);
             return it;
@@ -219,16 +199,15 @@ public class AdminGUI {
                 .append(Component.text(on ? "ON" : "OFF", on ? NamedTextColor.GREEN : NamedTextColor.RED)))
                 .decoration(TextDecoration.ITALIC, false));
         meta.lore(List.of(
-                Component.text("팀원에게 텔레포트 요청", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                Messages.get(loc, "admin.game.tpa-desc").decoration(TextDecoration.ITALIC, false),
                 Component.empty(),
-                Component.text("클릭해서 토글", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)
+                Messages.get(loc, "admin.click-to-toggle").decoration(TextDecoration.ITALIC, false)
         ));
         it.setItemMeta(meta);
         return it;
     }
 
-    /** The mode switch button — clicking it cycles Normal → Swappage → Fog of War → Lockout. */
-    private static ItemStack modeSwitchItem() {
+    private static ItemStack modeSwitchItem(SupportedLocale loc) {
         Settings.GameMode mode = Settings.getGameMode();
         Material mat = switch (mode) {
             case NORMAL -> Material.WHITE_WOOL;
@@ -239,19 +218,19 @@ public class AdminGUI {
 
         ItemStack it = new ItemStack(mat);
         ItemMeta meta = it.getItemMeta();
-        meta.displayName((Component.text("게임 모드 : ", NamedTextColor.AQUA)
-                .append(Component.text(mode.getDisplay(), NamedTextColor.GREEN)))
+        meta.displayName((Component.text(Messages.legacy(loc, "admin.mode.label") + " : ", NamedTextColor.AQUA)
+                .append(Component.text(mode.displayName(loc), NamedTextColor.GREEN)))
                 .decoration(TextDecoration.ITALIC, false));
 
-        var lore = new java.util.ArrayList<Component>();
+        var lore = new ArrayList<Component>();
         for (Settings.GameMode m : Settings.GameMode.values()) {
             boolean cur = (m == mode);
-            lore.add(Component.text((cur ? "▶ " : "   ") + m.getDisplay(),
+            lore.add(Component.text((cur ? "▶ " : "   ") + m.displayName(loc),
                     cur ? NamedTextColor.GOLD : NamedTextColor.DARK_GRAY)
                     .decoration(TextDecoration.ITALIC, false));
         }
         lore.add(Component.empty());
-        lore.add(Component.text("클릭해서 다음 모드로 전환", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+        lore.add(Messages.get(loc, "admin.mode.click-cycle").decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
 
         it.setItemMeta(meta);
@@ -259,16 +238,16 @@ public class AdminGUI {
     }
 
     /** Fills the inventory with the background frame and lays out the tab row. */
-    private static void decorate(Inventory inv, String selected) {
+    private static void decorate(Inventory inv, Gui selected, SupportedLocale loc) {
         ItemStack f = filler();
         for (int i = 0; i < inv.getSize(); i++) {
             inv.setItem(i, f);
         }
 
-        inv.setItem(0, tabItem(Material.WHITE_BANNER, "게임", selected.equals("GAME")));
-        inv.setItem(1, tabItem(Material.GREEN_BANNER, "상점 관련", selected.equals("SHOP")));
-        inv.setItem(2, tabItem(Material.ORANGE_BANNER, "바닐라 관련", selected.equals("VANILLA")));
-        inv.setItem(3, tabItem(Material.PURPLE_BANNER, "모드 관련", selected.equals("MODE")));
+        inv.setItem(0, tabItem(loc, Material.WHITE_BANNER, "admin.tab.game", selected == Gui.ADMIN_GAME));
+        inv.setItem(1, tabItem(loc, Material.GREEN_BANNER, "admin.tab.shop", selected == Gui.ADMIN_SHOP));
+        inv.setItem(2, tabItem(loc, Material.ORANGE_BANNER, "admin.tab.vanilla", selected == Gui.ADMIN_VANILLA));
+        inv.setItem(3, tabItem(loc, Material.PURPLE_BANNER, "admin.tab.mode", selected == Gui.ADMIN_MODE));
     }
 
     private static ItemStack filler() {
@@ -279,82 +258,75 @@ public class AdminGUI {
         return it;
     }
 
-    private static ItemStack tabItem(Material mat, String name, boolean selected) {
+    private static ItemStack tabItem(SupportedLocale loc, Material mat, String nameKey, boolean selected) {
         ItemStack it = new ItemStack(mat);
         ItemMeta meta = it.getItemMeta();
         meta.displayName(
-                Component.text((selected ? "▶ " : "") + name, selected ? NamedTextColor.GOLD : NamedTextColor.YELLOW)
+                Component.text((selected ? "▶ " : "") + Messages.legacy(loc, nameKey), selected ? NamedTextColor.GOLD : NamedTextColor.YELLOW)
                         .decoration(TextDecoration.ITALIC, false)
         );
-        meta.lore(List.of(Component.text("클릭해서 이동", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)));
+        meta.lore(List.of(Messages.get(loc, "admin.click-to-switch").decoration(TextDecoration.ITALIC, false)));
         it.setItemMeta(meta);
         return it;
     }
 
-    private static ItemStack toggleItem(Material mat, String name, boolean enabled, List<Component> desc) {
+    private static ItemStack toggleItem(SupportedLocale loc, Material mat, String name, boolean enabled, List<Component> desc) {
         ItemStack it = new ItemStack(mat);
         ItemMeta meta = it.getItemMeta();
-        meta.displayName((Component.text(name + " : ", NamedTextColor.AQUA).append(Component.text(enabled ? "ON" : "OFF", enabled ? NamedTextColor.GREEN : NamedTextColor.RED))).decoration(TextDecoration.ITALIC, false));
+        meta.displayName((Component.text(name + " : ", NamedTextColor.AQUA)
+                .append(Component.text(enabled ? "ON" : "OFF", enabled ? NamedTextColor.GREEN : NamedTextColor.RED)))
+                .decoration(TextDecoration.ITALIC, false));
 
-        var lore = new java.util.ArrayList<Component>();
-        for (Component d : desc) {
-            lore.add(d.decoration(TextDecoration.ITALIC, false));
-        }
-
+        var lore = new ArrayList<Component>();
+        for (Component d : desc) lore.add(d.decoration(TextDecoration.ITALIC, false));
         lore.add(Component.empty());
-        lore.add(Component.text("클릭해서 토글", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+        lore.add(Messages.get(loc, "admin.click-to-toggle").decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
 
         it.setItemMeta(meta);
         return it;
     }
 
-    /**
-     * A multi-state toggle that shows the selected option's label (e.g. the
-     * penalty mode name) rather than a raw number. {@code amount} controls the
-     * stack size used as a subtle visual indicator of the current option.
-     */
-    private static ItemStack toggleChoiceItem(Material mat, String name, String valueLabel, int amount, List<Component> desc) {
+    private static ItemStack toggleChoiceItem(SupportedLocale loc, Material mat, String name, String valueLabel, int amount, List<Component> desc) {
         ItemStack it = new ItemStack(mat);
         ItemMeta meta = it.getItemMeta();
-        meta.displayName((Component.text(name + " : ", NamedTextColor.AQUA).append(Component.text(valueLabel, NamedTextColor.GREEN))).decoration(TextDecoration.ITALIC, false));
+        meta.displayName((Component.text(name + " : ", NamedTextColor.AQUA)
+                .append(Component.text(valueLabel, NamedTextColor.GREEN)))
+                .decoration(TextDecoration.ITALIC, false));
         it.setAmount(Math.max(1, amount));
 
-        var lore = new java.util.ArrayList<Component>();
-        for (Component d : desc) {
-            lore.add(d.decoration(TextDecoration.ITALIC, false));
-        }
-
+        var lore = new ArrayList<Component>();
+        for (Component d : desc) lore.add(d.decoration(TextDecoration.ITALIC, false));
         lore.add(Component.empty());
-        lore.add(Component.text("클릭해서 토글", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+        lore.add(Messages.get(loc, "admin.click-to-toggle").decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
 
         it.setItemMeta(meta);
         return it;
     }
 
-    private static ItemStack disabledItem(Material mat, String name, List<Component> reason) {
+    private static ItemStack disabledItem(SupportedLocale loc, Material mat, String name, List<Component> reason) {
         ItemStack it = new ItemStack(mat);
         ItemMeta meta = it.getItemMeta();
 
-        meta.displayName((Component.text(name + " : ", NamedTextColor.AQUA).append(Component.text("LOCKED", NamedTextColor.RED))).decoration(TextDecoration.ITALIC, false));
+        meta.displayName((Component.text(name + " : ", NamedTextColor.AQUA)
+                .append(Component.text("LOCKED", NamedTextColor.RED)))
+                .decoration(TextDecoration.ITALIC, false));
 
-        var lore = new java.util.ArrayList<Component>();
-        for (Component d : reason) {
-            lore.add(d.decoration(TextDecoration.ITALIC, false));
-        }
+        var lore = new ArrayList<Component>();
+        for (Component d : reason) lore.add(d.decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
 
         it.setItemMeta(meta);
         return it;
     }
 
-    private static ItemStack placeholder(String name, String loreLine) {
+    private static ItemStack placeholder(SupportedLocale loc, String nameKey, String loreKey) {
         ItemStack it = new ItemStack(Material.BARRIER);
         ItemMeta meta = it.getItemMeta();
 
-        meta.displayName(Component.text(name, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
-        meta.lore(List.of(Component.text(loreLine, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)));
+        meta.displayName(Messages.get(loc, nameKey).decoration(TextDecoration.ITALIC, false));
+        meta.lore(List.of(Messages.get(loc, loreKey).decoration(TextDecoration.ITALIC, false)));
 
         it.setItemMeta(meta);
         return it;

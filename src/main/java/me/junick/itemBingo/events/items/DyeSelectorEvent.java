@@ -1,10 +1,10 @@
 package me.junick.itemBingo.events.items;
 
 import me.junick.itemBingo.enums.BingoItem;
-import me.junick.itemBingo.gui.ItemShopGUI;
+import me.junick.itemBingo.gui.BingoGuiHolder;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.util.CustomItems;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
@@ -18,13 +18,9 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 public class DyeSelectorEvent implements Listener {
-    private static final String TITLE = "§b염료 선택 메뉴";
 
     @EventHandler
     public void onDyeSelect(PlayerInteractEvent e) {
@@ -42,6 +38,8 @@ public class DyeSelectorEvent implements Listener {
     }
 
     private void openDyeSelectorGUI(Player player) {
+        SupportedLocale loc = Messages.localeOf(player);
+
         Material[] dyes = {
                 Material.WHITE_DYE,
                 Material.ORANGE_DYE,
@@ -61,16 +59,14 @@ public class DyeSelectorEvent implements Listener {
                 Material.BLACK_DYE
         };
 
-        Inventory inv = Bukkit.createInventory(null, (dyes.length + 8) / 9 * 9, TITLE);
+        BingoGuiHolder holder = new BingoGuiHolder(BingoGuiHolder.Gui.DYE_SELECTOR);
+        Inventory inv = Bukkit.createInventory(holder, (dyes.length + 8) / 9 * 9, Messages.get(loc, "items.dye.title"));
+        holder.setInventory(inv);
+
         for (Material dye : dyes) {
             ItemStack item = new ItemStack(dye);
             ItemMeta meta = item.getItemMeta();
-
-            List<Component> lore = List.of(
-                    Component.text("§7클릭하면 이 염료를 받습니다.")
-            );
-
-            meta.lore(lore);
+            meta.lore(List.of(Messages.get(loc, "items.dye.lore")));
             item.setItemMeta(meta);
             inv.addItem(item);
         }
@@ -86,8 +82,7 @@ public class DyeSelectorEvent implements Listener {
         ItemStack hand = player.getInventory().getItemInMainHand();
         if (!CustomItems.is(hand, BingoItem.DYE_SELECTOR)) return;
 
-        String title = LegacyComponentSerializer.legacySection().serialize(e.getView().title());
-        if (!title.equals(TITLE)) return;
+        if (!BingoGuiHolder.is(e.getView().getTopInventory(), BingoGuiHolder.Gui.DYE_SELECTOR)) return;
 
         e.setCancelled(true);
 
@@ -100,7 +95,7 @@ public class DyeSelectorEvent implements Listener {
         ItemStack active = player.getInventory().getItemInMainHand();
         if (!CustomItems.is(active, BingoItem.DYE_SELECTOR)) {
             player.closeInventory();
-            player.sendMessage("§c오류: 유효한 선택권이 인식되지 않습니다.");
+            player.sendMessage(Messages.get(player, "items.dye.invalid"));
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return;
         }
@@ -117,7 +112,7 @@ public class DyeSelectorEvent implements Listener {
                 player.getInventory().removeItem(remove);
             }
 
-            player.sendMessage("§c오류: 인벤토리가 꽉 차있습니다.");
+            player.sendMessage(Messages.get(player, "items.dye.inventory-full"));
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             player.closeInventory();
             return;

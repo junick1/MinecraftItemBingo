@@ -1,5 +1,6 @@
 package me.junick.itemBingo.commands;
 
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.util.ChatManager;
 import net.kyori.adventure.text.Component;
 import org.bukkit.command.Command;
@@ -17,11 +18,11 @@ public class AllChatCommand implements CommandExecutor {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!(sender instanceof Player p)) {
-            sender.sendMessage("§c이 명령어는 플레이어만 사용할 수 있습니다.");
+            sender.sendMessage(Messages.get(sender, "command.players-only"));
             return true;
         }
         if (args.length == 0) {
-            p.sendMessage("§c사용법: /ac <내용>");
+            p.sendMessage(Messages.get(p, "command.ac.usage"));
             return true;
         }
 

@@ -2,6 +2,7 @@ package me.junick.itemBingo.config;
 
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.gui.BundleGUI;
+import me.junick.itemBingo.i18n.Messages;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -103,7 +104,7 @@ public class BundleManager {
             list = new ArrayList<>();
         }
         if (list.contains(p.getName())) {
-            p.sendMessage("§c이미 번들을 받았습니다.");
+            p.sendMessage(Messages.get(p, "bundle.already-received"));
             return;
         }
 

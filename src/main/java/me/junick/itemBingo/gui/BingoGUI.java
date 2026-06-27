@@ -3,14 +3,13 @@ package me.junick.itemBingo.gui;
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.enums.BingoItemTag;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
-import me.junick.itemBingo.interfaces.access.SoloProgressAccess;
 import me.junick.itemBingo.model.BingoBoard;
-import me.junick.itemBingo.model.PlayerBingoProgress;
 import me.junick.itemBingo.util.BingoTagLoader;
 import me.junick.itemBingo.util.FogOfWar;
 import me.junick.itemBingo.util.Lockout;
-import me.junick.itemBingo.util.PlayerDataManager;
 import me.junick.itemBingo.util.ProgressFactory;
 import me.junick.itemBingo.util.TeamManager;
 import net.kyori.adventure.text.Component;
@@ -40,7 +39,8 @@ public class BingoGUI {
     private static final int GUI_WIDTH = 9;
     private static final int MAX_HEIGHT = 6;
 
-    public static final String TITLE = "§f빙고판";
+    /** Title message key. GUI identity is the {@link BingoGuiHolder} marker, not the title. */
+    public static final String TITLE_KEY = "gui.bingo.title";
 
     /**
      * Whether {@code p} is allowed to view the bingo board. In team mode only
@@ -56,15 +56,16 @@ public class BingoGUI {
     public static void open(Player p) {
         BingoBoard board = ItemBingo.currentBingo;
         if (board == null) {
-            p.sendMessage("§c현재 빙고판이 없습니다.");
+            p.sendMessage(Messages.get(p, "board.none"));
             return;
         }
 
         if (!canView(p)) {
-            p.sendMessage(Component.text("팀 모드에서는 팀에 배정된 플레이어만 빙고판을 볼 수 있습니다.", NamedTextColor.RED));
+            p.sendMessage(Messages.get(p, "board.team-only"));
             return;
         }
 
+        SupportedLocale loc = Messages.localeOf(p);
         BingoProgressAccess progress = ProgressFactory.of(p);
 
         // Oversized boards (beyond the 9x6 inventory limit) render through the
@@ -77,30 +78,29 @@ public class BingoGUI {
             }
             // The adaptive viewport may use fewer than 6 rows (e.g. a short, wide board).
             int guiRows = BingoViewport.layout(p.getUniqueId(), board).guiRows();
-            Inventory inv = Bukkit.createInventory(null, GUI_WIDTH * guiRows, TITLE);
-            renderScroll(inv, board, progress, p);
+            BingoGuiHolder holder = new BingoGuiHolder(BingoGuiHolder.Gui.BINGO);
+            Inventory inv = Bukkit.createInventory(holder, GUI_WIDTH * guiRows, Messages.get(loc, TITLE_KEY));
+            holder.setInventory(inv);
+            renderScroll(inv, board, progress, p, loc);
             p.openInventory(inv);
             return;
         }
 
-        int boardWidth = board.getWidth();
         int boardHeight = board.getHeight();
         boolean tightMode = boardHeight > 4;
 
         int guiHeight = tightMode ? boardHeight : boardHeight + 2;
         if (guiHeight > MAX_HEIGHT) {
-            p.sendMessage(Component.text("GUI 높이가 " + MAX_HEIGHT + "줄을 초과합니다.", NamedTextColor.RED));
+            p.sendMessage(Messages.get(p, "board.too-tall", "max", MAX_HEIGHT));
             return;
         }
 
-        Inventory inv = Bukkit.createInventory(
-                null,
-                GUI_WIDTH * guiHeight,
-                TITLE
-        );
+        BingoGuiHolder holder = new BingoGuiHolder(BingoGuiHolder.Gui.BINGO);
+        Inventory inv = Bukkit.createInventory(holder, GUI_WIDTH * guiHeight, Messages.get(loc, TITLE_KEY));
+        holder.setInventory(inv);
 
         fillBackground(inv);
-        placeBingoItems(inv, board, progress, tightMode, p);
+        placeBingoItems(inv, board, progress, tightMode, p, loc);
 
         p.openInventory(inv);
     }
@@ -120,23 +120,24 @@ public class BingoGUI {
      * inventory (which would drop the player's cursor item).
      */
     public static void rerenderInPlace(Player p) {
-        if (!TITLE.equals(p.getOpenInventory().getTitle())) return;
+        if (!BingoGuiHolder.is(p.getOpenInventory().getTopInventory(), BingoGuiHolder.Gui.BINGO)) return;
 
         BingoBoard board = ItemBingo.currentBingo;
         if (board == null) return;
 
+        SupportedLocale loc = Messages.localeOf(p);
         BingoProgressAccess progress = ProgressFactory.of(p);
         Inventory inv = p.getOpenInventory().getTopInventory();
 
         if (BingoViewport.needsScroll(board)) {
             // Re-renders arrows + cells from scratch (cells scroll in/out of view),
             // so a full redraw is needed rather than only repainting board slots.
-            renderScroll(inv, board, progress, p);
+            renderScroll(inv, board, progress, p, loc);
             return;
         }
 
         boolean tightMode = board.getHeight() > 4;
-        placeBingoItems(inv, board, progress, tightMode, p);
+        placeBingoItems(inv, board, progress, tightMode, p, loc);
     }
 
     private static void placeBingoItems(
@@ -144,7 +145,8 @@ public class BingoGUI {
             BingoBoard board,
             BingoProgressAccess progress,
             boolean tightMode,
-            Player viewer
+            Player viewer,
+            SupportedLocale loc
     ) {
         List<ItemStack> items = board.getItems();
         BingoTagLoader tagLoader = ItemBingo.getInstance().getTagLoader();
@@ -169,7 +171,7 @@ public class BingoGUI {
                 if (index >= items.size()) continue;
 
                 int slot = (y + offsetY) * GUI_WIDTH + offsetX + x;
-                inv.setItem(slot, cellIcon(board, progress, index, fog, revealed, locked, tagLoader, total));
+                inv.setItem(slot, cellIcon(board, progress, index, fog, revealed, locked, tagLoader, total, loc));
             }
         }
     }
@@ -181,18 +183,18 @@ public class BingoGUI {
      * Used by both the initial open and every live re-render, so a scroll always
      * lands in a fully consistent state.
      */
-    private static void renderScroll(Inventory inv, BingoBoard board, BingoProgressAccess progress, Player viewer) {
+    private static void renderScroll(Inventory inv, BingoBoard board, BingoProgressAccess progress, Player viewer, SupportedLocale loc) {
         BingoViewport.Layout layout = BingoViewport.layout(viewer.getUniqueId(), board);
 
         fillBackground(inv);
 
         // Only the directions that can still scroll show an arrow; the rest stay
         // filler ("hidden"). The recenter button is always present.
-        if (layout.upActive())    inv.setItem(layout.upSlot(),    arrow(Component.text("▲ 위로", NamedTextColor.WHITE)));
-        if (layout.downActive())  inv.setItem(layout.downSlot(),  arrow(Component.text("▼ 아래로", NamedTextColor.WHITE)));
-        if (layout.leftActive())  inv.setItem(layout.leftSlot(),  arrow(Component.text("◀ 왼쪽", NamedTextColor.WHITE)));
-        if (layout.rightActive()) inv.setItem(layout.rightSlot(), arrow(Component.text("▶ 오른쪽", NamedTextColor.WHITE)));
-        if (layout.recenterSlot() >= 0) inv.setItem(layout.recenterSlot(), recenterButton());
+        if (layout.upActive())    inv.setItem(layout.upSlot(),    arrow(loc, "board.scroll.up"));
+        if (layout.downActive())  inv.setItem(layout.downSlot(),  arrow(loc, "board.scroll.down"));
+        if (layout.leftActive())  inv.setItem(layout.leftSlot(),  arrow(loc, "board.scroll.left"));
+        if (layout.rightActive()) inv.setItem(layout.rightSlot(), arrow(loc, "board.scroll.right"));
+        if (layout.recenterSlot() >= 0) inv.setItem(layout.recenterSlot(), recenterButton(loc));
 
         BingoTagLoader tagLoader = ItemBingo.getInstance().getTagLoader();
         int total = board.getItems().size();
@@ -206,7 +208,7 @@ public class BingoGUI {
         for (int index = 0; index < board.getItems().size(); index++) {
             int slot = BingoViewport.indexToSlot(index, board, layout);
             if (slot < 0) continue;
-            inv.setItem(slot, cellIcon(board, progress, index, fog, revealed, locked, tagLoader, total));
+            inv.setItem(slot, cellIcon(board, progress, index, fog, revealed, locked, tagLoader, total, loc));
         }
     }
 
@@ -223,39 +225,37 @@ public class BingoGUI {
             Set<Integer> revealed,
             Set<Integer> locked,
             BingoTagLoader tagLoader,
-            int total
+            int total,
+            SupportedLocale loc
     ) {
         if (progress.isSubmitted(index)) {
             UUID owner = progress.getSubmitterId(index);
-            return submittedIcon(owner, progress.getSubmitterName(index), progressFraction(progress, owner, total));
+            return submittedIcon(owner, progress.getSubmitterName(index), progressFraction(progress, owner, total), loc);
         } else if (locked.contains(index)) {
-            return lockedIcon();
+            return lockedIcon(loc);
         } else if (fog && !revealed.contains(index)) {
             return hiddenCell();
         } else {
-            return withTagLore(board.getItems().get(index), tagLoader);
+            return withTagLore(board.getItems().get(index), tagLoader, loc);
         }
     }
 
     /** A scroll-arrow button (one per live edge); cosmetic only — handled by slot in the click listener. */
-    private static ItemStack arrow(Component name) {
+    private static ItemStack arrow(SupportedLocale loc, String nameKey) {
         ItemStack item = new ItemStack(Material.ARROW);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(name.decoration(TextDecoration.ITALIC, false));
-        meta.lore(List.of(Component.text("클릭하여 한 칸 스크롤", NamedTextColor.DARK_GRAY)
-                .decoration(TextDecoration.ITALIC, false)));
+        meta.displayName(Messages.get(loc, nameKey).decoration(TextDecoration.ITALIC, false));
+        meta.lore(List.of(Messages.get(loc, "board.scroll.hint").decoration(TextDecoration.ITALIC, false)));
         item.setItemMeta(meta);
         return item;
     }
 
     /** Jumps the viewport back to the middle of the board; handled by slot in the click listener. */
-    private static ItemStack recenterButton() {
+    private static ItemStack recenterButton(SupportedLocale loc) {
         ItemStack item = new ItemStack(Material.COMPASS);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(Component.text("⊙ 가운데로", NamedTextColor.YELLOW)
-                .decoration(TextDecoration.ITALIC, false));
-        meta.lore(List.of(Component.text("빙고판 중앙으로 이동합니다.", NamedTextColor.DARK_GRAY)
-                .decoration(TextDecoration.ITALIC, false)));
+        meta.displayName(Messages.get(loc, "board.recenter.name").decoration(TextDecoration.ITALIC, false));
+        meta.lore(List.of(Messages.get(loc, "board.recenter.lore").decoration(TextDecoration.ITALIC, false)));
         item.setItemMeta(meta);
         return item;
     }
@@ -277,23 +277,18 @@ public class BingoGUI {
 
     /**
      * The icon shown for a Lockout cell already claimed by another team: a plain
-     * barrier with no durability bar (unlike the submitted-cell icon, which is a
-     * netherite axe styled as a barrier whose durability tracks progress). It just
-     * signals "another team got here first — this cell is gone".
+     * barrier with no durability bar. It just signals "another team got here
+     * first — this cell is gone".
      */
-    private static ItemStack lockedIcon() {
+    private static ItemStack lockedIcon(SupportedLocale loc) {
         ItemStack item = new ItemStack(Material.BARRIER);
         ItemMeta meta = item.getItemMeta();
 
-        meta.displayName(Component.text("✘ 선점됨", NamedTextColor.RED)
-                .decoration(TextDecoration.ITALIC, false)
-                .decoration(TextDecoration.BOLD, true));
+        meta.displayName(Messages.get(loc, "board.locked.name").decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
-        lore.add(Component.text("다른 팀이 먼저 제출한 칸입니다.", NamedTextColor.GRAY)
-                .decoration(TextDecoration.ITALIC, false));
-        lore.add(Component.text("더 이상 제출할 수 없습니다.", NamedTextColor.DARK_GRAY)
-                .decoration(TextDecoration.ITALIC, false));
+        lore.add(Messages.get(loc, "board.locked.lore1").decoration(TextDecoration.ITALIC, false));
+        lore.add(Messages.get(loc, "board.locked.lore2").decoration(TextDecoration.ITALIC, false));
         meta.lore(lore);
 
         item.setItemMeta(meta);
@@ -316,18 +311,12 @@ public class BingoGUI {
      * The icon shown for an already-submitted slot, used by both the initial
      * render and live updates so a submitted slot always looks the same.
      *
-     * <p>The base item is a Netherite Axe whose {@code item_model} is swapped to a
-     * player head — in a team match, with the submitter's {@code profile} so the
-     * head shows their skin — or to a barrier (solo, no profile). Either way the
-     * axe's durability bar is scaled to {@code fraction}, so a fuller (greener) bar
-     * means more progress: in a team match that submitter's personal contribution,
-     * and on a solo board the player's overall completion.
-     *
      * @param submitterId   submitter UUID, or {@code null} for the barrier variant
      * @param submitterName submitter name shown in the lore (team match only)
      * @param fraction      progress fraction in [0, 1] driving the durability bar
+     * @param loc           the viewer's locale, for the displayed text
      */
-    public static ItemStack submittedIcon(UUID submitterId, String submitterName, double fraction) {
+    public static ItemStack submittedIcon(UUID submitterId, String submitterName, double fraction, SupportedLocale loc) {
         boolean teamMatch = submitterId != null;
 
         ItemStack item = new ItemStack(Material.NETHERITE_AXE);
@@ -335,19 +324,14 @@ public class BingoGUI {
 
         meta.setItemModel(NamespacedKey.minecraft(teamMatch ? "player_head" : "barrier"));
 
-        meta.displayName(Component.text("✔ 제출됨", NamedTextColor.GREEN)
-                .decoration(TextDecoration.ITALIC, false)
-                .decoration(TextDecoration.BOLD, true));
+        meta.displayName(Messages.get(loc, "board.submitted.name").decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
-        lore.add(Component.text("이미 제출한 칸입니다.", NamedTextColor.GRAY)
-                .decoration(TextDecoration.ITALIC, false));
+        lore.add(Messages.get(loc, "board.submitted.lore").decoration(TextDecoration.ITALIC, false));
         if (teamMatch) {
-            lore.add(Component.text("제출자: ", NamedTextColor.GRAY)
-                    .decoration(TextDecoration.ITALIC, false)
-                    .append(Component.text(
-                            submitterName != null ? submitterName : "알 수 없음",
-                            NamedTextColor.YELLOW)));
+            String name = submitterName != null ? submitterName : Messages.legacy(loc, "board.submitted.unknown");
+            lore.add(Messages.get(loc, "board.submitted.by", "submitter", name)
+                    .decoration(TextDecoration.ITALIC, false));
         }
         meta.lore(lore);
 
@@ -394,7 +378,7 @@ public class BingoGUI {
         return item;
     }
 
-    private static ItemStack withTagLore(ItemStack original, BingoTagLoader tagLoader) {
+    private static ItemStack withTagLore(ItemStack original, BingoTagLoader tagLoader, SupportedLocale loc) {
         ItemStack item = original.clone();
         ItemMeta meta = item.getItemMeta();
 
@@ -413,7 +397,7 @@ public class BingoGUI {
         lore.add(Component.empty());
 
         for (BingoItemTag tag : tags) {
-            lore.add(tag.bullet());
+            lore.add(tag.bullet(loc));
         }
 
         meta.lore(lore);

@@ -3,11 +3,13 @@ package me.junick.itemBingo.events.items;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.MapDecorations;
 import me.junick.itemBingo.enums.BingoItem;
+import me.junick.itemBingo.gui.BingoGuiHolder;
 import me.junick.itemBingo.gui.MapSelectorGUI;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.interfaces.MapOption;
 import me.junick.itemBingo.util.CustomItems;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -45,15 +47,18 @@ public abstract class MapItemListener<T extends Enum<T> & MapOption> implements 
     /* ===================== subclass hooks ===================== */
 
     protected abstract BingoItem triggerItem();
-    protected abstract String title();
+
+    /** Message key for the selector GUI title. */
+    protected abstract String titleKey();
+
     protected abstract T[] options();
     protected abstract T optionByName(String name);
 
     /** Locate the target on the main thread, or null if nothing was found. */
     protected abstract Location locate(World world, Location from, T option);
 
-    /** Display name for the produced map item. */
-    protected abstract String mapItemName(T option);
+    /** Localized display name for the produced map item. */
+    protected abstract String mapItemName(T option, SupportedLocale loc);
 
     /** Marker drawn on the produced map. */
     protected abstract MapCursor.Type markerType();
@@ -69,15 +74,19 @@ public abstract class MapItemListener<T extends Enum<T> & MapOption> implements 
         if (!CustomItems.is(player.getInventory().getItemInMainHand(), triggerItem())) return;
 
         e.setCancelled(true);
-        MapSelectorGUI.open(player, title(), options(), player.getWorld().getEnvironment());
+        // Context = the trigger item name, so the biome/explorer selectors stay distinct.
+        MapSelectorGUI.open(player, titleKey(), triggerItem().name(), options(), player.getWorld().getEnvironment());
     }
 
     @EventHandler
     public void onClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player player)) return;
 
-        String viewTitle = LegacyComponentSerializer.legacySection().serialize(e.getView().title());
-        if (!viewTitle.equals(title())) return;
+        BingoGuiHolder holder = BingoGuiHolder.of(e.getView().getTopInventory());
+        if (holder == null || holder.type() != BingoGuiHolder.Gui.MAP_SELECTOR
+                || !triggerItem().name().equals(holder.context())) {
+            return;
+        }
 
         e.setCancelled(true);
 
@@ -97,47 +106,52 @@ public abstract class MapItemListener<T extends Enum<T> & MapOption> implements 
         T option = optionByName(name);
         if (option == null) return;
 
+        SupportedLocale loc = Messages.localeOf(player);
+
         if (!CustomItems.is(player.getInventory().getItemInMainHand(), triggerItem())) {
             player.closeInventory();
-            announce(player, "§c오류", "§c유효한 지도가 인식되지 않습니다.");
+            announce(player, Messages.get(loc, "items.map.invalid-head"), Messages.get(loc, "items.map.invalid"));
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return;
         }
 
         player.closeInventory();
-        draw(player, option);
+        draw(player, option, loc);
     }
 
     /* ===================== map drawing ===================== */
 
-    private void draw(Player player, T option) {
+    private void draw(Player player, T option, SupportedLocale loc) {
         World world = player.getWorld();
 
-        // Safety net for #1 — the GUI already prevents out-of-dimension picks.
+        // Safety net — the GUI already prevents out-of-dimension picks.
         if (world.getEnvironment() != option.getDimension()) {
-            announce(player, "§c잘못된 차원",
-                    "§c이 지도는 " + MapSelectorGUI.dimensionName(option.getDimension()) + "에서만 사용할 수 있습니다.");
+            announce(player, Messages.get(loc, "items.map.wrong-dim-head"),
+                    Messages.get(loc, "items.map.wrong-dim", "dim", MapSelectorGUI.dimensionName(option.getDimension(), loc)));
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return;
         }
 
         Location target = locate(world, player.getLocation(), option);
         if (target == null) {
-            announce(player, "§c찾지 못함", "§c" + option.getName() + " 위치를 찾지 못했습니다.");
+            announce(player, Messages.get(loc, "items.map.not-found-head"),
+                    Messages.get(loc, "items.map.not-found", "name", option.displayName(loc)));
             player.playSound(player.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             return;
         }
 
-        ItemStack map = buildMap(world, target, mapItemName(option), markerType());
+        ItemStack map = buildMap(world, target, mapItemName(option, loc), markerType());
 
         // Consume exactly one map item and hand over the result (no stack wipe).
         consumeOne(player);
         giveOrDrop(player, map);
 
         double dist = player.getLocation().distance(target);
-        announce(player, "§a지도 발견!",
-                String.format("§e%s §b(%d, %d, %d)§e — 약 %.0f블록 거리",
-                        option.getName(), target.getBlockX(), target.getBlockY(), target.getBlockZ(), dist));
+        announce(player, Messages.get(loc, "items.map.found-head"),
+                Messages.get(loc, "items.map.found",
+                        "name", option.displayName(loc),
+                        "x", target.getBlockX(), "y", target.getBlockY(), "z", target.getBlockZ(),
+                        "dist", String.format("%.0f", dist)));
         player.playSound(player.getLocation(), Sound.UI_CARTOGRAPHY_TABLE_TAKE_RESULT, 1.0f, 1.0f);
     }
 
@@ -188,15 +202,10 @@ public abstract class MapItemListener<T extends Enum<T> & MapOption> implements 
 
     /**
      * Feedback goes only to the acting player: a chat line (kept in history for
-     * the coordinates) plus a center-screen subtitle headline. No action bar
-     * (reserved for timers) and no world-wide broadcast.
+     * the coordinates) plus a center-screen subtitle headline.
      */
-    private void announce(Player player, String subtitle, String chat) {
+    private void announce(Player player, Component subtitle, Component chat) {
         player.sendMessage(chat);
-        player.showTitle(Title.title(
-                Component.empty(),
-                LegacyComponentSerializer.legacySection().deserialize(subtitle),
-                TIMES
-        ));
+        player.showTitle(Title.title(Component.empty(), subtitle, TIMES));
     }
 }

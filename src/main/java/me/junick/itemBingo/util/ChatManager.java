@@ -1,9 +1,9 @@
 package me.junick.itemBingo.util;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.i18n.Messages;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -32,10 +32,6 @@ public final class ChatManager {
 
     private static final Map<UUID, Channel> channels = new HashMap<>();
     private static File file;
-
-    /** Tag prepended to team-chat messages; all chat stays vanilla-looking (untagged). */
-    private static final Component TEAM_TAG = Component.text("[팀] ", NamedTextColor.GREEN)
-            .decoration(TextDecoration.ITALIC, false);
 
     /* ===================== Persistence ===================== */
 
@@ -103,19 +99,16 @@ public final class ChatManager {
         TeamManager tm = ItemBingo.getInstance().getTeamManager();
         int teamId = tm.effectiveTeamId(sender);
         if (teamId == TeamManager.NO_TEAM) {
-            sender.sendMessage(Component.text(
-                    "팀이 없어 팀 채팅을 사용할 수 없습니다. /chat all 로 전체 채팅으로 전환하세요.",
-                    NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
+            sender.sendMessage(Messages.get(sender, "chat.no-team"));
             return;
         }
 
-        Component formatted = Component.empty()
-                .append(TEAM_TAG)
-                .append(sender.displayName())
-                .append(Component.text(": ", NamedTextColor.WHITE))
-                .append(message);
-
+        // Built per recipient so the team tag shows in each member's language.
         for (Player member : tm.getOnlinePlayersOnTeam(teamId)) {
+            Component formatted = Messages.get(member, "chat.team-tag")
+                    .append(sender.displayName())
+                    .append(Component.text(": ", NamedTextColor.WHITE))
+                    .append(message);
             member.sendMessage(formatted);
         }
     }

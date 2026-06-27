@@ -1,19 +1,30 @@
 package me.junick.itemBingo.enums;
 
-public enum BingoRewardType  {
-    DIAMOND("§b다이아몬드 포인트", false),
-    SLOT("§a빙고칸 포인트", true),
-    LINE("§e빙고줄 포인트", false);
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 
-    private final String displayName;
+import java.util.Locale;
+
+public enum BingoRewardType {
+    DIAMOND(false),
+    SLOT(true),
+    LINE(false);
+
     private final boolean isPersonal;
 
-    BingoRewardType(String displayName, boolean isPersonal) {
-        this.displayName = displayName;
+    BingoRewardType(boolean isPersonal) {
         this.isPersonal = isPersonal;
     }
 
-    public String getDisplayName() { return displayName; }
+    /** Message-key stem, e.g. {@code diamond} → {@code reward.diamond.name}. */
+    public String key() {
+        return name().toLowerCase(Locale.ROOT);
+    }
+
+    /** Localized, color-coded display name (legacy §) for the given locale. */
+    public String displayName(SupportedLocale loc) {
+        return Messages.legacy(loc, "reward." + key() + ".name");
+    }
 
     public boolean isPersonal() { return isPersonal; }
 }

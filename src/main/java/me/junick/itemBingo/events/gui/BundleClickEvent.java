@@ -1,8 +1,8 @@
 package me.junick.itemBingo.events.gui;
 
 import me.junick.itemBingo.config.BundleManager;
+import me.junick.itemBingo.gui.BingoGuiHolder;
 import me.junick.itemBingo.gui.BundleGUI;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -14,17 +14,16 @@ import org.bukkit.inventory.Inventory;
 
 public class BundleClickEvent implements Listener {
 
-    private static boolean isBundleGui(String title) {
-        return title.equals(BundleGUI.TITLE);
+    private static boolean isBundleGui(Inventory top) {
+        return BingoGuiHolder.is(top, BingoGuiHolder.Gui.BUNDLE);
     }
 
     @EventHandler
     public void onClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
-        String title = LegacyComponentSerializer.legacySection().serialize(e.getView().title());
-        if (!isBundleGui(title)) return;
-
         Inventory top = e.getView().getTopInventory();
+        if (!isBundleGui(top)) return;
+
         int templateIdx = BundleGUI.readTemplateIndex(top);
 
         int raw = e.getRawSlot();
@@ -62,10 +61,9 @@ public class BundleClickEvent implements Listener {
     @EventHandler
     public void onDrag(InventoryDragEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
-        String title = LegacyComponentSerializer.legacySection().serialize(e.getView().title());
-        if (!isBundleGui(title)) return;
-
         Inventory top = e.getView().getTopInventory();
+        if (!isBundleGui(top)) return;
+
         int templateIdx = BundleGUI.readTemplateIndex(top);
         int topSize = top.getSize();
 
@@ -81,10 +79,9 @@ public class BundleClickEvent implements Listener {
 
     @EventHandler
     public void onClose(InventoryCloseEvent e) {
-        String title = LegacyComponentSerializer.legacySection().serialize(e.getView().title());
-        if (!isBundleGui(title)) return;
-
         Inventory top = e.getView().getTopInventory();
+        if (!isBundleGui(top)) return;
+
         BundleGUI.persistEditable(top, BundleGUI.readTemplateIndex(top));
     }
 }

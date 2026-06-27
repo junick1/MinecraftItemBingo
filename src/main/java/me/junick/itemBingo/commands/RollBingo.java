@@ -1,6 +1,7 @@
 package me.junick.itemBingo.commands;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.util.BingoItemSelector;
 import me.junick.itemBingo.util.ConfirmationManager;
@@ -24,7 +25,7 @@ public class RollBingo implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (args.length != 2) {
-            sender.sendMessage("§c사용법: /rollbingo <가로> <세로>");
+            sender.sendMessage(Messages.get(sender, "command.rollbingo.usage"));
             return true;
         }
 
@@ -33,13 +34,15 @@ public class RollBingo implements CommandExecutor, TabCompleter {
             int height = Integer.parseInt(args[1]);
 
             if (width < 1 || width > MAX_WIDTH || height < 1 || height > MAX_HEIGHT) {
-                sender.sendMessage("§c가로는 1~" + MAX_WIDTH + ", 세로는 1~" + MAX_HEIGHT + " 사이여야 합니다.");
+                sender.sendMessage(Messages.get(sender, "command.rollbingo.range",
+                        "maxw", MAX_WIDTH, "maxh", MAX_HEIGHT));
                 return true;
             }
 
             if (!ConfirmationManager.confirm(sender, "rollbingo")) {
-                sender.sendMessage("§c§l[경고] §f새 빙고판을 생성하면 모든 플레이어와 팀의 진행 데이터가 초기화됩니다.");
-                sender.sendMessage("§e계속하려면 10초 안에 §f/rollbingo " + width + " " + height + "§e을(를) 다시 입력하세요.");
+                sender.sendMessage(Messages.get(sender, "command.rollbingo.warn"));
+                sender.sendMessage(Messages.get(sender, "command.rollbingo.confirm",
+                        "width", width, "height", height));
                 return true;
             }
 
@@ -49,9 +52,10 @@ public class RollBingo implements CommandExecutor, TabCompleter {
 
             ItemBingo.applyNewBoard(new BingoBoard(width, height, items));
 
-            sender.sendMessage("§a" + width + "x" + height + " 빙고판이 생성되었습니다!");
+            sender.sendMessage(Messages.get(sender, "command.rollbingo.created",
+                    "width", width, "height", height));
         } catch (NumberFormatException e) {
-            sender.sendMessage("§c올바른 정수를 입력하세요.");
+            sender.sendMessage(Messages.get(sender, "command.invalid-number"));
         }
         return true;
     }

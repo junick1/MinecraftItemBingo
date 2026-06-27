@@ -2,6 +2,7 @@ package me.junick.itemBingo.commands;
 
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.util.TpaManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -23,23 +24,23 @@ public class TpaCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
         if (!(sender instanceof Player p)) {
-            sender.sendMessage("§c이 명령어는 플레이어만 사용할 수 있습니다.");
+            sender.sendMessage(Messages.get(sender, "command.players-only"));
             return true;
         }
 
         if (!Settings.isTpaEffective()) {
-            p.sendMessage("§c/tpa 기능이 비활성화되어 있습니다.");
+            p.sendMessage(Messages.get(p, "command.tpa.disabled"));
             return true;
         }
 
         if (args.length != 1) {
-            p.sendMessage("§e사용법: /tpa <플레이어>");
+            p.sendMessage(Messages.get(p, "command.tpa.usage"));
             return true;
         }
 
         Player target = Bukkit.getPlayerExact(args[0]);
         if (target == null) {
-            p.sendMessage("§c" + args[0] + " 님은 온라인이 아닙니다.");
+            p.sendMessage(Messages.get(p, "command.tpa.offline", "player", args[0]));
             return true;
         }
 

@@ -1,6 +1,8 @@
 package me.junick.itemBingo.util;
 
 import me.junick.itemBingo.enums.BingoRewardType;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
 import me.junick.itemBingo.model.PlayerBingoProgress;
 import net.kyori.adventure.text.Component;
@@ -45,42 +47,24 @@ public class IconGenerator {
         return item;
     }
 
-    public static ItemStack currencyIcon(PlayerBingoProgress prog) {
-        return icon(
-                Material.EMERALD,
-                "§f§l보유 포인트",
-                "§7빙고판을 채워 포인트를 얻으세요!",
-                "",
-                "§a빙고칸 포인트: §f" + prog.getCurrency(BingoRewardType.SLOT),
-                "§7  └ 빙고판에 아이템 제출 시 획득",
-                "§e빙고줄 포인트: §f" + prog.getCurrency(BingoRewardType.LINE),
-                "§7  └ 빙고 줄 완성 시 획득",
-                "§b다이아몬드 포인트: §f" + prog.getCurrency(BingoRewardType.DIAMOND),
-                "§7  └ 다이아몬드 환전소에서 획득"
-        );
-    }
-
     public static ItemStack currencyIcon(Player p, BingoProgressAccess prog) {
+        SupportedLocale loc = Messages.localeOf(p);
         return icon(
                 Material.EMERALD,
-                "§f§l보유 포인트",
-                "§7빙고판을 채워 포인트를 얻으세요!",
-                "",
-                "§a개인 빙고칸 포인트: §f" + prog.getCurrency(p, BingoRewardType.SLOT),
-                "§7  └ 빙고판에 아이템 제출 시 획득",
-                "§e팀 빙고줄 포인트: §f" + prog.getCurrency(p, BingoRewardType.LINE),
-                "§7  └ 빙고 줄 완성 시 획득",
-                "§b팀 다이아몬드 포인트: §f" + prog.getCurrency(p, BingoRewardType.DIAMOND),
-                "§7  └ 다이아몬드 환전소에서 획득"
+                Messages.legacy(loc, "gui.currency.title"),
+                Messages.getList(loc, "gui.currency.lore",
+                        "slot", prog.getCurrency(p, BingoRewardType.SLOT),
+                        "line", prog.getCurrency(p, BingoRewardType.LINE),
+                        "diamond", prog.getCurrency(p, BingoRewardType.DIAMOND))
         );
     }
 
 
-    public static ItemStack backIcon() {
+    public static ItemStack backIcon(SupportedLocale loc) {
         return icon(
                 Material.ARROW,
-                "§a돌아가기",
-                "§7이전 메뉴로 돌아갑니다."
+                Messages.legacy(loc, "gui.back.name"),
+                Messages.legacy(loc, "gui.back.lore")
         );
     }
 }

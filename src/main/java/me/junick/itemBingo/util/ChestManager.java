@@ -2,8 +2,8 @@ package me.junick.itemBingo.util;
 
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.i18n.Messages;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
@@ -155,13 +155,13 @@ public final class ChestManager implements Listener {
     /** Opens the caller's storage chest, or tells them why it isn't available. */
     public static void open(Player p) {
         if (!Settings.isChestEnabled()) {
-            p.sendMessage(Component.text("창고가 비활성화되어 있습니다.", NamedTextColor.RED));
+            p.sendMessage(Messages.get(p, "chest.disabled"));
             return;
         }
 
         String key = keyFor(p);
         if (key == null) {
-            p.sendMessage(Component.text("팀에 속해 있지 않아 공유 창고를 열 수 없습니다.", NamedTextColor.RED));
+            p.sendMessage(Messages.get(p, "chest.no-team"));
             return;
         }
 
@@ -179,14 +179,14 @@ public final class ChestManager implements Listener {
         return "solo-" + p.getUniqueId();
     }
 
-    private static String title() {
-        return Settings.isTeamEnabled() ? "§5공유 창고" : "§5개인 창고";
-    }
-
     private static Inventory createLive(String key) {
         int size = Settings.getChestSlots();
         ChestHolder holder = new ChestHolder(key);
-        Inventory inv = Bukkit.createInventory(holder, size, title());
+        // The chest is shared (one per team), so its title can't be per-player —
+        // it renders in the server default language.
+        Component title = Messages.get(Settings.getDefaultLanguage(),
+                Settings.isTeamEnabled() ? "chest.title-team" : "chest.title-solo");
+        Inventory inv = Bukkit.createInventory(holder, size, title);
         holder.setInventory(inv);
 
         ItemStack[] back = backing.computeIfAbsent(key, k -> new ItemStack[MAX_SLOTS]);
