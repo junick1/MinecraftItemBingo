@@ -3,6 +3,7 @@ package me.junick.itemBingo.gui;
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.util.IconGenerator;
+import me.junick.itemBingo.util.TimerManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
@@ -46,6 +47,11 @@ public class MenuGUI {
         inv.setItem(16, Settings.isChestEnabled()
                 ? IconGenerator.icon(Material.ENDER_CHEST, "§d창고", Settings.isTeamEnabled() ? "§7팀 공유 창고를 엽니다." : "§7개인 창고를 엽니다.")
                 : IconGenerator.icon(Material.GRAY_DYE, "§7창고 §8(비활성화)", "§c관리자에 의해 비활성화되었습니다."));
+
+        // Last game's results — only available once the timer stops.
+        inv.setItem(22, TimerManager.isRunning()
+                ? IconGenerator.icon(Material.GRAY_DYE, "§7게임 결과 §8(진행 중)", "§c게임이 끝난 후 확인할 수 있습니다.")
+                : IconGenerator.icon(Material.KNOWLEDGE_BOOK, "§6게임 결과", "§7지난 게임의 결과를 확인합니다."));
 
         if (playSound) {
             p.playSound(p.getLocation(), Sound.BLOCK_ENDER_CHEST_OPEN, 1.0f, 1.0f);

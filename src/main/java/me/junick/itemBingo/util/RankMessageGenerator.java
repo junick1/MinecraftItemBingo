@@ -8,6 +8,10 @@ import java.util.*;
 
 public class RankMessageGenerator {
     public static void sendRankMessage(CommandSender sender) {
+        if (Leaderboard.isHidden()) {
+            sender.sendMessage("§c게임이 진행 중에는 랭킹을 볼 수 없습니다. §7(게임 종료 후 공개)");
+            return;
+        }
         for (String msg : generateRankMessage()) sender.sendMessage(msg);
     }
 

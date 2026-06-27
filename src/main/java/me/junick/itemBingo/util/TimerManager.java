@@ -2,8 +2,10 @@ package me.junick.itemBingo.util;
 
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.records.ranking.RankingEntry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -14,6 +16,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -75,7 +78,7 @@ public class TimerManager {
                 if (!running || paused) return;
 
                 if (remainingSeconds <= 0) {
-                    stop();
+                    finish();
                     return;
                 }
 
@@ -137,6 +140,49 @@ public class TimerManager {
         Component actionBar = Component.text("§c§l타이머 종료");
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendActionBar(actionBar);
+        }
+    }
+
+    /**
+     * Natural end of the game (the countdown reached zero): announce the winner
+     * with a title, then run the normal {@link #stop()} cleanup. Distinct from a
+     * bare {@code stop()} (manual /timer stop or a reset before a new start),
+     * which ends the timer silently without a winner screen.
+     */
+    public static void finish() {
+        announceWinner();
+        stop();
+        // The timer is now inactive, so a hidden leaderboard becomes visible —
+        // refresh the sidebar immediately rather than waiting for the next tick.
+        BingoScoreboard.updateAll();
+    }
+
+    /** Shows every player a title with the top-ranked player/team, score and penalty. */
+    private static void announceWinner() {
+        List<RankingEntry> top = RankingProviders.current().getRankings(1);
+
+        Component mainTitle;
+        Component subtitle;
+        if (top.isEmpty() || top.get(0).score() <= 0) {
+            // Nobody submitted anything — there's no winner to crown.
+            mainTitle = Component.text("게임 종료", NamedTextColor.YELLOW);
+            subtitle = Component.text("제출한 플레이어가 없습니다", NamedTextColor.GRAY);
+        } else {
+            RankingEntry winner = top.get(0);
+            mainTitle = Component.text("★ ", NamedTextColor.YELLOW)
+                    .append(Component.text(winner.displayName() + " 승리!", NamedTextColor.GOLD));
+            subtitle = Component.text(winner.score() + "개", NamedTextColor.AQUA)
+                    .append(Component.text(" · ", NamedTextColor.DARK_GRAY))
+                    .append(Component.text(RankingFormat.penalty(winner.penaltySeconds()), NamedTextColor.GRAY));
+        }
+
+        Title title = Title.title(
+                mainTitle, subtitle,
+                Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(6), Duration.ofSeconds(1))
+        );
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            player.showTitle(title);
+            player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
         }
     }
 

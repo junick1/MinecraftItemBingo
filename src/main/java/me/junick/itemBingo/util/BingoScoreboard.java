@@ -25,8 +25,22 @@ public class BingoScoreboard {
         initializeObjective();
         clearScores();
 
+        if (Leaderboard.isHidden()) {
+            showHiddenPlaceholder();
+            return;
+        }
+
         List<RankingEntry> rankings = getSortedScores();
         updatePlayerScores(rankings);
+    }
+
+    /** Replaces the rankings with a "revealed after the game" notice while hidden. */
+    private static void showHiddenPlaceholder() {
+        objective.getScore(" ").setScore(4);
+        objective.getScore("§7랭킹은 게임 종료 후").setScore(3);
+        objective.getScore("§7공개됩니다").setScore(2);
+        objective.getScore("  ").setScore(1);
+        Bukkit.getOnlinePlayers().forEach(p -> p.setScoreboard(BOARD));
     }
 
     private static void initializeObjective() {

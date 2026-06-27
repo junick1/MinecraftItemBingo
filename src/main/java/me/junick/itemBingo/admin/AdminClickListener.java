@@ -7,6 +7,7 @@ import me.junick.itemBingo.gui.EffectShopGUI;
 import me.junick.itemBingo.gui.ItemShopGUI;
 import me.junick.itemBingo.gui.MenuGUI;
 import me.junick.itemBingo.gui.ShopGUI;
+import me.junick.itemBingo.util.BingoScoreboard;
 import me.junick.itemBingo.util.ChestManager;
 import me.junick.itemBingo.util.GuiSync;
 import net.kyori.adventure.text.Component;
@@ -116,6 +117,13 @@ public class AdminClickListener implements Listener {
                 case 31 -> {
                     Settings.togglePenaltyInt();
                     refreshGame();
+                }
+                case 33 -> {
+                    Settings.toggleHideLeaderboard();
+                    refreshGame();
+                    // Reflect the change on the sidebar immediately instead of
+                    // waiting up to a second for the next scoreboard tick.
+                    BingoScoreboard.updateAll();
                 }
             }
             return;

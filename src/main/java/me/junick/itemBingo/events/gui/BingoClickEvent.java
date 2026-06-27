@@ -387,11 +387,21 @@ public class BingoClickEvent implements Listener {
                 Component.translatable(item.translationKey())
         );
 
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (team.contains(player)) {
-                player.sendMessage(message.append(itemInfo));
-            } else {
-                player.sendMessage(message);
+        if (Leaderboard.isHidden()) {
+            // The live leaderboard is concealed, so a public "(n/total)" broadcast would
+            // leak progress to opponents and defeat the hide. Keep it within the player's
+            // own team (or just the player when solo), with the item detail they'd
+            // normally get as teammates.
+            for (Player member : team) {
+                member.sendMessage(message.append(itemInfo));
+            }
+        } else {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (team.contains(player)) {
+                    player.sendMessage(message.append(itemInfo));
+                } else {
+                    player.sendMessage(message);
+                }
             }
         }
 

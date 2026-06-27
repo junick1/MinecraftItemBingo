@@ -20,6 +20,8 @@ game:
   chestRows: 0
   # /tpa teammate teleport. Only effective while team mode is ON.
   tpaEnabled: false
+  # Hide the ranking sidebar and /rank while the timer is running; reveal on game end.
+  hideLeaderboard: false
 
 mode:
   # type = NORMAL | SWAPPAGE | FOG_OF_WAR (only one mode is active at a time)

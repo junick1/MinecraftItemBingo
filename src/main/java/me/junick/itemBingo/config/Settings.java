@@ -26,6 +26,13 @@ public class Settings {
     private static boolean tpaEnabled;
 
     /**
+     * When true, the ranking sidebar and {@code /rank} are concealed while the
+     * game timer is running, and only revealed once it stops/expires. See
+     * {@link me.junick.itemBingo.util.Leaderboard}.
+     */
+    private static boolean hideLeaderboard;
+
+    /**
      * The three game modes are mutually exclusive — only one is active at a time.
      * Each mode has its own set of sub-settings (the rows below the mode switch in
      * the admin "모드" tab).
@@ -68,6 +75,7 @@ public class Settings {
         penaltySystem = config.getInt("game.penalty", 0);
         chestRows = Math.max(0, Math.min(6, config.getInt("game.chestRows", 0)));
         tpaEnabled = config.getBoolean("game.tpaEnabled", false);
+        hideLeaderboard = config.getBoolean("game.hideLeaderboard", false);
 
         // Mode: prefer the new "mode.type" key, falling back to the legacy
         // "mode.positionSwap" boolean so existing configs keep working.
@@ -106,6 +114,7 @@ public class Settings {
         config.set("game.penalty", penaltySystem);
         config.set("game.chestRows", chestRows);
         config.set("game.tpaEnabled", tpaEnabled);
+        config.set("game.hideLeaderboard", hideLeaderboard);
 
         config.set("mode.type", gameMode.name());
         config.set("mode.swap.alert", swapAlert);
@@ -147,6 +156,11 @@ public class Settings {
     /** TPA only works when team mode is ON and the toggle is set. */
     public static boolean isTpaEffective() { return teamEnabled && tpaEnabled; }
     public static void toggleTpaEnabled() { tpaEnabled = !tpaEnabled; }
+
+    // ===== Leaderboard visibility =====
+    /** Whether rankings are hidden during play (revealed when the timer stops). */
+    public static boolean isHideLeaderboard() { return hideLeaderboard; }
+    public static void toggleHideLeaderboard() { hideLeaderboard = !hideLeaderboard; }
 
     // ===== Game mode =====
     public static GameMode getGameMode() { return gameMode; }

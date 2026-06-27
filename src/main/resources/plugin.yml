@@ -49,6 +49,9 @@ commands:
   rank:
     description: View rankings
     usage: /rank
+  summary:
+    description: View the results of the last game (when the timer is inactive)
+    usage: /summary
   shop:
     description: Open shop
     usage: /shop

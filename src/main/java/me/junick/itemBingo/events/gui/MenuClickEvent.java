@@ -3,6 +3,7 @@ package me.junick.itemBingo.events.gui;
 import me.junick.itemBingo.gui.BingoGUI;
 import me.junick.itemBingo.gui.MenuGUI;
 import me.junick.itemBingo.gui.ShopGUI;
+import me.junick.itemBingo.gui.SummaryGUI;
 import me.junick.itemBingo.util.ChestManager;
 import me.junick.itemBingo.util.RankMessageGenerator;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
@@ -30,6 +31,10 @@ public class MenuClickEvent implements Listener {
         if (name.contains("빙고판")) {
             p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
             BingoGUI.open(p);
+        } else if (name.contains("게임 결과")) {
+            p.playSound(p.getLocation(), Sound.UI_BUTTON_CLICK, 1.0f, 1.0f);
+            p.closeInventory();
+            SummaryGUI.tryOpen(p);
         } else if (name.contains("랭킹")) {
             p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 2.0f);
             RankMessageGenerator.sendRankMessage(p);

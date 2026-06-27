@@ -56,6 +56,14 @@ public class AdminGUI {
                 List.of(Component.text("1: 제출 합, 2: 마지막 제출, 3: 점수제", NamedTextColor.GRAY), Component.text("(기본 1: 제출 합)", NamedTextColor.GRAY))
         ));
 
+        // Hide the ranking sidebar + /rank during the game (revealed when the timer stops).
+        inv.setItem(33, toggleItem(
+                Material.BOOK,
+                "랭킹 숨기기",
+                Settings.isHideLeaderboard(),
+                List.of(Component.text("게임 중 랭킹판과 /rank 숨김", NamedTextColor.GRAY), Component.text("타이머 종료 후 공개 (기본 OFF)", NamedTextColor.GRAY))
+        ));
+
         p.openInventory(inv);
     }
 

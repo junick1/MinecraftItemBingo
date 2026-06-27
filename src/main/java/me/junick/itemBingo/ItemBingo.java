@@ -75,6 +75,7 @@ public final class ItemBingo extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new BundleClickEvent(), this);
         Bukkit.getPluginManager().registerEvents(new PresetClickEvent(), this);
         Bukkit.getPluginManager().registerEvents(new PresetEditorClickEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new SummaryClickEvent(), this);
         Bukkit.getPluginManager().registerEvents(ChestManager.listener(), this);
         EffectApplier.start();
 
@@ -105,6 +106,7 @@ public final class ItemBingo extends JavaPlugin {
 
         getCommand("bingo").setExecutor(new ViewBingo());
         getCommand("rank").setExecutor(new RankCommand());
+        getCommand("summary").setExecutor(new SummaryCommand());
         getCommand("shop").setExecutor(new ShopCommand());
 
         RollBingo rb = new RollBingo();
