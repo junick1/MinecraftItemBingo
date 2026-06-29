@@ -5,6 +5,7 @@ import me.junick.itemBingo.admin.AdminCommand;
 import me.junick.itemBingo.commands.*;
 import me.junick.itemBingo.config.BundleManager;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.gui.BingoViewport;
 import me.junick.itemBingo.events.ChatListener;
 import me.junick.itemBingo.events.EffectListener;
@@ -15,7 +16,6 @@ import me.junick.itemBingo.events.items.*;
 import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.util.*;
 import org.bukkit.*;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public final class ItemBingo extends JavaPlugin {
@@ -37,6 +37,9 @@ public final class ItemBingo extends JavaPlugin {
     public void onEnable() {
         instance = this;
 
+        // Load localized message bundles before anything user-facing runs.
+        Messages.init(this);
+
         // Extract the default bundle templates on first run (does not overwrite admin edits).
         saveResource("bundle.yml", false);
 
@@ -45,6 +48,7 @@ public final class ItemBingo extends JavaPlugin {
         teamManager = new TeamManager(this);
 
         ChatManager.load();
+        LanguageManager.load();
         ChestManager.init(this);
 
         KEY_EFFECT = new NamespacedKey(this, "effect");
@@ -76,6 +80,7 @@ public final class ItemBingo extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new BundleClickEvent(), this);
         Bukkit.getPluginManager().registerEvents(new PresetClickEvent(), this);
         Bukkit.getPluginManager().registerEvents(new PresetEditorClickEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new SummaryClickEvent(), this);
         Bukkit.getPluginManager().registerEvents(ChestManager.listener(), this);
         EffectApplier.start();
 
@@ -104,8 +109,13 @@ public final class ItemBingo extends JavaPlugin {
         getCommand("ac").setExecutor(new AllChatCommand());
         getCommand("tc").setExecutor(new TeamChatCommand());
 
+        LanguageCommand lang = new LanguageCommand();
+        getCommand("language").setExecutor(lang);
+        getCommand("language").setTabCompleter(lang);
+
         getCommand("bingo").setExecutor(new ViewBingo());
         getCommand("rank").setExecutor(new RankCommand());
+        getCommand("summary").setExecutor(new SummaryCommand());
         getCommand("shop").setExecutor(new ShopCommand());
 
         RollBingo rb = new RollBingo();
@@ -126,10 +136,10 @@ public final class ItemBingo extends JavaPlugin {
         getCommand("editbingo").setTabCompleter(eb);
 
         getCommand("startbingo").setExecutor(new StartBingoCommand());
-        getCommand("pointadd").setExecutor((CommandExecutor)new PointCommand());
-        getCommand("customitem").setExecutor((CommandExecutor)new CustomItemCommand());
-        getCommand("setbundle").setExecutor((CommandExecutor)new SetBundleCommand());
-        getCommand("bundle").setExecutor((CommandExecutor)new BundleCommand());
+        getCommand("pointadd").setExecutor(new PointCommand());
+        getCommand("customitem").setExecutor(new CustomItemCommand());
+        getCommand("setbundle").setExecutor(new SetBundleCommand());
+        getCommand("bundle").setExecutor(new BundleCommand());
 
 //        MaterialExporter.exportToFile();
 
@@ -190,5 +200,6 @@ public final class ItemBingo extends JavaPlugin {
         Settings.save(this);
         ChatManager.save();
         ChestManager.save();
+        LanguageManager.save();
     }
 }

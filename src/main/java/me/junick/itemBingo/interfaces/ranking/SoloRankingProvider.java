@@ -1,6 +1,7 @@
 package me.junick.itemBingo.interfaces.ranking;
 
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.model.PlayerBingoProgress;
 import me.junick.itemBingo.records.ranking.RankingEntry;
 import me.junick.itemBingo.util.PlayerDataManager;
@@ -19,23 +20,10 @@ public class SoloRankingProvider implements RankingProvider {
             allProgress.put(p.getUniqueId(), PlayerDataManager.get(p));
         }
 
-        Settings.Penalty penalty = Settings.getPenaltySystem();
-
-        List<Map.Entry<UUID, PlayerBingoProgress>> entries = new ArrayList<>(allProgress.entrySet());
-        entries.sort(Map.Entry.comparingByValue(RankingSupport.comparator(penalty)));
-
-        int realLimit = (limit <= 0) ? entries.size() : Math.min(limit, entries.size());
-
-        List<RankingEntry> out = new ArrayList<>();
-        for (int i = 0; i < realLimit; i++) {
-            UUID id = entries.get(i).getKey();
-            PlayerBingoProgress prog = entries.get(i).getValue();
-
+        return RankingSupport.rank(allProgress, limit, Settings.getPenaltySystem(), id -> {
             OfflinePlayer op = Bukkit.getOfflinePlayer(id);
-            String name = (op.getName() != null) ? op.getName() : "알 수 없는 플레이어";
-
-            out.add(RankingSupport.toEntry(name, prog, penalty));
-        }
-        return out;
+            return (op.getName() != null) ? op.getName()
+                    : Messages.legacy(Settings.getDefaultLanguage(), "rank.unknown-player");
+        });
     }
 }

@@ -1,10 +1,16 @@
 package me.junick.itemBingo.util;
 
 import me.junick.itemBingo.gui.BingoGUI;
+import me.junick.itemBingo.gui.BingoGuiHolder;
+import me.junick.itemBingo.gui.DiamondExchangeGUI;
 import me.junick.itemBingo.gui.EffectShopGUI;
 import me.junick.itemBingo.gui.ItemShopGUI;
+import me.junick.itemBingo.gui.MenuGUI;
+import me.junick.itemBingo.gui.ShopGUI;
+import me.junick.itemBingo.gui.SummaryGUI;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.Inventory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +50,28 @@ public final class GuiSync {
     }
 
     /**
+     * Holder-based viewer iteration: runs {@code action} for every online player
+     * whose open GUI is one of ours of the given {@code type}. Preferred over the
+     * title-based overload, since GUI titles are now localized per player.
+     */
+    public static void forEachViewer(BingoGuiHolder.Gui type, Consumer<Player> action) {
+        List<Player> viewers = new ArrayList<>();
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (BingoGuiHolder.is(p.getOpenInventory().getTopInventory(), type)) {
+                viewers.add(p);
+            }
+        }
+        for (Player p : viewers) {
+            action.accept(p);
+        }
+    }
+
+    /** Holder-based: closes the inventory of every viewer of a GUI of {@code type}. */
+    public static void closeViewers(BingoGuiHolder.Gui type) {
+        forEachViewer(type, Player::closeInventory);
+    }
+
+    /**
      * Re-renders the currency-displaying shop GUIs (item / effect shop) for each
      * given player who currently has one open, so a shared-currency change made
      * by one teammate updates everyone else's open shop.
@@ -55,10 +83,10 @@ public final class GuiSync {
      */
     public static void refreshShops(Iterable<? extends Player> players) {
         for (Player p : players) {
-            String title = p.getOpenInventory().getTitle();
-            if (ItemShopGUI.TITLE.equals(title)) {
+            Inventory top = p.getOpenInventory().getTopInventory();
+            if (BingoGuiHolder.is(top, BingoGuiHolder.Gui.ITEM_SHOP)) {
                 ItemShopGUI.open(p);
-            } else if (EffectShopGUI.TITLE.equals(title)) {
+            } else if (BingoGuiHolder.is(top, BingoGuiHolder.Gui.EFFECT_SHOP)) {
                 EffectShopGUI.open(p);
             }
         }
@@ -74,14 +102,53 @@ public final class GuiSync {
         // A team-mode change can revoke someone's right to see the board (e.g. an
         // unassigned player once team mode turns on), so close their board instead
         // of reopening it.
-        forEachViewer(BingoGUI.TITLE, vp -> {
+        forEachViewer(BingoGuiHolder.Gui.BINGO, vp -> {
             if (BingoGUI.canView(vp)) {
                 BingoGUI.open(vp);
             } else {
                 vp.closeInventory();
             }
         });
-        forEachViewer(ItemShopGUI.TITLE, ItemShopGUI::open);
-        forEachViewer(EffectShopGUI.TITLE, EffectShopGUI::open);
+        forEachViewer(BingoGuiHolder.Gui.ITEM_SHOP, ItemShopGUI::open);
+        forEachViewer(BingoGuiHolder.Gui.EFFECT_SHOP, EffectShopGUI::open);
+    }
+
+    /**
+     * Reopens {@code p}'s currently open plugin GUI in their (possibly just
+     * changed) language. Used by {@code /language} so a switch is reflected
+     * immediately. GUIs are recognized by their {@link BingoGuiHolder} marker, so
+     * a player who has no plugin GUI open — or has an admin/editor screen open
+     * that we don't live-refresh — is left untouched.
+     */
+    public static void reopenFor(Player p) {
+        BingoGuiHolder holder = BingoGuiHolder.of(p.getOpenInventory().getTopInventory());
+        if (holder == null) return;
+
+        switch (holder.type()) {
+            case BINGO -> {
+                if (BingoGUI.canView(p)) BingoGUI.open(p);
+                else p.closeInventory();
+            }
+            case SHOP -> ShopGUI.open(p);
+            case ITEM_SHOP -> ItemShopGUI.open(p);
+            case EFFECT_SHOP -> EffectShopGUI.open(p);
+            case MENU -> MenuGUI.openMain(p, false);
+            case SUMMARY -> SummaryGUI.tryOpen(p);
+            case DIAMOND_EXCHANGE -> {
+                int amount = 1;
+                if (holder.context() != null) {
+                    try {
+                        amount = Integer.parseInt(holder.context());
+                    } catch (NumberFormatException ignored) {
+                        // fall back to 1
+                    }
+                }
+                DiamondExchangeGUI.open(p, amount);
+            }
+            default -> {
+                // BUNDLE / PRESET / PRESET_EDITOR / MAP_SELECTOR / admin screens:
+                // not live-reopened; they refresh on the next manual open.
+            }
+        }
     }
 }

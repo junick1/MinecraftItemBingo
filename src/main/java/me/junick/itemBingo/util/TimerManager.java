@@ -2,8 +2,12 @@ package me.junick.itemBingo.util;
 
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
+import me.junick.itemBingo.records.ranking.RankingEntry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -14,6 +18,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -75,7 +80,7 @@ public class TimerManager {
                 if (!running || paused) return;
 
                 if (remainingSeconds <= 0) {
-                    stop();
+                    finish();
                     return;
                 }
 
@@ -90,21 +95,13 @@ public class TimerManager {
                     doSwap();
                     setSwap();
                 }
-                Component actionBar = Component.text("남은 시간: ", NamedTextColor.GREEN).append(
-                        Component.text(formatTime(remainingSeconds), NamedTextColor.YELLOW)
-                );
-                if (Settings.isPositionSwapMode() && Settings.isSwapTimer()) {
-                    actionBar = Component.text("").append(
-                            Component.text("남은 시간: ", NamedTextColor.YELLOW),
-                            Component.text(formatTime(remainingSeconds), NamedTextColor.YELLOW),
-                            Component.text(" | ", NamedTextColor.WHITE),
-                            Component.text("swap 시간: ", NamedTextColor.RED),
-                            Component.text(formatTime(swapRemaining), NamedTextColor.RED)
-                    );
-                }
-
-                // ✨
+                boolean swapBar = Settings.isPositionSwapMode() && Settings.isSwapTimer();
+                String timeStr = formatTime(remainingSeconds);
+                String swapStr = formatTime(swapRemaining);
                 for (Player player : Bukkit.getOnlinePlayers()) {
+                    Component actionBar = swapBar
+                            ? Messages.get(player, "timer.actionbar-swap", "time", timeStr, "swap", swapStr)
+                            : Messages.get(player, "timer.actionbar", "time", timeStr);
                     player.sendActionBar(actionBar);
                 }
             }
@@ -134,9 +131,48 @@ public class TimerManager {
             task = null;
         }
 
-        Component actionBar = Component.text("§c§l타이머 종료");
         for (Player player : Bukkit.getOnlinePlayers()) {
-            player.sendActionBar(actionBar);
+            player.sendActionBar(Messages.get(player, "timer.ended"));
+        }
+    }
+
+    /**
+     * Natural end of the game (the countdown reached zero): announce the winner
+     * with a title, then run the normal {@link #stop()} cleanup. Distinct from a
+     * bare {@code stop()} (manual /timer stop or a reset before a new start),
+     * which ends the timer silently without a winner screen.
+     */
+    public static void finish() {
+        announceWinner();
+        stop();
+        // The timer is now inactive, so a hidden leaderboard becomes visible —
+        // refresh the sidebar immediately rather than waiting for the next tick.
+        BingoScoreboard.updateAll();
+    }
+
+    /** Shows every player a title with the top-ranked player/team, score and penalty. */
+    private static void announceWinner() {
+        List<RankingEntry> top = RankingProviders.current().getRankings(1);
+        boolean hasWinner = !top.isEmpty() && top.get(0).score() > 0;
+        RankingEntry winner = hasWinner ? top.get(0) : null;
+
+        Title.Times times = Title.Times.times(Duration.ofMillis(500), Duration.ofSeconds(6), Duration.ofSeconds(1));
+        // Built per player so each sees the result in their language.
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            SupportedLocale loc = Messages.localeOf(player);
+            Component mainTitle;
+            Component subtitle;
+            if (!hasWinner) {
+                mainTitle = Messages.get(loc, "timer.game-over");
+                subtitle = Messages.get(loc, "timer.no-submitter");
+            } else {
+                mainTitle = Messages.get(loc, "timer.winner", "name", winner.displayName());
+                subtitle = Messages.get(loc, "timer.winner-sub",
+                        "score", winner.score(),
+                        "penalty", RankingFormat.penalty(winner.penaltySeconds(), loc));
+            }
+            player.showTitle(Title.title(mainTitle, subtitle, times));
+            player.playSound(player.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f, 1.0f);
         }
     }
 
@@ -223,13 +259,13 @@ public class TimerManager {
                 Location newLoc = locations.get(i);
 
                 target.teleport(newLoc);
-                target.sendMessage("§b§l[!] §f누군가와 위치가 바뀌었습니다! 슈슉-!");
+                target.sendMessage(Messages.get(target, "timer.swapped"));
 
                 // 이동 시 소리 효과!
                 target.playSound(target.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
             }
 
-            Bukkit.getLogger().info("✨ 모든 플레이어의 위치가 성공적으로 교체되었습니다.");
+            Bukkit.getLogger().info("[ItemBingo] All player positions swapped successfully.");
         }
     }
 }

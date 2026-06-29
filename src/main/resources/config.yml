@@ -1,6 +1,15 @@
 # ItemBingo default configuration
 # These values are also editable in-game via /admin.
 
+# Display language
+language:
+  # Default/fallback language: used for the console and for clients whose game
+  # language is neither English nor Korean. Supported: en_us, ko_kr
+  default: en_us
+  # When true, players without an explicit /language choice follow their
+  # Minecraft client language; when false, everyone gets 'default'.
+  followClient: true
+
 team:
   enabled: false
 
@@ -20,6 +29,8 @@ game:
   chestRows: 0
   # /tpa teammate teleport. Only effective while team mode is ON.
   tpaEnabled: false
+  # Hide the ranking sidebar and /rank while the timer is running; reveal on game end.
+  hideLeaderboard: false
 
 mode:
   # type = NORMAL | SWAPPAGE | FOG_OF_WAR (only one mode is active at a time)

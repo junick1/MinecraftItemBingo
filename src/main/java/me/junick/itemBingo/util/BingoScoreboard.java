@@ -3,8 +3,11 @@ package me.junick.itemBingo.util;
 import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.records.ranking.RankingEntry;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
@@ -13,8 +16,15 @@ import java.util.*;
 
 public class BingoScoreboard {
     private static final String OBJECTIVE_NAME = "bingo_sidebar";
-    private static final String OBJECTIVE_DISPLAY_NAME = "§e§l빙고 진행 상황";
     private static final int MAX_ROWS = 14;
+
+    /**
+     * The sidebar is a single shared scoreboard shown to every player, so it can't
+     * be localized per-player; it renders in the server default language.
+     */
+    private static SupportedLocale loc() {
+        return Settings.getDefaultLanguage();
+    }
 
     private static final Scoreboard BOARD = Bukkit.getScoreboardManager().getNewScoreboard();
     private static Objective objective;
@@ -25,14 +35,29 @@ public class BingoScoreboard {
         initializeObjective();
         clearScores();
 
+        if (Leaderboard.isHidden()) {
+            showHiddenPlaceholder();
+            return;
+        }
+
         List<RankingEntry> rankings = getSortedScores();
         updatePlayerScores(rankings);
+    }
+
+    /** Replaces the rankings with a "revealed after the game" notice while hidden. */
+    private static void showHiddenPlaceholder() {
+        objective.getScore(" ").setScore(4);
+        objective.getScore(Messages.legacy(loc(), "scoreboard.hidden1")).setScore(3);
+        objective.getScore(Messages.legacy(loc(), "scoreboard.hidden2")).setScore(2);
+        objective.getScore("  ").setScore(1);
+        assignToViewers();
     }
 
     private static void initializeObjective() {
         if (objective != null) return;
 
-        objective = BOARD.registerNewObjective(OBJECTIVE_NAME, "dummy", OBJECTIVE_DISPLAY_NAME);
+        objective = BOARD.registerNewObjective(OBJECTIVE_NAME, "dummy",
+                Messages.legacy(loc(), "scoreboard.title"));
         objective.setDisplaySlot(DisplaySlot.SIDEBAR);
 
         NumberFormat hideFormat = NumberFormat.blank();
@@ -67,7 +92,21 @@ public class BingoScoreboard {
             objective.getScore(placeholder).setScore(scoreRow);
         }
 
-        Bukkit.getOnlinePlayers().forEach(p -> p.setScoreboard(BOARD));
+        assignToViewers();
+    }
+
+    /**
+     * Points every online player at the shared sidebar, but only if they aren't
+     * already viewing it. The sidebar is a single shared {@link Scoreboard}, so
+     * score changes propagate to current viewers for free — re-assigning the same
+     * board every tick just sends redundant packets. Guarding on the current
+     * board means a freshly joined player is picked up within a tick while
+     * everyone else is left untouched.
+     */
+    private static void assignToViewers() {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (p.getScoreboard() != BOARD) p.setScoreboard(BOARD);
+        }
     }
 
     private static String formatEntry(int rank, String name, int score, long totalSeconds) {
@@ -79,7 +118,7 @@ public class BingoScoreboard {
         };
 
         StringBuilder sb = new StringBuilder(48);
-        sb.append(color).append(rank).append("위 §f").append(name)
+        sb.append(color).append(Messages.legacy(loc(), "scoreboard.rank-fmt", "rank", rank)).append(" §f").append(name)
           .append(" - §b").append(score).append(" §7(");
 
         if (Settings.getPenaltySystem() == Settings.Penalty.CODEFORCES) {

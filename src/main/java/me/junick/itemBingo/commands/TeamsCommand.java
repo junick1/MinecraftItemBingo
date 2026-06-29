@@ -1,6 +1,7 @@
 package me.junick.itemBingo.commands;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.util.GuiSync;
 import me.junick.itemBingo.util.TeamManager;
 import net.kyori.adventure.text.Component;
@@ -83,7 +84,9 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
 
                 tm().assign(target.getUniqueId(), teamId);
                 mutated = true;
-                Bukkit.broadcast(Component.text("§e[팀] §f" + name(target) + "§f 님이 §bTeam " + teamOneBased + "§f로 배정되었습니다."));
+                for (Player pl : Bukkit.getOnlinePlayers()) {
+                    pl.sendMessage(Messages.get(pl, "command.teams.assigned", "player", name(target), "team", teamOneBased));
+                }
             }
 
             case "remove", "unset" -> {
@@ -100,7 +103,9 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
 
                 tm().unassign(target.getUniqueId());
                 mutated = true;
-                Bukkit.broadcast(Component.text("§e[팀] §f" + name(target) + "§f 님의 팀 배정이 해제되었습니다."));
+                for (Player pl : Bukkit.getOnlinePlayers()) {
+                    pl.sendMessage(Messages.get(pl, "command.teams.unassigned", "player", name(target)));
+                }
             }
 
             case "random" -> {
@@ -122,7 +127,9 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
                 tm().assignRandomEven(all, keep);
                 mutated = true;
 
-                Bukkit.broadcast(Component.text("§e[팀] §f랜덤 팀 배정 완료! (keep=" + keep + ", reset=" + reset + ")"));
+                for (Player pl : Bukkit.getOnlinePlayers()) {
+                    pl.sendMessage(Messages.get(pl, "command.teams.random-done", "keep", keep, "reset", reset));
+                }
                 info(sender);
             }
 
@@ -131,7 +138,9 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
                 Collection<? extends OfflinePlayer> all = Bukkit.getOnlinePlayers();
                 tm().assignRandomEven(all, true);
                 mutated = true;
-                Bukkit.broadcast(Component.text("§e[팀] §f남은 인원만 랜덤 배정 완료!"));
+                for (Player pl : Bukkit.getOnlinePlayers()) {
+                    pl.sendMessage(Messages.get(pl, "command.teams.fill-done"));
+                }
                 info(sender);
             }
 
@@ -178,14 +187,14 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
 
     private void info(CommandSender s) {
         Map<Integer, Integer> sizes = tm().getTeamSizes();
-        s.sendMessage("§e[팀] §f팀 개수: §a" + tm().getTeamCount());
+        s.sendMessage(Messages.get(s, "command.teams.info-count", "count", tm().getTeamCount()));
         for (int i = 0; i < tm().getTeamCount(); i++) {
-            s.sendMessage(" §bTeam " + (i + 1) + "§7: §f" + sizes.getOrDefault(i, 0) + "명");
+            s.sendMessage(Messages.get(s, "command.teams.info-team", "team", i + 1, "size", sizes.getOrDefault(i, 0)));
         }
 
         long unassigned = Bukkit.getOnlinePlayers().stream().filter(p -> tm().getTeamId(p) == TeamManager.NO_TEAM).count();
         if (unassigned > 0) {
-            s.sendMessage(" §c미배정: §f" + unassigned + "명");
+            s.sendMessage(Messages.get(s, "command.teams.info-unassigned", "count", unassigned));
         }
     }
 
@@ -197,11 +206,13 @@ public class TeamsCommand implements CommandExecutor, TabCompleter {
 
     private void listTeam(CommandSender s, int teamId) {
         List<Player> online = tm().getOnlinePlayersOnTeam(teamId);
-        s.sendMessage("§b[Team " + (teamId + 1) + "] §f(" + online.size() + "명) §7" + joinNames(online));
+        String names = online.isEmpty()
+                ? Messages.legacy(Messages.localeOf(s), "command.teammate.none")
+                : joinNames(online);
+        s.sendMessage(Messages.get(s, "command.teams.list", "team", teamId + 1, "count", online.size(), "names", names));
     }
 
     private String joinNames(List<? extends OfflinePlayer> ps) {
-        if (ps == null || ps.isEmpty()) return "§7(없음)";
         return ps.stream().map(this::name).collect(Collectors.joining("§7, §f"));
     }
 

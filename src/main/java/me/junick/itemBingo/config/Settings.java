@@ -1,9 +1,23 @@
 package me.junick.itemBingo.config;
 
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Locale;
+
 public class Settings {
+    /**
+     * Default/fallback language for the console and clients that are neither
+     * English nor Korean. Initialized to a safe value so message look-ups before
+     * {@link #load} still resolve.
+     */
+    private static SupportedLocale defaultLanguage = SupportedLocale.EN_US;
+
+    /** When true, players without an explicit /language choice follow their client locale. */
+    private static boolean followClient = true;
+
     private static boolean teamEnabled;
     private static boolean shopEnabled;
     private static boolean effectShopEnabled;
@@ -26,21 +40,27 @@ public class Settings {
     private static boolean tpaEnabled;
 
     /**
+     * When true, the ranking sidebar and {@code /rank} are concealed while the
+     * game timer is running, and only revealed once it stops/expires. See
+     * {@link me.junick.itemBingo.util.Leaderboard}.
+     */
+    private static boolean hideLeaderboard;
+
+    /**
      * The three game modes are mutually exclusive — only one is active at a time.
      * Each mode has its own set of sub-settings (the rows below the mode switch in
      * the admin "모드" tab).
      */
     public enum GameMode {
-        NORMAL("일반"),
-        SWAPPAGE("Swappage"),
-        FOG_OF_WAR("Fog of War"),
-        LOCKOUT("Lockout");
+        NORMAL,
+        SWAPPAGE,
+        FOG_OF_WAR,
+        LOCKOUT;
 
-        private final String display;
-
-        GameMode(String display) { this.display = display; }
-
-        public String getDisplay() { return display; }
+        /** Localized label for GUI display. */
+        public String displayName(SupportedLocale loc) {
+            return Messages.legacy(loc, "mode." + name().toLowerCase(Locale.ROOT));
+        }
     }
 
     private static GameMode gameMode;
@@ -60,6 +80,9 @@ public class Settings {
 
         FileConfiguration config = plugin.getConfig();
 
+        defaultLanguage = parseLocale(config.getString("language.default", "en_us"));
+        followClient = config.getBoolean("language.followClient", true);
+
         teamEnabled = config.getBoolean("team.enabled", false);
         shopEnabled = config.getBoolean("shop.enabled", false);
         effectShopEnabled = config.getBoolean("shop.effectShopEnabled", false);
@@ -68,6 +91,7 @@ public class Settings {
         penaltySystem = config.getInt("game.penalty", 0);
         chestRows = Math.max(0, Math.min(6, config.getInt("game.chestRows", 0)));
         tpaEnabled = config.getBoolean("game.tpaEnabled", false);
+        hideLeaderboard = config.getBoolean("game.hideLeaderboard", false);
 
         // Mode: prefer the new "mode.type" key, falling back to the legacy
         // "mode.positionSwap" boolean so existing configs keep working.
@@ -81,8 +105,17 @@ public class Settings {
         fogRevealAlert = config.getBoolean("mode.fog.revealAlert", true);
         fogDiagonalReveal = config.getBoolean("mode.fog.diagonalReveal", false);
 
-        plugin.getLogger().info("모든 설정이 로드되었습니다");
+        plugin.getLogger().info("Settings loaded.");
     }
+
+    private static SupportedLocale parseLocale(String id) {
+        SupportedLocale loc = SupportedLocale.fromId(id);
+        return loc != null ? loc : SupportedLocale.EN_US;
+    }
+
+    // ===== Language =====
+    public static SupportedLocale getDefaultLanguage() { return defaultLanguage; }
+    public static boolean isFollowClient() { return followClient; }
 
     private static GameMode parseMode(String type, boolean legacyPositionSwap) {
         if (type != null) {
@@ -98,6 +131,9 @@ public class Settings {
     public static void save(JavaPlugin plugin) {
         FileConfiguration config = plugin.getConfig();
 
+        config.set("language.default", defaultLanguage.id());
+        config.set("language.followClient", followClient);
+
         config.set("team.enabled", teamEnabled);
         config.set("shop.enabled", shopEnabled);
         config.set("shop.effectShopEnabled", effectShopEnabled);
@@ -106,6 +142,7 @@ public class Settings {
         config.set("game.penalty", penaltySystem);
         config.set("game.chestRows", chestRows);
         config.set("game.tpaEnabled", tpaEnabled);
+        config.set("game.hideLeaderboard", hideLeaderboard);
 
         config.set("mode.type", gameMode.name());
         config.set("mode.swap.alert", swapAlert);
@@ -120,7 +157,7 @@ public class Settings {
         config.set("mode.positionSwap.timer", null);
 
         plugin.saveConfig();
-        plugin.getLogger().info("설정이  저장되었습니다");
+        plugin.getLogger().info("Settings saved.");
     }
 
     public static boolean isTeamEnabled() { return teamEnabled; }
@@ -147,6 +184,11 @@ public class Settings {
     /** TPA only works when team mode is ON and the toggle is set. */
     public static boolean isTpaEffective() { return teamEnabled && tpaEnabled; }
     public static void toggleTpaEnabled() { tpaEnabled = !tpaEnabled; }
+
+    // ===== Leaderboard visibility =====
+    /** Whether rankings are hidden during play (revealed when the timer stops). */
+    public static boolean isHideLeaderboard() { return hideLeaderboard; }
+    public static void toggleHideLeaderboard() { hideLeaderboard = !hideLeaderboard; }
 
     // ===== Game mode =====
     public static GameMode getGameMode() { return gameMode; }
@@ -186,15 +228,14 @@ public class Settings {
     public static void togglePenaltyInt() { penaltySystem = (penaltySystem + 1) % 3; }
 
     public enum Penalty {
-        TOTAL_SUBMISSION("제출 합"),
-        LAST_SUBMISSION("마지막 제출"),
-        CODEFORCES("점수제");
+        TOTAL_SUBMISSION,
+        LAST_SUBMISSION,
+        CODEFORCES;
 
-        private final String display;
-
-        Penalty(String display) { this.display = display; }
-
-        public String getDisplay() { return display; }
+        /** Localized label for GUI display. */
+        public String displayName(SupportedLocale loc) {
+            return Messages.legacy(loc, "penalty." + name().toLowerCase(Locale.ROOT));
+        }
     }
 
     public static Penalty getPenaltySystem() {
@@ -206,9 +247,9 @@ public class Settings {
         };
     }
 
-    /** Korean label for the currently selected penalty mode (for GUI display). */
-    public static String getPenaltyDisplay() {
-        return getPenaltySystem().getDisplay();
+    /** Localized label for the currently selected penalty mode. */
+    public static String getPenaltyDisplay(SupportedLocale loc) {
+        return getPenaltySystem().displayName(loc);
     }
 
 }

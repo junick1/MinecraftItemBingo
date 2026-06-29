@@ -1,6 +1,7 @@
 package me.junick.itemBingo.commands;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.util.ChatManager;
 import me.junick.itemBingo.util.ChatManager.Channel;
 import me.junick.itemBingo.util.TeamManager;
@@ -25,30 +26,32 @@ public class ChatCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!(sender instanceof Player p)) {
-            sender.sendMessage("§c이 명령어는 플레이어만 사용할 수 있습니다.");
+            sender.sendMessage(Messages.get(sender, "command.players-only"));
             return true;
         }
 
         if (args.length == 0) {
             Channel current = ChatManager.getChannel(p);
-            p.sendMessage("§e현재 채팅 채널: §f" + (current == Channel.TEAM ? "팀" : "전체"));
-            p.sendMessage("§7/chat team §8또는 §7/chat all §8로 변경하세요.");
+            String channel = Messages.legacy(p, current == Channel.TEAM
+                    ? "command.chat.channel-team" : "command.chat.channel-all");
+            p.sendMessage(Messages.get(p, "command.chat.current", "channel", channel));
+            p.sendMessage(Messages.get(p, "command.chat.hint"));
             return true;
         }
 
         switch (args[0].toLowerCase()) {
             case "t", "team" -> {
                 ChatManager.setChannel(p, Channel.TEAM);
-                p.sendMessage("§a이제 §2팀 채팅§a으로 대화합니다.");
+                p.sendMessage(Messages.get(p, "command.chat.now-team"));
                 if (ItemBingo.getInstance().getTeamManager().effectiveTeamId(p) == TeamManager.NO_TEAM) {
-                    p.sendMessage("§e주의: 현재 팀이 없어 메시지가 전송되지 않습니다.");
+                    p.sendMessage(Messages.get(p, "command.chat.no-team-warn"));
                 }
             }
             case "a", "all" -> {
                 ChatManager.setChannel(p, Channel.ALL);
-                p.sendMessage("§a이제 §f전체 채팅§a으로 대화합니다.");
+                p.sendMessage(Messages.get(p, "command.chat.now-all"));
             }
-            default -> p.sendMessage("§c사용법: /chat <team|t|all|a>");
+            default -> p.sendMessage(Messages.get(p, "command.chat.usage"));
         }
         return true;
     }

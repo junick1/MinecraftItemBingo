@@ -5,7 +5,10 @@ import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.enums.BingoItem;
 import me.junick.itemBingo.enums.BingoRewardType;
 import me.junick.itemBingo.gui.BingoGUI;
+import me.junick.itemBingo.gui.BingoGuiHolder;
 import me.junick.itemBingo.gui.BingoViewport;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
 import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.model.PlayerBingoProgress;
@@ -47,9 +50,7 @@ public class BingoClickEvent implements Listener {
             return;
         }
 
-        Component title = e.getView().title();
-        String legacyTitle = LegacyComponentSerializer.legacySection().serialize(title);
-        if (!legacyTitle.equals(BingoGUI.TITLE)) return;
+        if (!BingoGuiHolder.is(e.getView().getTopInventory(), BingoGuiHolder.Gui.BINGO)) return;
 
         BingoBoard board = ItemBingo.currentBingo;
         if (board == null) return;
@@ -207,7 +208,7 @@ public class BingoClickEvent implements Listener {
 
     /** 다른 팀이 선점한 칸 제출 시도 메세지 */
     private void sendLockedMessage(Player p) {
-        p.sendMessage("§c다른 팀이 이미 선점한 칸입니다!");
+        p.sendMessage(Messages.get(p, "board.locked-claimed"));
         playErrorSound(p);
     }
 
@@ -259,7 +260,7 @@ public class BingoClickEvent implements Listener {
         if (Settings.isLockoutMode()) {
             // The claim locks this cell out for every other team, so re-render every
             // open board (not just the submitter's team) to show the new barrier.
-            GuiSync.forEachViewer(BingoGUI.TITLE, BingoGUI::rerenderInPlace);
+            GuiSync.forEachViewer(BingoGuiHolder.Gui.BINGO, BingoGUI::rerenderInPlace);
         } else {
             boolean scroll = BingoViewport.needsScroll(board);
             for (Player viewer : progress.viewers(p)) {
@@ -278,13 +279,13 @@ public class BingoClickEvent implements Listener {
 
         if (fog && Settings.isFogRevealAlert() && newlyRevealed > 0) {
             // Center-screen subtitle (like the map items), leaving the action bar
-            // free for the timer.
-            Title revealTitle = Title.title(
-                    Component.empty(),
-                    Component.text("새로운 칸이 공개되었습니다! (+" + newlyRevealed + ")", NamedTextColor.AQUA),
-                    REVEAL_TIMES
-            );
+            // free for the timer. Built per viewer so each sees it in their language.
             for (Player viewer : progress.viewers(p)) {
+                Title revealTitle = Title.title(
+                        Component.empty(),
+                        Messages.get(viewer, "board.fog-revealed", "count", newlyRevealed),
+                        REVEAL_TIMES
+                );
                 viewer.showTitle(revealTitle);
                 viewer.playSound(viewer.getLocation(), Sound.BLOCK_AMETHYST_BLOCK_CHIME, 1.0f, 1.2f);
             }
@@ -320,7 +321,7 @@ public class BingoClickEvent implements Listener {
 
     /** 잘못된 아이템 메세지 */
     private void sendInvalidItemMessage(Player p) {
-        p.sendMessage("§c잘못된 아이템입니다!");
+        p.sendMessage(Messages.get(p, "board.invalid-item"));
         playErrorSound(p);
     }
 
@@ -333,9 +334,9 @@ public class BingoClickEvent implements Listener {
 
     /** GUI의 모든 제출된 슬롯을 갱신 (진행도 막대가 동기화되도록) */
     private void refreshSubmittedSlots(Player p, BingoBoard board, BingoProgressAccess progress) {
-        String title = LegacyComponentSerializer.legacySection().serialize(p.getOpenInventory().title());
-        if (!title.equals(BingoGUI.TITLE)) return;
+        if (!BingoGuiHolder.is(p.getOpenInventory().getTopInventory(), BingoGuiHolder.Gui.BINGO)) return;
 
+        SupportedLocale loc = Messages.localeOf(p);
         Inventory inv = p.getOpenInventory().getTopInventory();
         int width = board.getWidth();
         int height = board.getHeight();
@@ -355,7 +356,8 @@ public class BingoClickEvent implements Listener {
             inv.setItem(slot, BingoGUI.submittedIcon(
                     owner,
                     progress.getSubmitterName(idx),
-                    BingoGUI.progressFraction(progress, owner, total)
+                    BingoGUI.progressFraction(progress, owner, total),
+                    loc
             ));
         }
     }
@@ -365,8 +367,10 @@ public class BingoClickEvent implements Listener {
         int current = progress.getSubmittedSlots().size();
         int total = ItemBingo.currentBingo.getItems().size();
 
-        String message = "§a" + p.getName() + "님이 아이템을 제출했습니다! (" + current + "/" + total + ")";
-        Bukkit.getOnlinePlayers().forEach(pl -> pl.sendMessage(message));
+        for (Player pl : Bukkit.getOnlinePlayers()) {
+            pl.sendMessage(Messages.get(pl, "board.submit-broadcast",
+                    "player", p.getName(), "current", current, "total", total));
+        }
 
         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
     }
@@ -381,17 +385,28 @@ public class BingoClickEvent implements Listener {
                 ? tm.getOnlinePlayersOnTeam(teamId)
                 : List.of(p);
 
-        String rawMessage = p.getName() + "님이 아이템을 제출했습니다! (" + current + "/" + total + ")";
-        Component message = Component.text(rawMessage, NamedTextColor.GREEN);
         Component itemInfo = Component.text(" -> ", NamedTextColor.WHITE).append(
                 Component.translatable(item.translationKey())
         );
 
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (team.contains(player)) {
-                player.sendMessage(message.append(itemInfo));
-            } else {
-                player.sendMessage(message);
+        if (Leaderboard.isHidden()) {
+            // The live leaderboard is concealed, so a public "(n/total)" broadcast would
+            // leak progress to opponents and defeat the hide. Keep it within the player's
+            // own team (or just the player when solo), with the item detail they'd
+            // normally get as teammates.
+            for (Player member : team) {
+                member.sendMessage(Messages.get(member, "board.submit-broadcast",
+                        "player", p.getName(), "current", current, "total", total).append(itemInfo));
+            }
+        } else {
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                Component base = Messages.get(player, "board.submit-broadcast",
+                        "player", p.getName(), "current", current, "total", total);
+                if (team.contains(player)) {
+                    player.sendMessage(base.append(itemInfo));
+                } else {
+                    player.sendMessage(base);
+                }
             }
         }
 
@@ -413,7 +428,7 @@ public class BingoClickEvent implements Listener {
                 + (diag2Done ? 1 : 0);
 
         if (cnt > 0) {
-            p.sendMessage("§e팀 빙고줄 포인트 + " + cnt);
+            p.sendMessage(Messages.get(p, "board.line-points", "count", cnt));
             p.playSound(p.getLocation(), Sound.UI_TOAST_CHALLENGE_COMPLETE, 0.33f, 1.0f);
             progress.addCurrencyAll(BingoRewardType.LINE, cnt);
             progress.save();

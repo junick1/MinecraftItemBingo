@@ -1,6 +1,7 @@
 package me.junick.itemBingo.events.items;
 
 import me.junick.itemBingo.enums.BingoItem;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.util.CustomItems;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -39,7 +40,7 @@ implements Listener {
         Material next = this.getNextOxidation(current);
         if (next == null) {
             player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
-            player.sendMessage("§c이 블록에는 사용할 수 없습니다.");
+            player.sendMessage(Messages.get(player, "items.copper.invalid-block"));
             return;
         }
         String oldDataStr = block.getBlockData().getAsString();
@@ -51,11 +52,11 @@ implements Listener {
             hand.setAmount(hand.getAmount() - 1);
             player.playSound(player.getLocation(), Sound.ENTITY_PHANTOM_HURT, 1.0f, 1.5f);
             player.playSound(player.getLocation(), Sound.BLOCK_ANVIL_PLACE, 0.1f, 0.5f);
-            player.sendMessage("§a구리가 산화되었습니다!");
+            player.sendMessage(Messages.get(player, "items.copper.oxidized"));
         }
         catch (IllegalArgumentException ex) {
             player.playSound(player.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
-            player.sendMessage("§c이 블록에는 사용할 수 없습니다.");
+            player.sendMessage(Messages.get(player, "items.copper.invalid-block"));
             return;
         }
     }

@@ -2,18 +2,19 @@ package me.junick.itemBingo.events.items;
 
 import me.junick.itemBingo.enums.BingoItem;
 import me.junick.itemBingo.enums.BingoStructure;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.map.MapCursor;
 
 public class ExplorerMapEvent extends MapItemListener<BingoStructure> {
-    private static final String TITLE = "§b지도 선택";
 
     // Search radius for World#locateNearestStructure, in chunks.
     private static final int SEARCH_RADIUS_CHUNKS = 200;
 
     @Override protected BingoItem triggerItem() { return BingoItem.EXPLORER_MAP; }
-    @Override protected String title() { return TITLE; }
+    @Override protected String titleKey() { return "items.explorermap.title"; }
     @Override protected BingoStructure[] options() { return BingoStructure.values(); }
 
     @Override
@@ -32,6 +33,8 @@ public class ExplorerMapEvent extends MapItemListener<BingoStructure> {
         return res == null ? null : res.getLocation();
     }
 
-    @Override protected String mapItemName(BingoStructure option) { return option.getName() + " 탐험가 지도"; }
+    @Override protected String mapItemName(BingoStructure option, SupportedLocale loc) {
+        return Messages.legacy(loc, "items.explorermap.map-name", "name", option.displayName(loc));
+    }
     @Override protected MapCursor.Type markerType() { return MapCursor.Type.BANNER_RED; }
 }

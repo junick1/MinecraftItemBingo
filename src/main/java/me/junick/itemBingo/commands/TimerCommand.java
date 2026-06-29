@@ -1,5 +1,6 @@
 package me.junick.itemBingo.commands;
 
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.util.TimerManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -16,34 +17,34 @@ public class TimerCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (args.length == 0) {
-            sender.sendMessage("§c사용법: /timer <start|stop|pause> [초]");
+            sender.sendMessage(Messages.get(sender, "command.timer.usage"));
             return true;
         }
 
         switch (args[0].toLowerCase()) {
             case "start" -> {
                 if (args.length < 2) {
-                    sender.sendMessage("§c사용법: /timer start <초>");
+                    sender.sendMessage(Messages.get(sender, "command.timer.start-usage"));
                     return true;
                 }
                 try {
                     int seconds = Integer.parseInt(args[1]);
 
                     TimerManager.start(seconds);
-                    sender.sendMessage("§a타이머가 " + seconds + "초로 시작되었습니다.");
+                    sender.sendMessage(Messages.get(sender, "command.timer.started", "seconds", seconds));
                 } catch (NumberFormatException e) {
-                    sender.sendMessage("§c올바른 정수를 입력하세요.");
+                    sender.sendMessage(Messages.get(sender, "command.invalid-number"));
                 }
             }
             case "pause" -> {
                 boolean nowPaused = TimerManager.togglePause();
-                sender.sendMessage(nowPaused ? "§a타이머가 일시정지되었습니다." : "§a타이머가 재개되었습니다.");
+                sender.sendMessage(Messages.get(sender, nowPaused ? "command.timer.paused" : "command.timer.resumed"));
             }
             case "stop" -> {
                 TimerManager.stop();
-                sender.sendMessage("§a타이머가 정지되었습니다.");
+                sender.sendMessage(Messages.get(sender, "command.timer.stopped"));
             }
-            default -> sender.sendMessage("§c알 수 없는 명령입니다. /timer <start|stop|pause> [초]");
+            default -> sender.sendMessage(Messages.get(sender, "command.timer.unknown"));
         }
         return true;
     }

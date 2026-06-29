@@ -2,6 +2,8 @@ package me.junick.itemBingo.gui;
 
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.BundleManager;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -19,18 +21,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Renders the bundle manager.
- *
- * <pre>
- * row 0 (0-8)   : 4 glass | bundle preview (slot 4) | 4 glass
- * row 1-3 (9-35): editable region — the selected template's items
- * row 4 (36-44) : glass separator
- * row 5 (45-53) : 9 terracotta template selectors (0..8)
- * </pre>
+ * Renders the bundle manager. GUI identity is the {@link BingoGuiHolder} marker
+ * ({@code BUNDLE}); the shown template index rides on the preview item's PDC.
  */
 public class BundleGUI {
-    public static final String TITLE = "§6번들 매니저";
-
     public static final int BUNDLE_SLOT = 4;
     public static final int EDIT_START = 9;
     public static final int EDIT_END = 35;                 // inclusive (27 slots)
@@ -53,13 +47,16 @@ public class BundleGUI {
     public static void open(Player player, int templateIdx) {
         if (templateIdx < 0 || templateIdx >= BundleManager.TEMPLATE_COUNT) templateIdx = 0;
 
-        Inventory inv = Bukkit.createInventory(null, 54, TITLE);
+        SupportedLocale loc = Messages.localeOf(player);
+        BingoGuiHolder holder = new BingoGuiHolder(BingoGuiHolder.Gui.BUNDLE);
+        Inventory inv = Bukkit.createInventory(holder, 54, Messages.get(loc, "gui.bundle.title"));
+        holder.setInventory(inv);
 
         ItemStack glass = hiddenGlass();
         for (int i = 0; i < 9; i++) inv.setItem(i, glass);
         for (int i = SEPARATOR_START; i < TEMPLATE_ROW_START; i++) inv.setItem(i, glass);
 
-        inv.setItem(BUNDLE_SLOT, bundlePreview(templateIdx));
+        inv.setItem(BUNDLE_SLOT, bundlePreview(templateIdx, loc));
 
         // Editable region: only template 1..8 actually carry items.
         List<ItemStack> items = BundleManager.loadTemplate(templateIdx);
@@ -69,7 +66,7 @@ public class BundleGUI {
         }
 
         for (int i = 0; i < BundleManager.TEMPLATE_COUNT; i++) {
-            inv.setItem(TEMPLATE_ROW_START + i, templateIcon(i, templateIdx));
+            inv.setItem(TEMPLATE_ROW_START + i, templateIcon(i, templateIdx, loc));
         }
 
         player.openInventory(inv);
@@ -83,22 +80,22 @@ public class BundleGUI {
         return glass;
     }
 
-    private static ItemStack bundlePreview(int templateIdx) {
+    private static ItemStack bundlePreview(int templateIdx, SupportedLocale loc) {
         ItemStack bundle = new ItemStack(Material.BUNDLE);
         ItemMeta meta = bundle.getItemMeta();
-        meta.displayName(Component.text("번들 미리보기 — 템플릿 #" + templateIdx, NamedTextColor.GOLD)
+        meta.displayName(Component.text(Messages.legacy(loc, "gui.bundle.preview-title", "idx", templateIdx), NamedTextColor.GOLD)
                 .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
-        lore.add(line("아래 27칸에 시작 아이템을 배치하세요.", NamedTextColor.GRAY));
-        lore.add(line("하단의 점토로 템플릿을 전환합니다.", NamedTextColor.GRAY));
+        lore.add(line(Messages.legacy(loc, "gui.bundle.preview-desc1"), NamedTextColor.GRAY));
+        lore.add(line(Messages.legacy(loc, "gui.bundle.preview-desc2"), NamedTextColor.GRAY));
         lore.add(Component.empty());
         if (templateIdx == 0) {
-            lore.add(line("이 템플릿은 비어 있으며 수정할 수 없습니다.", NamedTextColor.RED));
-            lore.add(line("선택 시 플레이어는 빈손으로 시작합니다.", NamedTextColor.RED));
+            lore.add(line(Messages.legacy(loc, "gui.bundle.preview-empty1"), NamedTextColor.RED));
+            lore.add(line(Messages.legacy(loc, "gui.bundle.preview-empty2"), NamedTextColor.RED));
         } else {
-            lore.add(line("이 템플릿이 현재 선택되어 있습니다.", NamedTextColor.GREEN));
-            lore.add(line("빙고 시작 시 이 구성이 지급됩니다.", NamedTextColor.GREEN));
+            lore.add(line(Messages.legacy(loc, "gui.bundle.preview-selected1"), NamedTextColor.GREEN));
+            lore.add(line(Messages.legacy(loc, "gui.bundle.preview-selected2"), NamedTextColor.GREEN));
         }
         meta.lore(lore);
 
@@ -107,19 +104,21 @@ public class BundleGUI {
         return bundle;
     }
 
-    private static ItemStack templateIcon(int idx, int selected) {
+    private static ItemStack templateIcon(int idx, int selected, SupportedLocale loc) {
         ItemStack item = new ItemStack(TEMPLATE_COLORS[idx]);
         ItemMeta meta = item.getItemMeta();
 
-        String name = idx == 0 ? "빈 번들 (수정 불가)" : "번들 템플릿 #" + idx;
+        String name = idx == 0
+                ? Messages.legacy(loc, "gui.bundle.empty-template")
+                : Messages.legacy(loc, "gui.bundle.template", "idx", idx);
         meta.displayName(Component.text(name, idx == selected ? NamedTextColor.YELLOW : NamedTextColor.WHITE)
                 .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
         if (idx == selected) {
-            lore.add(line("✔ 현재 선택됨", NamedTextColor.GREEN));
+            lore.add(line(Messages.legacy(loc, "gui.bundle.current"), NamedTextColor.GREEN));
         } else {
-            lore.add(line("클릭하여 이 템플릿을 선택", NamedTextColor.GRAY));
+            lore.add(line(Messages.legacy(loc, "gui.bundle.click-select"), NamedTextColor.GRAY));
         }
         meta.lore(lore);
 

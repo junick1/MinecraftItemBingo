@@ -1,0 +1,576 @@
+# ItemBingo — English (US) messages.
+# This is the DEFAULT/fallback bundle: every key must exist here. Other languages
+# (e.g. ko_kr.yml) may omit keys and fall back to this file per-key.
+#
+# Formatting: legacy section codes (§) are supported (e.g. §c = red).
+# Placeholders: {name} is replaced by value; {noun:withBatchim/withoutBatchim}
+# selects a Korean particle (only meaningful in ko_kr.yml).
+
+common:
+  disabled-by-admin: "§cDisabled by an administrator."
+
+command:
+  players-only: "§cThis command can only be used by a player."
+  language:
+    usage: "§eUsage: §f/language <english|korean|auto>"
+    current: "§eCurrent language: §f{language}"
+    set: "§aLanguage set to §f{language}§a."
+    auto: "§aLanguage now follows your Minecraft client: §f{language}§a."
+    unknown: "§cUnknown option. Use: §fenglish§c, §fkorean§c, or §fauto§c."
+  customitem:
+    title: "§3Custom Items"
+  tpa:
+    disabled: "§cThe /tpa feature is disabled."
+    usage: "§eUsage: §f/tpa <player>"
+    offline: "§c{player} is not online."
+  teammate:
+    no-team: "§cYou are not on a team!"
+    out-of-range: "§cError! Team number is out of range. (1..{count})"
+    list: "§b[Team {team}] §f({count}) §7{names}"
+    none: "§7(none)"
+  ac:
+    usage: "§cUsage: §f/ac <message>"
+  tc:
+    usage: "§cUsage: §f/tc <message>"
+  startbingo:
+    usage: "§cUsage: §f/startbingo <seconds>"
+    invalid-number: "§cPlease enter a valid integer."
+    warn: "§c§l[Warning] §fStarting the game clears every player's inventory and respawns them."
+    unassigned: "§c§l[Warning] §fSome players aren't assigned to a team: §e{names}"
+    confirm: "§eType §f/startbingo {seconds}§e again within 10 seconds to continue."
+    started: "§aBingo has started for {seconds} seconds."
+  chat:
+    current: "§eCurrent chat channel: §f{channel}"
+    channel-team: "Team"
+    channel-all: "All"
+    hint: "§7Use §7/chat team §8or §7/chat all §8to switch."
+    now-team: "§aYou're now chatting in §2team chat§a."
+    no-team-warn: "§eNote: you have no team, so messages won't be sent."
+    now-all: "§aYou're now chatting in §fall chat§a."
+    usage: "§cUsage: §f/chat <team|t|all|a>"
+  invalid-number: "§cPlease enter a valid number."
+  rollbingo:
+    usage: "§cUsage: §f/rollbingo <width> <height>"
+    range: "§cWidth must be 1–{maxw} and height 1–{maxh}."
+    warn: "§c§l[Warning] §fCreating a new board resets all player and team progress."
+    confirm: "§eType §f/rollbingo {width} {height}§e again within 10 seconds to continue."
+    created: "§aA {width}x{height} bingo board has been created!"
+  timer:
+    usage: "§cUsage: §f/timer <start|stop|pause> [seconds]"
+    start-usage: "§cUsage: §f/timer start <seconds>"
+    started: "§aTimer started for {seconds} seconds."
+    paused: "§aTimer paused."
+    resumed: "§aTimer resumed."
+    stopped: "§aTimer stopped."
+    unknown: "§cUnknown command. /timer <start|stop|pause> [seconds]"
+  point:
+    usage: "§cUsage: §f/pointadd <player> <diamond|line|slot> <amount>"
+    no-player: "§cPlayer not found: {player}"
+    given: "§aGave {amount} {type} to {player}."
+  preset:
+    range: "§cWidth must be 1–{maxw} and height 1–{maxh}."
+  newbingo:
+    usage: "§cUsage: §f/newbingo <id> <width> <height>"
+    invalid-id: "§cAn id may only contain letters, digits, _ and -."
+    exists: "§cA preset with that id already exists: {id}"
+    created: "§aPreset '{id}' ({width}x{height}) created!"
+    edit-hint: "§7Edit it in-game with §f/editbingo {id}§7."
+  setbingo:
+    gui-players-only: "§cOnly players can open the GUI. Use /setbingo <id>."
+    no-presets: "§cNo saved presets. Create one first with /newbingo <id> <width> <height>."
+    not-found: "§cThat preset doesn't exist: {id}"
+    incomplete: "§cIncomplete preset ({filled}/{slots}). Finish it first with §7/editbingo {id}§c."
+    warn: "§c§l[Warning] §fApplying a preset resets all player and team progress."
+    confirm: "§eType §f/setbingo {id}§e again within 10 seconds to continue."
+    applied: "§aApplied preset '{id}' ({width}x{height})!"
+  teams:
+    assigned: "§e[Team] §f{player}§f was assigned to §bTeam {team}§f."
+    unassigned: "§e[Team] §f{player}§f was removed from their team."
+    random-done: "§e[Team] §fRandom team assignment complete! (keep={keep}, reset={reset})"
+    fill-done: "§e[Team] §fAssigned remaining players randomly!"
+    info-count: "§e[Team] §fTeam count: §a{count}"
+    info-team: " §bTeam {team}§7: §f{size}"
+    info-unassigned: " §cUnassigned: §f{count}"
+    list: "§b[Team {team}] §f({count}) §7{names}"
+
+language:
+  name:
+    en_us: "English"
+    ko_kr: "한국어"
+
+reward:
+  diamond:
+    name: "§bDiamond Points"
+  slot:
+    name: "§aTile Points"
+  line:
+    name: "§eLine Points"
+
+shop:
+  disabled: "§cThe shop is disabled."
+  purchased: "§e[Shop] §aPurchased {item}§f!"
+  not-enough: "§e[Shop] §cNot enough points!"
+  inventory-full: "§e[Shop] §cYour inventory is full!"
+
+chat:
+  team-tag: "§a[Team] "
+  no-team: "§cYou have no team, so team chat is unavailable. Use /chat all to switch to all chat."
+
+tpa:
+  self: "§cYou can't send a request to yourself."
+  not-teammate: "§cYou can only request a teammate."
+  sent: "§aSent a teleport request to {target}. (accept within 60s)"
+  request-received: "§b{requester} requested to teleport to you. "
+  accept-button: "§a§l[Accept]"
+  accept-hover: "§7Click to accept {requester}"
+  deny-button: "§c§l[Deny]"
+  deny-hover: "§7Click to deny the request"
+  not-same-team: "§cYou're no longer on the same team, so you can't teleport."
+  teleported: "§aTeleported to {target}."
+  accepted: "§aAccepted {requester}'s teleport request."
+  denied-by-you: "§eDenied {requester}'s request."
+  denied: "§c{target} denied your teleport request."
+  none-pending: "§cYou have no pending teleport requests."
+  ambiguous: "§cMultiple requests. Specify one with /tp{sub} <player>."
+  requester-offline: "§cThe requester is offline."
+  not-found: "§cCouldn't find a request from {player}."
+
+timer:
+  actionbar: "§aTime left: §e{time}"
+  actionbar-swap: "§eTime left: {time} §f| §cSwap: {swap}"
+  ended: "§c§lTimer ended"
+  game-over: "§eGame Over"
+  no-submitter: "§7No one submitted anything"
+  winner: "§e★ §6{name} wins!"
+  winner-sub: "§b{score} §8· §7{penalty}"
+  swapped: "§b§l[!] §fYou swapped places with someone! Whoosh!"
+
+rank:
+  hidden: "§cRankings are hidden while a game is running. §7(revealed after the game)"
+  header: "§6===== §eBingo Rankings §6====="
+  entry: "§f{rank}. §a{name}§f - §b{score}§f, (§7{time}§f)"
+  points: "{n} pts"
+  unknown-player: "Unknown Player"
+
+scoreboard:
+  title: "§e§lBingo Progress"
+  hidden1: "§7Rankings are revealed"
+  hidden2: "§7after the game ends"
+  rank-fmt: "#{rank}"
+
+chest:
+  disabled: "§cStorage is disabled."
+  no-team: "§cYou have no team, so you can't open the shared storage."
+  title-team: "§5Shared Storage"
+  title-solo: "§5Personal Storage"
+
+bundle:
+  already-received: "§cYou've already received your bundle."
+
+items:
+  copper:
+    invalid-block: "§cYou can't use it on this block."
+    oxidized: "§aThe copper has oxidized!"
+  dye:
+    title: "§bDye Selection"
+    lore: "§7Click to receive this dye."
+    invalid: "§cError: no valid voucher detected."
+    inventory-full: "§cError: your inventory is full."
+  mapselector:
+    dimension: "§7Dimension: {dim}"
+    click-to-create: "§eClick to create a map"
+    wrong-dimension: "§c✖ Not usable in your current dimension"
+    close:
+      name: "§cClose"
+      lore: "§7Cancel and close."
+  map:
+    invalid-head: "§cError"
+    invalid: "§cNo valid map detected."
+    wrong-dim-head: "§cWrong dimension"
+    wrong-dim: "§cThis map can only be used in {dim}."
+    not-found-head: "§cNot found"
+    not-found: "§cCouldn't find {name}."
+    found-head: "§aMap found!"
+    found: "§e{name} §b({x}, {y}, {z})§e — about {dist} blocks away"
+  biomemap:
+    title: "§bSelect Biome Map"
+    map-name: "{name} Biome Map"
+  explorermap:
+    title: "§bSelect Map"
+    map-name: "{name} Explorer Map"
+
+item:
+  diamond:
+    name: "Convert Line Points to Diamond Points"
+    lore:
+      - "Line Points -> 10 Diamond Points"
+  bingo_filler:
+    name: "Bingo Submit Pass"
+    lore:
+      - "Instantly submits one bingo tile."
+  dye_selector:
+    name: "Dye Voucher"
+    lore:
+      - "Choose and receive one dye."
+  copper_oxidizer:
+    name: "Copper Oxidizer"
+    lore:
+      - "Right-click an unwaxed copper block to oxidize it one stage."
+      - "Right-click a copper golem to instantly turn it into a statue."
+  explorer_map:
+    name: "Explorer Map"
+    lore:
+      - "Pick a structure to get an explorer map to the nearest one."
+  biome_map:
+    name: "Biome Map"
+    lore:
+      - "Pick a biome to get a map pointing to the nearest one."
+
+effect:
+  speed:
+    name: "Speed"
+  dolphins_grace:
+    name: "Dolphin's Grace"
+  haste:
+    name: "Haste II"
+  conduit_power:
+    name: "Water Breathing & No Mining Fatigue"
+  step_height:
+    name: "Step Height"
+  efficiency:
+    name: "Efficiency"
+  mending:
+    name: "Mending"
+  strength:
+    name: "Strength II"
+  resistance:
+    name: "Resistance II"
+  health_boost:
+    name: "Health Boost V"
+  fire_resistance:
+    name: "Fire Resistance"
+  improve_lava_movement:
+    name: "Strider's Blessing"
+
+tag:
+  color:
+    name: "★ Color Item"
+  silk_touch:
+    name: "⛏ Silk Touch Item"
+  the_end:
+    name: "⏣ End Item"
+  smithing_template:
+    name: "⚒ Smithing Template Item"
+  the_nether:
+    name: "💢 Nether Item"
+  copper:
+    name: "🐱 Oxidizing Copper Item"
+  waxed:
+    name: "🍯 Waxed Item"
+  disc:
+    name: "💿 Music Disc Item"
+  pottery_sherd:
+    name: "🍶 Pottery Sherd Item"
+
+board:
+  none: "§cThere is no active bingo board."
+  team-only: "§cIn team mode, only players assigned to a team can view the board."
+  too-tall: "§cThe GUI height exceeds {max} rows."
+  locked-claimed: "§cAnother team has already claimed this tile!"
+  invalid-item: "§cInvalid item!"
+  fog-revealed: "§bNew tiles revealed! (+{count})"
+  submit-broadcast: "§a{player} submitted an item! ({current}/{total})"
+  line-points: "§eTeam Line Points + {count}"
+  scroll:
+    up: "§f▲ Up"
+    down: "§f▼ Down"
+    left: "§f◀ Left"
+    right: "§f▶ Right"
+    hint: "§8Click to scroll one tile"
+  recenter:
+    name: "§e⊙ Recenter"
+    lore: "§8Jump to the center of the board."
+  locked:
+    name: "§c§l✘ Claimed"
+    lore1: "§7Another team submitted this tile first."
+    lore2: "§8It can no longer be submitted."
+  submitted:
+    name: "§a§l✔ Submitted"
+    lore: "§7This tile has already been submitted."
+    by: "§7Submitted by: §e{submitter}"
+    unknown: "Unknown"
+
+gui:
+  back:
+    name: "§aBack"
+    lore: "§7Return to the previous menu."
+  shop-common:
+    price-label: "§ePrice: "
+    cost: "§f • {reward}§f: {cost}"
+    affordable: "§a✔ Can purchase"
+    not-affordable: "§c✖ Not enough points"
+  currency:
+    title: "§f§lYour Points"
+    lore:
+      - "§7Fill the bingo board to earn points!"
+      - ""
+      - "§aTile Points: §f{slot}"
+      - "§7  └ Earned by submitting board items"
+      - "§eLine Points: §f{line}"
+      - "§7  └ Earned by completing a line"
+      - "§bDiamond Points: §f{diamond}"
+      - "§7  └ Earned at the diamond exchange"
+  shop:
+    title: "§aShop"
+    effect:
+      name: "§bEffect Shop"
+      lore: "§7Click to open the effect shop."
+    item:
+      name: "§eItem Shop"
+      lore: "§7Click to open the item shop."
+  item-shop:
+    title: "§eItem Shop"
+  effect-shop:
+    title: "§bEffect Shop"
+    upgrade-hint: "§eLeft-click to upgrade."
+    maxed: "§a✔ Max level"
+    upgradable: "§a✔ Can upgrade"
+    upgraded: "§a{effect} §fis now level §b{level}§f!"
+    upgrade-failed: "§cUpgrade failed."
+  menu:
+    title: "§6Bingo Menu"
+    rank:
+      name: "§eView Rankings"
+      lore: "§7Check the current bingo rankings."
+    board:
+      name: "§bView Board"
+      lore: "§7Check the current bingo board."
+    shop:
+      name: "§aBingo Shop"
+      lore: "§7Opens the bingo shop."
+    shop-disabled:
+      name: "§7Bingo Shop §8(disabled)"
+    chest:
+      name: "§dStorage"
+      lore-team: "§7Opens your team's shared storage."
+      lore-solo: "§7Opens your personal storage."
+    chest-disabled:
+      name: "§7Storage §8(disabled)"
+    results:
+      name: "§6Game Results"
+      lore: "§7View the results of the last game."
+    results-running:
+      name: "§7Game Results §8(in progress)"
+      lore: "§cAvailable once the game ends."
+  diamond:
+    title: "§bDiamond Exchange"
+    amount:
+      name: "§e{amount}"
+      lore: "§7The number of diamonds to exchange."
+    diamond-name: "§bDiamond"
+    all:
+      name: "§6Select All"
+      lore: "§7Selects all the diamonds you have."
+    confirm:
+      name: "§aConfirm"
+      lore:
+        - "§7Exchange §b{amount}§7 diamond(s)"
+        - "§7for §b{amount} points§7."
+    cancel:
+      name: "§cCancel"
+    not-enough: "§cYou don't have enough diamonds!"
+    exchanged: "§e[Exchange] §fExchanged §b{amount}§f diamond(s) for §b{gained} points§f!"
+    cancelled: "§e[Exchange] §fDiamond exchange cancelled."
+  bingo:
+    title: "§fBingo Board"
+  summary:
+    title: "§6Game Results"
+    no-game: "§cNo game has been played yet."
+    in-progress: "§cResults are available after the game ends."
+    rank-fmt: "#{rank}"
+    score: "§7Score: §a{score}"
+    record: "§7Record: §f{penalty}"
+    my-record: "§6▶ Your record"
+    info-title: "§e§lGame Summary"
+    mode: "§7Mode: §f{mode}"
+    scoring: "§7Scoring: §f{scoring}"
+    board: "§7Board: §f{width}×{height} §7({total} tiles)"
+    participants-team: "§7Teams: §f{count}"
+    participants-solo: "§7Players: §f{count}"
+    winner: "§6Winner: §f{name} §7({score})"
+    no-winner: "§7Winner: no one submitted anything"
+    personal-title: "§b§lYour Result"
+    my-rank: "§7Rank: §e#{rank} §7/ {total}"
+    not-participated: "§7You didn't take part in this game."
+    close:
+      name: "§cClose"
+      lore: "§7Closes the results screen."
+  preset:
+    apply-title: "§6Bingo Presets"
+    edit-title: "§eSelect Preset to Edit"
+    info-apply: "Bingo Presets"
+    info-edit: "Select Preset to Edit"
+    prev: "◀ Previous Page"
+    next: "Next Page ▶"
+    size: "Size: {w} x {h}"
+    filled: "Filled: {filled} / {total}"
+    click-edit: "Click to edit"
+    click-apply: "Click to apply this preset"
+    apply-warn: "⚠ All progress will be reset."
+    incomplete-icon: "✖ Incomplete — finish editing first."
+    page: "Page {page} / {pageCount}"
+    total: "{total} preset(s) total"
+    empty-hint: "Create one with /newbingo <id> <width> <height>."
+  preset-editor:
+    title: "§6Edit Preset: {id}"
+    info-title: "Preset: {id}"
+    drag-hint: "Drag items into the cells to edit."
+    autosave: "Saved automatically when you close."
+    reroll: "Reroll All"
+    reroll-desc1: "Refills every cell with random items."
+    reroll-desc2: "The current layout is lost."
+    save-close: "Save & Close"
+  bundle:
+    title: "§6Bundle Manager"
+    preview-title: "Bundle Preview — Template #{idx}"
+    preview-desc1: "Place starter items in the 27 cells below."
+    preview-desc2: "Switch templates with the terracotta at the bottom."
+    preview-empty1: "This template is empty and can't be edited."
+    preview-empty2: "Selecting it starts players empty-handed."
+    preview-selected1: "This template is currently selected."
+    preview-selected2: "It's given out when bingo starts."
+    empty-template: "Empty Bundle (read-only)"
+    template: "Bundle Template #{idx}"
+    current: "✔ Currently selected"
+    click-select: "Click to select this template"
+
+mode:
+  normal: "Normal"
+  swappage: "Swappage"
+  fog_of_war: "Fog of War"
+  lockout: "Lockout"
+
+penalty:
+  total_submission: "Total Submission"
+  last_submission: "Last Submission"
+  codeforces: "Codeforces"
+
+admin:
+  no-permission: "§cYou don't have permission."
+  click-to-toggle: "§eClick to toggle"
+  click-to-switch: "§7Click to switch"
+  default-on: "§7(default ON)"
+  default-off: "§7(default OFF)"
+  tab:
+    game: "Game"
+    shop: "Shop"
+    vanilla: "Vanilla"
+    mode: "Mode"
+  game:
+    title: "§8Admin · Game"
+    team: "Team Mode"
+    team-desc: "§7Team mode ON/OFF"
+    penalty: "Scoring Method"
+    penalty-desc1: "§71: Total, 2: Last, 3: Codeforces"
+    penalty-desc2: "§7(default 1: Total)"
+    hide-rank: "Hide Rankings"
+    hide-rank-desc1: "§7Hides the sidebar and /rank during the game"
+    hide-rank-desc2: "§7Revealed when the timer ends (default OFF)"
+    chest-team: "Shared Storage Size"
+    chest-solo: "Personal Storage Size"
+    chest-disabled: "Disabled"
+    chest-rows: "{rows} rows"
+    chest-desc-team: "§7Storage shared by the whole team"
+    chest-desc-solo: "§7Each player's private storage"
+    chest-range: "§7Disabled, 1–6 rows"
+    chest-up: "§eLeft-click: increase"
+    chest-down: "§eRight-click: decrease"
+    tpa-desc: "§7Request a teleport to a teammate"
+    tpa-needs-team: "§7Requires team mode to be ON"
+  shop:
+    title: "§8Admin · Shop"
+    shop: "Shop"
+    shop-desc: "§7Whole shop ON/OFF"
+    effect: "Effect Shop"
+    effect-desc: "§7Effect shop ON/OFF"
+    item: "Item Shop"
+    item-desc: "§7Item shop ON/OFF"
+    locked-reason: "§7Can't change while the shop is OFF"
+  vanilla:
+    title: "§8Admin · Vanilla"
+    shovel-copper: "Shovel-click Oxidizes Copper"
+    shovel-copper-desc1: "§7Right-clicking copper with a shovel oxidizes it one stage"
+    shovel-copper-desc2: "§7(default OFF)"
+    placeholder: "§7Miscellaneous"
+    placeholder-desc: "§7More to be added later"
+  mode:
+    title: "§8Admin · Mode"
+    label: "Game Mode"
+    click-cycle: "§eClick to cycle to the next mode"
+    none-name: "§7No extra settings"
+    none-normal-desc: "§7Normal mode has no extra settings"
+    none-lockout-desc: "§7Lockout mode has no extra settings"
+    swap-timer: "Swap Timer"
+    swap-timer-desc1: "§7Show the swap timer?"
+    swap-alert: "Swap Alert"
+    swap-alert-desc1: "§7Warn 3 seconds before swapping?"
+    fog-submit: "Submit Revealed Only"
+    fog-submit-desc1: "§7Hidden tiles can't be submitted"
+    fog-reveal: "Reveal Alert"
+    fog-reveal-desc1: "§7Sound/message when new tiles are revealed"
+    fog-diagonal: "Diagonal Reveal"
+    fog-diagonal-desc1: "§7Submitting also reveals diagonal tiles"
+
+dimension:
+  normal: "Overworld"
+  nether: "Nether"
+  the_end: "The End"
+
+biome:
+  desert: "Desert"
+  badlands: "Badlands"
+  jungle: "Jungle"
+  bamboo_jungle: "Bamboo Jungle"
+  taiga: "Taiga"
+  savanna: "Savanna"
+  warm_ocean: "Warm Ocean"
+  cherry_grove: "Cherry Grove"
+  pale_garden: "Pale Garden"
+  mangrove_swamp: "Mangrove Swamp"
+  swamp: "Swamp"
+  deep_dark: "Deep Dark"
+  lush_caves: "Lush Caves"
+  dripstone_caves: "Dripstone Caves"
+  sulfur_caves: "Sulfur Caves"
+  crimson_forest: "Crimson Forest"
+  warped_forest: "Warped Forest"
+  soul_sand_valley: "Soul Sand Valley"
+  basalt_deltas: "Basalt Deltas"
+
+structure:
+  village_plains: "Plains Village"
+  village_savanna: "Savanna Village"
+  village_snowy: "Snowy Village"
+  village_taiga: "Taiga Village"
+  village_desert: "Desert Village"
+  igloo: "Igloo"
+  swamp_hut: "Swamp Hut"
+  shipwreck: "Shipwreck"
+  buried_treasure: "Buried Treasure"
+  stronghold: "Stronghold"
+  desert_pyramid: "Desert Pyramid"
+  ancient_city: "Ancient City"
+  monument: "Ocean Monument"
+  mineshaft: "Mineshaft"
+  jungle_pyramid: "Jungle Temple"
+  ruined_portal: "Ruined Portal"
+  pillager_outpost: "Pillager Outpost"
+  mansion: "Woodland Mansion"
+  trial_chambers: "Trial Chambers"
+  trail_ruins: "Trail Ruins"
+  ocean_ruin_cold: "Cold Ocean Ruins"
+  ocean_ruin_warm: "Warm Ocean Ruins"
+  ruined_portal_nether: "Ruined Portal (Nether)"
+  fortress: "Nether Fortress"
+  bastion_remnant: "Bastion Remnant"
+  end_city: "End City"

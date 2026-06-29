@@ -35,12 +35,32 @@ public class TeamDataManager {
         return cache.computeIfAbsent(teamId, TeamDataManager::load);
     }
 
+    // Short-lived cache so repeated ranking lookups (scoreboard every second,
+    // commands) don't re-scan and re-parse every team YAML on disk each call.
+    // Mirrors PlayerDataManager.getAllData().
+    private static final long ALL_DATA_TTL_MS = 3000;
+    private static Map<Integer, TeamBingoProgress> allDataCache;
+    private static long allDataCacheTime;
+
     public static Map<Integer, TeamBingoProgress> getAllData() {
+        long now = System.currentTimeMillis();
+        if (allDataCache != null && now - allDataCacheTime < ALL_DATA_TTL_MS) {
+            return new HashMap<>(allDataCache);
+        }
+
         Map<Integer, TeamBingoProgress> all = new HashMap<>();
         for (int teamId : listAllTeamIds()) {
-            all.put(teamId, load(teamId));
+            // Prefer the live in-memory progress over a fresh disk parse.
+            all.put(teamId, cache.getOrDefault(teamId, load(teamId)));
         }
-        return all;
+
+        allDataCache = all;
+        allDataCacheTime = now;
+        return new HashMap<>(all);
+    }
+
+    private static void invalidateAllDataCache() {
+        allDataCache = null;
     }
 
     public static void save(int teamId) {
@@ -56,12 +76,14 @@ public class TeamDataManager {
 
     public static void resetAll() {
         cache.clear();
+        invalidateAllDataCache();
         deleteAllFiles();
         Bukkit.getLogger().info("[ItemBingo] All team data has been reset.");
     }
 
     public static void clearCache() {
         cache.clear();
+        invalidateAllDataCache();
     }
 
     public static TeamBingoProgress load(int teamId) {
@@ -93,9 +115,9 @@ public class TeamDataManager {
 
         try {
             config.save(file);
+            invalidateAllDataCache();
         } catch (IOException e) {
             Bukkit.getLogger().severe("[ItemBingo] Failed to save team data for " + teamId + ": " + e.getMessage());
-            e.printStackTrace();
         }
     }
 

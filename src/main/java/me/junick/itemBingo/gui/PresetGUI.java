@@ -3,6 +3,8 @@ package me.junick.itemBingo.gui;
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.PresetManager;
 import me.junick.itemBingo.config.PresetManager.PresetInfo;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -21,30 +23,11 @@ import java.util.List;
 /**
  * Paginated, read-only browser for saved board presets, used in two modes:
  * {@link Mode#APPLY} (click a preset to make it the active board) and {@link Mode#EDIT} (click to
- * open it in the {@link PresetEditorGUI}). The mode is carried in the title so the click handler and
- * the page-nav buttons can preserve it.
- *
- * <pre>
- * row 0 (0-8)   : fixed top bar — prev (0) | page info (4) | next (8)
- * row 1-5 (9-53): one icon per preset, {@link #PAGE_SIZE} per page
- * </pre>
- *
- * The top bar stays put while the content rows page through the catalog, so the control row never
- * scrolls no matter how many presets exist.
+ * open it in the {@link PresetEditorGUI}). The mode rides in the {@link BingoGuiHolder} context, so
+ * the click handler and the page-nav buttons can preserve it without depending on the title.
  */
 public class PresetGUI {
-    public enum Mode {
-        APPLY("§6빙고 프리셋"),
-        EDIT("§e프리셋 편집 선택");
-
-        public final String title;
-        Mode(String title) { this.title = title; }
-    }
-
-    public static Mode modeOf(String title) {
-        for (Mode m : Mode.values()) if (m.title.equals(title)) return m;
-        return null;
-    }
+    public enum Mode { APPLY, EDIT }
 
     private static final int SIZE = 54;
     private static final int CONTENT_START = 9;          // rows 1..5
@@ -65,31 +48,35 @@ public class PresetGUI {
     }
 
     public static void open(Player player, int page, Mode mode) {
+        SupportedLocale loc = Messages.localeOf(player);
         List<PresetInfo> presets = PresetManager.listInfo();
         int pageCount = Math.max(1, (presets.size() + PAGE_SIZE - 1) / PAGE_SIZE);
         if (page < 0) page = 0;
         if (page >= pageCount) page = pageCount - 1;
 
-        Inventory inv = Bukkit.createInventory(null, SIZE, mode.title);
+        BingoGuiHolder holder = new BingoGuiHolder(BingoGuiHolder.Gui.PRESET, mode.name());
+        Inventory inv = Bukkit.createInventory(holder, SIZE,
+                Messages.get(loc, mode == Mode.EDIT ? "gui.preset.edit-title" : "gui.preset.apply-title"));
+        holder.setInventory(inv);
 
         ItemStack glass = hiddenGlass();
         for (int i = 0; i < CONTENT_START; i++) inv.setItem(i, glass);
 
-        if (page > 0) inv.setItem(PREV_SLOT, navButton("◀ 이전 페이지", page - 1));
-        if (page < pageCount - 1) inv.setItem(NEXT_SLOT, navButton("다음 페이지 ▶", page + 1));
-        inv.setItem(INFO_SLOT, info(page, pageCount, presets.size(), mode));
+        if (page > 0) inv.setItem(PREV_SLOT, navButton(Messages.legacy(loc, "gui.preset.prev"), page - 1));
+        if (page < pageCount - 1) inv.setItem(NEXT_SLOT, navButton(Messages.legacy(loc, "gui.preset.next"), page + 1));
+        inv.setItem(INFO_SLOT, info(loc, page, pageCount, presets.size(), mode));
 
         int from = page * PAGE_SIZE;
         int to = Math.min(from + PAGE_SIZE, presets.size());
         int slot = CONTENT_START;
         for (int i = from; i < to; i++) {
-            inv.setItem(slot++, presetIcon(presets.get(i), mode));
+            inv.setItem(slot++, presetIcon(loc, presets.get(i), mode));
         }
 
         player.openInventory(inv);
     }
 
-    private static ItemStack presetIcon(PresetInfo preset, Mode mode) {
+    private static ItemStack presetIcon(SupportedLocale loc, PresetInfo preset, Mode mode) {
         boolean complete = preset.isComplete();
         ItemStack item = new ItemStack(complete ? Material.FILLED_MAP : Material.MAP);
         ItemMeta meta = item.getItemMeta();
@@ -98,17 +85,17 @@ public class PresetGUI {
                 .decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
-        lore.add(line("크기: " + preset.width() + " x " + preset.height(), NamedTextColor.GRAY));
-        lore.add(line("채워진 칸: " + preset.filled() + " / " + preset.slotCount(),
+        lore.add(line(Messages.legacy(loc, "gui.preset.size", "w", preset.width(), "h", preset.height()), NamedTextColor.GRAY));
+        lore.add(line(Messages.legacy(loc, "gui.preset.filled", "filled", preset.filled(), "total", preset.slotCount()),
                 complete ? NamedTextColor.GREEN : NamedTextColor.YELLOW));
         lore.add(Component.empty());
         if (mode == Mode.EDIT) {
-            lore.add(line("클릭하여 편집", NamedTextColor.YELLOW));
+            lore.add(line(Messages.legacy(loc, "gui.preset.click-edit"), NamedTextColor.YELLOW));
         } else if (complete) {
-            lore.add(line("클릭하여 이 프리셋을 적용", NamedTextColor.YELLOW));
-            lore.add(line("⚠ 모든 진행도가 초기화됩니다.", NamedTextColor.RED));
+            lore.add(line(Messages.legacy(loc, "gui.preset.click-apply"), NamedTextColor.YELLOW));
+            lore.add(line(Messages.legacy(loc, "gui.preset.apply-warn"), NamedTextColor.RED));
         } else {
-            lore.add(line("✖ 미완성 — 먼저 편집을 완료하세요.", NamedTextColor.RED));
+            lore.add(line(Messages.legacy(loc, "gui.preset.incomplete-icon"), NamedTextColor.RED));
             lore.add(line("/editbingo " + preset.id(), NamedTextColor.DARK_GRAY));
         }
         meta.lore(lore);
@@ -127,18 +114,18 @@ public class PresetGUI {
         return item;
     }
 
-    private static ItemStack info(int page, int pageCount, int total, Mode mode) {
+    private static ItemStack info(SupportedLocale loc, int page, int pageCount, int total, Mode mode) {
         ItemStack item = new ItemStack(Material.BOOK);
         ItemMeta meta = item.getItemMeta();
-        meta.displayName(Component.text(mode == Mode.EDIT ? "프리셋 편집 선택" : "빙고 프리셋",
+        meta.displayName(Component.text(Messages.legacy(loc, mode == Mode.EDIT ? "gui.preset.info-edit" : "gui.preset.info-apply"),
                 NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
 
         List<Component> lore = new ArrayList<>();
-        lore.add(line("페이지 " + (page + 1) + " / " + pageCount, NamedTextColor.GRAY));
-        lore.add(line("총 " + total + "개의 프리셋", NamedTextColor.GRAY));
+        lore.add(line(Messages.legacy(loc, "gui.preset.page", "page", page + 1, "pageCount", pageCount), NamedTextColor.GRAY));
+        lore.add(line(Messages.legacy(loc, "gui.preset.total", "total", total), NamedTextColor.GRAY));
         if (total == 0) {
             lore.add(Component.empty());
-            lore.add(line("/newbingo <id> <가로> <세로> 로 생성하세요.", NamedTextColor.DARK_GRAY));
+            lore.add(line(Messages.legacy(loc, "gui.preset.empty-hint"), NamedTextColor.DARK_GRAY));
         }
         meta.lore(lore);
 

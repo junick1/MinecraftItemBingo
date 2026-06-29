@@ -2,6 +2,8 @@ package me.junick.itemBingo.gui;
 
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.util.IconGenerator;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -13,12 +15,18 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 
 public class DiamondExchangeGUI {
-    public static final String TITLE = "§b다이아몬드 환전";
+    /** Title message key. GUI identity is the {@link BingoGuiHolder} marker, not the title. */
+    public static final String TITLE_KEY = "gui.diamond.title";
 
     public static void open(Player p, int amount) {
         if (!Settings.isShopEnabled()) return;
 
-        Inventory inv = Bukkit.createInventory(null, 9*5, TITLE);
+        SupportedLocale loc = Messages.localeOf(p);
+
+        // The current amount rides in the holder context so /language can reopen at the same amount.
+        BingoGuiHolder holder = new BingoGuiHolder(BingoGuiHolder.Gui.DIAMOND_EXCHANGE, String.valueOf(amount));
+        Inventory inv = Bukkit.createInventory(holder, 9 * 5, Messages.get(loc, TITLE_KEY));
+        holder.setInventory(inv);
 
         ItemStack grayGlass = new ItemStack(Material.GRAY_STAINED_GLASS_PANE);
         ItemMeta grayMeta = grayGlass.getItemMeta();
@@ -29,66 +37,38 @@ public class DiamondExchangeGUI {
             inv.setItem(i, grayGlass);
         }
 
-        inv.setItem(9*1 + 1, IconGenerator.icon(
-                Material.RED_STAINED_GLASS,
-                "§c-9",
-                9
-        ));
+        // Step buttons are pure numeric labels — no translation needed.
+        inv.setItem(9 * 1 + 1, IconGenerator.icon(Material.RED_STAINED_GLASS, "§c-9", 9));
+        inv.setItem(9 * 1 + 2, IconGenerator.icon(Material.RED_STAINED_GLASS, "§c-4", 4));
+        inv.setItem(9 * 1 + 3, IconGenerator.icon(Material.RED_STAINED_GLASS, "§c-1"));
+        inv.setItem(9 * 1 + 5, IconGenerator.icon(Material.LIME_STAINED_GLASS, "§a+1"));
+        inv.setItem(9 * 1 + 6, IconGenerator.icon(Material.LIME_STAINED_GLASS, "§a+4", 4));
+        inv.setItem(9 * 1 + 7, IconGenerator.icon(Material.LIME_STAINED_GLASS, "§a+9", 9));
 
-
-        inv.setItem(9*1 + 2, IconGenerator.icon(
-                Material.RED_STAINED_GLASS,
-                "§c-4",
-                4
-        ));
-
-        inv.setItem(9*1 + 3, IconGenerator.icon(
-                Material.RED_STAINED_GLASS,
-                "§c-1"
-        ));
-
-        inv.setItem(9*1 + 5, IconGenerator.icon(
-                Material.LIME_STAINED_GLASS,
-                "§a+1"
-        ));
-
-        inv.setItem(9*1 + 6, IconGenerator.icon(
-                Material.LIME_STAINED_GLASS,
-                "§a+4",
-                4
-        ));
-
-        inv.setItem(9*1 + 7, IconGenerator.icon(
-                Material.LIME_STAINED_GLASS,
-                "§a+9",
-                9
-        ));
-
-        inv.setItem(9*2 + 4, IconGenerator.icon(
+        inv.setItem(9 * 2 + 4, IconGenerator.icon(
                 Material.OAK_SIGN,
-                "§e" + amount + "개",
-                "§7환전할 다이아몬드의 개수입니다."
+                Messages.legacy(loc, "gui.diamond.amount.name", "amount", amount),
+                Messages.legacy(loc, "gui.diamond.amount.lore")
         ));
 
-        inv.setItem(9*1 + 4, IconGenerator.icon(
+        inv.setItem(9 * 1 + 4, IconGenerator.icon(
                 Material.DIAMOND,
-                "§b다이아몬드",
+                Messages.legacy(loc, "gui.diamond.diamond-name"),
                 Math.clamp(amount, 1, 64)
         ));
 
-        inv.setItem(9*2 + 6, IconGenerator.icon(
+        inv.setItem(9 * 2 + 6, IconGenerator.icon(
                 Material.GOLD_INGOT,
-                "§6전부 선택",
-                "§7보유한 다이아몬드 전부를 선택합니다."
+                Messages.legacy(loc, "gui.diamond.all.name"),
+                Messages.legacy(loc, "gui.diamond.all.lore")
         ));
 
-        inv.setItem(9*3 + 2, IconGenerator.icon(
+        inv.setItem(9 * 3 + 2, IconGenerator.icon(
                 Material.GREEN_TERRACOTTA,
-                "§a확인",
-                "§7다이아몬드 §b" + amount + "개§7를",
-                "§b" + amount + " 포인트§7로 교환합니다."
+                Messages.legacy(loc, "gui.diamond.confirm.name"),
+                Messages.legacyList(loc, "gui.diamond.confirm.lore", "amount", amount).toArray(new String[0])
         ));
-        inv.setItem(9*3 + 6, IconGenerator.icon(Material.RED_TERRACOTTA, "§c취소"));
+        inv.setItem(9 * 3 + 6, IconGenerator.icon(Material.RED_TERRACOTTA, Messages.legacy(loc, "gui.diamond.cancel.name")));
 
         for (ItemStack item : inv.getContents()) {
             if (item == null) continue;

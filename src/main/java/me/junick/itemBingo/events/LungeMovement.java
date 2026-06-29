@@ -29,11 +29,12 @@ public class LungeMovement implements Listener {
         if (!event.getAction().isLeftClick()) {
             return;
         }
+
         // 2. 아이템이 우리가 설정한 그 "창"인지 확인합니다 (이름이나 PDC 사용)
         if (item == null || !item.getType().name().toLowerCase().contains("spear")) return;
-
         // 아리스의 추천: 이름으로 판별하기 (PDC를 쓰면 더 좋지만 일단 이름으로!)
         if (!item.getItemMeta().getDisplayName().contains("특정한 창 이름")) return;
+
         // 3. ⭐ 핵심: 플레이어의 공격 쿨타임이 꽉 찼는지 확인합니다!
         // getCooledAttackStrength는 0.0 ~ 1.0 사이의 값을 반환해요. 1.0이 완충 상태입니다.
         if (player.getCooledAttackStrength(0.0f) > 0.9f) {

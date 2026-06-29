@@ -2,9 +2,9 @@ package me.junick.itemBingo.events.gui;
 
 import me.junick.itemBingo.config.PresetManager;
 import me.junick.itemBingo.config.PresetManager.PresetInfo;
+import me.junick.itemBingo.gui.BingoGuiHolder;
 import me.junick.itemBingo.gui.PresetEditorGUI;
 import me.junick.itemBingo.util.BingoItemSelector;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -15,25 +15,27 @@ import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * Drives the {@link PresetEditorGUI}: board cells are freely editable, the control buttons run their
- * action, and the border panes are inert. The layout is saved on close (and after a reroll).
+ * action, and the border panes are inert. The layout is saved on close (and after a reroll). The
+ * preset id is read from the {@link BingoGuiHolder} context.
  */
 public class PresetEditorClickEvent implements Listener {
 
-    private static String presetId(String title) {
-        if (!title.startsWith(PresetEditorGUI.TITLE_PREFIX)) return null;
-        return title.substring(PresetEditorGUI.TITLE_PREFIX.length());
+    private static @Nullable String presetId(Inventory top) {
+        BingoGuiHolder h = BingoGuiHolder.of(top);
+        return (h != null && h.type() == BingoGuiHolder.Gui.PRESET_EDITOR) ? h.context() : null;
     }
 
     @EventHandler
     public void onClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
-        String title = LegacyComponentSerializer.legacySection().serialize(e.getView().title());
-        String id = presetId(title);
+        Inventory top = e.getView().getTopInventory();
+        String id = presetId(top);
         if (id == null) return;
 
         PresetInfo info = PresetManager.getInfo(id);
@@ -44,7 +46,6 @@ public class PresetEditorClickEvent implements Listener {
         }
         int width = info.width(), height = info.height();
 
-        Inventory top = e.getView().getTopInventory();
         int raw = e.getRawSlot();
         boolean clickedTop = raw < top.getSize();
 
@@ -78,8 +79,8 @@ public class PresetEditorClickEvent implements Listener {
     @EventHandler
     public void onDrag(InventoryDragEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
-        String title = LegacyComponentSerializer.legacySection().serialize(e.getView().title());
-        String id = presetId(title);
+        Inventory top = e.getView().getTopInventory();
+        String id = presetId(top);
         if (id == null) return;
 
         PresetInfo info = PresetManager.getInfo(id);
@@ -90,7 +91,7 @@ public class PresetEditorClickEvent implements Listener {
 
         // Cancel the whole drag if any affected top-inventory slot is outside the board grid,
         // so dragged items can never land on (and be lost to) the border or control slots.
-        int topSize = e.getView().getTopInventory().getSize();
+        int topSize = top.getSize();
         for (int raw : e.getRawSlots()) {
             if (raw < topSize && !PresetEditorGUI.isBoardCell(raw, info.width(), info.height())) {
                 e.setCancelled(true);
@@ -101,13 +102,13 @@ public class PresetEditorClickEvent implements Listener {
 
     @EventHandler
     public void onClose(InventoryCloseEvent e) {
-        String title = LegacyComponentSerializer.legacySection().serialize(e.getView().title());
-        String id = presetId(title);
+        Inventory top = e.getView().getTopInventory();
+        String id = presetId(top);
         if (id == null) return;
 
         PresetInfo info = PresetManager.getInfo(id);
         if (info == null) return;
-        PresetEditorGUI.persist(e.getView().getTopInventory(), id, info.width(), info.height());
+        PresetEditorGUI.persist(top, id, info.width(), info.height());
     }
 
     private static String buttonAction(ItemStack item) {

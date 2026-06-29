@@ -1,15 +1,14 @@
 package me.junick.itemBingo.events.gui;
 
 import me.junick.itemBingo.ItemBingo;
-import me.junick.itemBingo.config.Settings;
 import me.junick.itemBingo.enums.BingoRewardType;
+import me.junick.itemBingo.gui.BingoGuiHolder;
 import me.junick.itemBingo.gui.DiamondExchangeGUI;
+import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
-import me.junick.itemBingo.model.PlayerBingoProgress;
 import me.junick.itemBingo.util.GuiSync;
 import me.junick.itemBingo.util.PlayerDataManager;
 import me.junick.itemBingo.util.ProgressFactory;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
@@ -26,8 +25,7 @@ public class DiamondExchangeClickEvent implements Listener {
     public void onDiamondExchangeClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
 
-        String title = LegacyComponentSerializer.legacySection().serialize(e.getView().title());
-        if (!title.equals(DiamondExchangeGUI.TITLE)) return;
+        if (!BingoGuiHolder.is(e.getView().getTopInventory(), BingoGuiHolder.Gui.DIAMOND_EXCHANGE)) return;
 
         e.setCancelled(true);
 
@@ -87,7 +85,7 @@ public class DiamondExchangeClickEvent implements Listener {
     private void confirm(Player p, int amount) {
         int diamonds = countDiamonds(p);
         if (diamonds < amount) {
-            p.sendMessage("§c다이아몬드가 부족합니다!");
+            p.sendMessage(Messages.get(p, "gui.diamond.not-enough"));
             p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
             return;
         }
@@ -103,13 +101,13 @@ public class DiamondExchangeClickEvent implements Listener {
         // DIAMOND points are team-shared, so refresh teammates' open shops.
         GuiSync.refreshShops(proga.viewers(p));
 
-        p.sendMessage("§e[환전] §f다이아몬드 " + amount + "개를 §b" + gained + " 포인트§f로 교환했습니다!");
+        p.sendMessage(Messages.get(p, "gui.diamond.exchanged", "amount", amount, "gained", gained));
         p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 2.0f);
         p.closeInventory();
     }
 
     private void cancel(Player p) {
-        p.sendMessage("§e[환전] §f다이아몬드 환전을 취소했습니다.");
+        p.sendMessage(Messages.get(p, "gui.diamond.cancelled"));
         p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
         p.closeInventory();
     }

@@ -49,6 +49,9 @@ commands:
   rank:
     description: View rankings
     usage: /rank
+  summary:
+    description: View the results of the last game (when the timer is inactive)
+    usage: /summary
   shop:
     description: Open shop
     usage: /shop
@@ -65,6 +68,10 @@ commands:
   teammate:
     description: Check teammates
     usage: /teammate
+  language:
+    description: Set your display language
+    usage: /language <english|korean|auto>
+    aliases: [lang]
   chat:
     description: Set your default chat channel (team/all)
     usage: /chat <team|t|all|a>

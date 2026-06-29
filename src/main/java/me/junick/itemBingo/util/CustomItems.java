@@ -2,6 +2,7 @@ package me.junick.itemBingo.util;
 
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.enums.BingoItem;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
@@ -22,11 +23,11 @@ public class CustomItems {
     private static final NamespacedKey CUSTOM_TAG =
             new NamespacedKey(ItemBingo.getInstance(), "custom_item");
 
-    public static ItemStack get(BingoItem b) {
+    public static ItemStack get(BingoItem b, SupportedLocale loc) {
         ItemStack item = createCustomItem(b.getIcon(),
-                b.getDisplay(),
+                b.displayName(loc),
                 b.getColor(),
-                b.getLore(),
+                b.lore(loc),
                 b.name());
         return b.apply(item);
     }

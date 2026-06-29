@@ -4,6 +4,7 @@ import me.junick.itemBingo.config.PresetManager;
 import me.junick.itemBingo.gui.PresetEditorGUI;
 import me.junick.itemBingo.gui.PresetGUI;
 import me.junick.itemBingo.gui.PresetGUI.Mode;
+import me.junick.itemBingo.i18n.Messages;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -24,13 +25,13 @@ public class EditBingoCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage("§c편집기는 플레이어만 사용할 수 있습니다.");
+            sender.sendMessage(Messages.get(sender, "command.players-only"));
             return true;
         }
 
         if (args.length == 0) {
             if (PresetManager.getIds().isEmpty()) {
-                player.sendMessage("§c저장된 프리셋이 없습니다. /newbingo <id> <가로> <세로> 로 먼저 생성하세요.");
+                player.sendMessage(Messages.get(player, "command.setbingo.no-presets"));
                 return true;
             }
             PresetGUI.open(player, 0, Mode.EDIT);
@@ -39,7 +40,7 @@ public class EditBingoCommand implements CommandExecutor, TabCompleter {
 
         String id = args[0];
         if (!PresetManager.exists(id)) {
-            player.sendMessage("§c존재하지 않는 프리셋입니다: " + id);
+            player.sendMessage(Messages.get(player, "command.setbingo.not-found", "id", id));
             return true;
         }
         PresetEditorGUI.open(player, id);

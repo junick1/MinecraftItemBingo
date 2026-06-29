@@ -3,15 +3,16 @@ package me.junick.itemBingo.events.gui;
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.enums.BingoItem;
 import me.junick.itemBingo.enums.BingoRewardType;
+import me.junick.itemBingo.gui.BingoGuiHolder;
 import me.junick.itemBingo.gui.ItemShopGUI;
 import me.junick.itemBingo.gui.ShopGUI;
+import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
-import me.junick.itemBingo.model.PlayerBingoProgress;
 import me.junick.itemBingo.util.CustomItems;
 import me.junick.itemBingo.util.GuiSync;
 import me.junick.itemBingo.util.PlayerDataManager;
 import me.junick.itemBingo.util.ProgressFactory;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
@@ -26,19 +27,17 @@ public class ItemShopClickEvent implements Listener {
     @EventHandler
     public void onItemShopClick(InventoryClickEvent e) {
         if (!(e.getWhoClicked() instanceof Player p)) return;
-
-        String title = LegacyComponentSerializer.legacySection().serialize(e.getView().title());
-        if (!title.equals(ItemShopGUI.TITLE)) return;
+        if (!BingoGuiHolder.is(e.getView().getTopInventory(), BingoGuiHolder.Gui.ITEM_SHOP)) return;
 
         e.setCancelled(true);
 
-        ItemStack clicked = e.getCurrentItem();
-        if (clicked == null || clicked.getType() == Material.AIR) return;
-
-        if (clicked.getItemMeta().getDisplayName().contains("돌아가기")) {
+        if (e.getRawSlot() == ItemShopGUI.SLOT_BACK) {
             ShopGUI.open(p);
             return;
         }
+
+        ItemStack clicked = e.getCurrentItem();
+        if (clicked == null || clicked.getType() == Material.AIR) return;
 
         BingoItem selected = getClickedShopItem(clicked);
         if (selected == null) return;
@@ -46,13 +45,13 @@ public class ItemShopClickEvent implements Listener {
         handlePurchase(p, selected);
     }
 
-    private ItemStack createItem(BingoItem item) {
+    private ItemStack createItem(BingoItem item, SupportedLocale loc) {
         return switch (item) {
-            case BINGO_FILLER -> CustomItems.get(BingoItem.BINGO_FILLER);
-            case DYE_SELECTOR -> CustomItems.get(BingoItem.DYE_SELECTOR);
-            case COPPER_OXIDIZER -> CustomItems.get(BingoItem.COPPER_OXIDIZER);
-            case EXPLORER_MAP -> CustomItems.get(BingoItem.EXPLORER_MAP);
-            case BIOME_MAP -> CustomItems.get(BingoItem.BIOME_MAP);
+            case BINGO_FILLER -> CustomItems.get(BingoItem.BINGO_FILLER, loc);
+            case DYE_SELECTOR -> CustomItems.get(BingoItem.DYE_SELECTOR, loc);
+            case COPPER_OXIDIZER -> CustomItems.get(BingoItem.COPPER_OXIDIZER, loc);
+            case EXPLORER_MAP -> CustomItems.get(BingoItem.EXPLORER_MAP, loc);
+            case BIOME_MAP -> CustomItems.get(BingoItem.BIOME_MAP, loc);
             case DIAMOND -> {
                 var itemStack = new ItemStack(Material.DIAMOND);
                 itemStack.setAmount(10);
@@ -79,14 +78,15 @@ public class ItemShopClickEvent implements Listener {
 
     private void handlePurchase(Player p, BingoItem item) {
         BingoProgressAccess prog = ProgressFactory.of(p);
+        SupportedLocale loc = Messages.localeOf(p);
 
         if (!canAfford(prog, p, item)) {
-            p.sendMessage("§e[상점] §c포인트가 부족합니다!");
+            p.sendMessage(Messages.get(p, "shop.not-enough"));
             p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
             return;
         }
 
-        ItemStack toGive = createItem(item);
+        ItemStack toGive = createItem(item, loc);
         if (toGive == null) return;
 
         var leftover = p.getInventory().addItem(toGive);
@@ -99,7 +99,7 @@ public class ItemShopClickEvent implements Listener {
                 p.getInventory().removeItem(remove);
             }
 
-            p.sendMessage("§e[상점] §c인벤토리가 가득 차서 구매할 수 없습니다!");
+            p.sendMessage(Messages.get(p, "shop.inventory-full"));
             p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
             ItemShopGUI.open(p);
             return;
@@ -109,7 +109,7 @@ public class ItemShopClickEvent implements Listener {
         PlayerDataManager.save(p);
 
         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
-        p.sendMessage("§e[상점] §a" + item.getDisplay() + "§f(을)를 구매했습니다!");
+        p.sendMessage(Messages.get(p, "shop.purchased", "item", item.displayName(loc)));
         // Purchase can spend team-shared currency, so refresh every teammate's
         // open shop (includes the buyer) to reflect the new balance.
         GuiSync.refreshShops(prog.viewers(p));

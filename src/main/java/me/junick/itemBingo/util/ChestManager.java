@@ -2,8 +2,8 @@ package me.junick.itemBingo.util;
 
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.i18n.Messages;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
 import org.bukkit.configuration.ConfigurationSection;
@@ -155,13 +155,13 @@ public final class ChestManager implements Listener {
     /** Opens the caller's storage chest, or tells them why it isn't available. */
     public static void open(Player p) {
         if (!Settings.isChestEnabled()) {
-            p.sendMessage(Component.text("창고가 비활성화되어 있습니다.", NamedTextColor.RED));
+            p.sendMessage(Messages.get(p, "chest.disabled"));
             return;
         }
 
         String key = keyFor(p);
         if (key == null) {
-            p.sendMessage(Component.text("팀에 속해 있지 않아 공유 창고를 열 수 없습니다.", NamedTextColor.RED));
+            p.sendMessage(Messages.get(p, "chest.no-team"));
             return;
         }
 
@@ -179,14 +179,14 @@ public final class ChestManager implements Listener {
         return "solo-" + p.getUniqueId();
     }
 
-    private static String title() {
-        return Settings.isTeamEnabled() ? "§5공유 창고" : "§5개인 창고";
-    }
-
     private static Inventory createLive(String key) {
         int size = Settings.getChestSlots();
         ChestHolder holder = new ChestHolder(key);
-        Inventory inv = Bukkit.createInventory(holder, size, title());
+        // The chest is shared (one per team), so its title can't be per-player —
+        // it renders in the server default language.
+        Component title = Messages.get(Settings.getDefaultLanguage(),
+                Settings.isTeamEnabled() ? "chest.title-team" : "chest.title-solo");
+        Inventory inv = Bukkit.createInventory(holder, size, title);
         holder.setInventory(inv);
 
         ItemStack[] back = backing.computeIfAbsent(key, k -> new ItemStack[MAX_SLOTS]);
@@ -203,15 +203,20 @@ public final class ChestManager implements Listener {
         if (!(e.getInventory().getHolder() instanceof ChestHolder holder)) return;
 
         Inventory inv = e.getInventory();
+        // Capture the closing player's moves into the backing array immediately, so
+        // even if other viewers remain the latest state is held in memory (and gets
+        // persisted on the next empty-out or on disable).
         syncToBacking(holder.getKey(), inv);
 
         // The closing player is still counted as a viewer during this event, so
-        // check on the next tick whether the chest is now empty of viewers.
+        // check on the next tick whether the chest is now empty of viewers. Only
+        // then do we drop the live inventory and write chests.yml — re-serializing
+        // every chest on each close while teammates are still browsing is wasteful.
         Bukkit.getScheduler().runTask(plugin, () -> {
             if (inv.getViewers().isEmpty()) {
                 live.remove(holder.getKey());
+                save();
             }
-            save();
         });
     }
 
