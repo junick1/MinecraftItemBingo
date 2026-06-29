@@ -60,11 +60,9 @@ public enum BingoItem {
         }
     },
     MYSTERIOUS_SHERD(
-            "의문의 도자기 조각 상자",
             TextColor.fromHexString("#9D5848"),
             Material.BRICK,
-            Map.of(BingoRewardType.DIAMOND, 727),
-            List.of("사용하면 정해진 확률에 따라 도자기 조각을 획득할 수 있다.", "확률형 아이템 포함")
+            Map.of(BingoRewardType.DIAMOND, 7)
     );
 
     private final TextColor color;

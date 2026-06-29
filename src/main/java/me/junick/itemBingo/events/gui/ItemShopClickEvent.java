@@ -57,7 +57,7 @@ public class ItemShopClickEvent implements Listener {
                 itemStack.setAmount(10);
                 yield itemStack;
             }
-            case MYSTERIOUS_SHERD -> CustomItems.get(BingoItem.MYSTERIOUS_SHERD);
+            case MYSTERIOUS_SHERD -> CustomItems.get(BingoItem.MYSTERIOUS_SHERD, loc);
             default -> null;
         };
     }
