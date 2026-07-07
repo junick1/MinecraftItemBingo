@@ -105,6 +105,8 @@ reward:
     name: "§aTile Points"
   line:
     name: "§eLine Points"
+  emerald:
+    name: "§aEmerald 포인트"
 
 shop:
   disabled: "§cThe shop is disabled."
@@ -201,9 +203,9 @@ items:
 
 item:
   diamond:
-    name: "Convert Line Points to Diamond Points"
+    name: "Convert Line Points to Diamond"
     lore:
-      - "Line Points -> 10 Diamond Points"
+      - "Line Points -> 10 Diamond"
   bingo_filler:
     name: "Bingo Submit Pass"
     lore:
@@ -325,6 +327,8 @@ gui:
       - "§7  └ Earned by completing a line"
       - "§bDiamond Points: §f{diamond}"
       - "§7  └ Earned at the diamond exchange"
+      - "§aEmerald Points: §f{emerald}"
+      - "§7  └ Earned at the emerald exchange"
   shop:
     title: "§aShop"
     effect:

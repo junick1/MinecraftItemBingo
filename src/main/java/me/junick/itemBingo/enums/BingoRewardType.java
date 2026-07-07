@@ -8,7 +8,8 @@ import java.util.Locale;
 public enum BingoRewardType {
     DIAMOND(false),
     SLOT(true),
-    LINE(false);
+    LINE(false),
+    EMERALD(false);
 
     private final boolean isPersonal;
 

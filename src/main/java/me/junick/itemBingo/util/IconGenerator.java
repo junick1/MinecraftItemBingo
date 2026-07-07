@@ -55,7 +55,8 @@ public class IconGenerator {
                 Messages.getList(loc, "gui.currency.lore",
                         "slot", prog.getCurrency(p, BingoRewardType.SLOT),
                         "line", prog.getCurrency(p, BingoRewardType.LINE),
-                        "diamond", prog.getCurrency(p, BingoRewardType.DIAMOND))
+                        "diamond", prog.getCurrency(p, BingoRewardType.DIAMOND),
+                        "emerald", prog.getCurrency(p, BingoRewardType.EMERALD))
         );
     }
 

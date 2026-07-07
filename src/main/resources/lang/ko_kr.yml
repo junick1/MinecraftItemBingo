@@ -104,6 +104,8 @@ reward:
     name: "§a빙고칸 포인트"
   line:
     name: "§e빙고줄 포인트"
+  emerald:
+    name: "§a에메랄드 포인트"
 
 shop:
   disabled: "§c상점이 비활성화되어 있습니다."
@@ -200,9 +202,9 @@ items:
 
 item:
   diamond:
-    name: "줄 포인트를 다이아몬드 포인트로 변환"
+    name: "줄 포인트를 다이아몬드로 변환"
     lore:
-      - "줄 포인트 -> 10 다이아몬드 포인트"
+      - "줄 포인트 -> 10 다이아몬드"
   bingo_filler:
     name: "빙고 제출권"
     lore:
@@ -324,6 +326,8 @@ gui:
       - "§7  └ 빙고 줄 완성 시 획득"
       - "§b팀 다이아몬드 포인트: §f{diamond}"
       - "§7  └ 다이아몬드 환전소에서 획득"
+      - "§a팀 에메랄드 포인트: §f{emerald}"
+      - "§7  └ 에메랄드 환전소에서 획득"
   shop:
     title: "§a상점"
     effect:

@@ -63,6 +63,7 @@ public final class ItemBingo extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new EffectShopClickEvent(), this);
         Bukkit.getPluginManager().registerEvents(new ItemShopClickEvent(), this);
         Bukkit.getPluginManager().registerEvents(new DiamondExchangeClickEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new EmeraldExchangeClickEvent(), this);
 
         Bukkit.getPluginManager().registerEvents(new DyeSelectorEvent(), this);
         Bukkit.getPluginManager().registerEvents(new CopperOxidizerEvent(), this);
@@ -73,6 +74,7 @@ public final class ItemBingo extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new LungeMovement(), this);
 
         Bukkit.getPluginManager().registerEvents(new DiamondEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new EmeraldEvent(), this);
         Bukkit.getPluginManager().registerEvents(new ShovelOxidizeEvent(), this);
 
         Bukkit.getPluginManager().registerEvents(new EffectListener(), this);

@@ -20,7 +20,7 @@ public final class BingoGuiHolder implements InventoryHolder {
     public enum Gui {
         BINGO, SHOP, ITEM_SHOP, EFFECT_SHOP, DIAMOND_EXCHANGE,
         MENU, BUNDLE, PRESET, PRESET_EDITOR, SUMMARY, MAP_SELECTOR, DYE_SELECTOR,
-        ADMIN_GAME, ADMIN_SHOP, ADMIN_VANILLA, ADMIN_MODE
+        ADMIN_GAME, ADMIN_SHOP, ADMIN_VANILLA, ADMIN_MODE, EMERALD_EXCHANGE
     }
 
     private final Gui type;
