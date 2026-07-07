@@ -16,6 +16,8 @@ import me.junick.itemBingo.util.ProgressFactory;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Sound;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -58,6 +60,22 @@ public class ItemShopClickEvent implements Listener {
                 yield itemStack;
             }
             case MYSTERIOUS_SHERD -> CustomItems.get(BingoItem.MYSTERIOUS_SHERD, loc);
+            case GOLDEN_PICKAXE -> {
+                var itemStack = new ItemStack(Material.GOLDEN_PICKAXE);
+                var meta = itemStack.getItemMeta();
+                meta.addEnchant(Enchantment.SILK_TOUCH, 1, true);
+                itemStack.setItemMeta(meta);
+                yield itemStack;
+            }
+            case IRON_PICKAXE -> {
+                var itemStack = new ItemStack(Material.IRON_PICKAXE);
+                var meta = itemStack.getItemMeta();
+                meta.addEnchant(Enchantment.SILK_TOUCH, 1, true);
+                itemStack.setItemMeta(meta);
+                yield itemStack;
+            }
+            case HONEY_FILLER -> CustomItems.get(BingoItem.HONEY_FILLER, loc);
+            case BEEHIVE_BREAKER -> CustomItems.get(BingoItem.BEEHIVE_BREAKER, loc);
             default -> null;
         };
     }

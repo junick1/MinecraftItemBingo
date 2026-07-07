@@ -231,6 +231,26 @@ item:
     lore:
       - "사용하면 정해진 확률에 따라 도자기 조각을 획득할 수 있다."
       - "확률형 아이템 포함"
+  golden_pickaxe:
+    name: "금 곡괭이"
+    lore:
+      - "섬세한 손길"
+  iron_pickaxe:
+    name: "철 곡괭이"
+    lore:
+      - "섬세한 손길"
+  honey_filler:
+    name: "벌집 채우기"
+    lore:
+      - "벌집이나 벌통에 사용하면 즉시 꿀 레벨을 5로 설정한다."
+  beehive_breaker:
+    name: "벌집 분해기"
+    lore:
+      - "채린미 데이터팩에 있던거"
+      - "벌집이나 벌통에 사용할 수 있다."
+      - "좌클릭하면 꿀 병 1개, 우클릭하면 벌집 조각 3개를 얻는다."
+      - "사용 후 벌집이 파괴된다."
+
 
 effect:
   speed:
@@ -389,6 +409,25 @@ gui:
     not-enough: "§c다이아몬드가 부족합니다!"
     exchanged: "§e[환전] §f다이아몬드 {amount}개를 §b{gained} 포인트§f로 교환했습니다!"
     cancelled: "§e[환전] §f다이아몬드 환전을 취소했습니다."
+  emerald:
+    title: "§a에메랄드 환전"
+    amount:
+      name: "§e{amount}개"
+      lore: "§7환전할 에메랄드의 개수입니다."
+    emerald-name: "§a에메랄드"
+    all:
+      name: "§6전부 선택"
+      lore: "§7보유한 에메랄드 전부를 선택합니다."
+    confirm:
+      name: "§a확인"
+      lore:
+        - "§7에메랄드 §a{amount}개§7를"
+        - "§a{amount} 포인트§7로 교환합니다."
+    cancel:
+      name: "§c취소"
+    not-enough: "§c에메랄드가 부족합니다!"
+    exchanged: "§e[환전] §f에메랄드 {amount}개를 §a{gained} 포인트§f로 교환했습니다!"
+    cancelled: "§e[환전] §f에메랄드 환전을 취소했습니다."
   bingo:
     title: "§f빙고판"
   summary:

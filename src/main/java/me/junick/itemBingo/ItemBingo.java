@@ -70,6 +70,8 @@ public final class ItemBingo extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new ExplorerMapEvent(), this);
         Bukkit.getPluginManager().registerEvents(new BiomeMapEvent(), this);
         Bukkit.getPluginManager().registerEvents(new MysteriousSherdEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new HoneyFillerEvent(), this);
+        Bukkit.getPluginManager().registerEvents(new BeehiveBreakerEvent(), this);
         Bukkit.getPluginManager().registerEvents(new LavaMovement(), this);
         Bukkit.getPluginManager().registerEvents(new LungeMovement(), this);
 

@@ -6,6 +6,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.w3c.dom.Text;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -63,6 +64,36 @@ public enum BingoItem {
             TextColor.fromHexString("#9D5848"),
             Material.BRICK,
             Map.of(BingoRewardType.DIAMOND, 7)
+    ),
+    RED_PLATE1(
+            TextColor.color(0, 0, 0),
+            Material.RED_STAINED_GLASS_PANE,
+            Map.of(BingoRewardType.DIAMOND, 0)
+    ),
+    RED_PLATE2(
+            TextColor.color(0, 0, 0),
+            Material.RED_STAINED_GLASS_PANE,
+            Map.of(BingoRewardType.DIAMOND, 0)
+    ),
+    GOLDEN_PICKAXE(
+            NamedTextColor.GOLD,
+            Material.GOLDEN_PICKAXE,
+            Map.of(BingoRewardType.EMERALD, 3)
+    ),
+    IRON_PICKAXE(
+            NamedTextColor.GRAY,
+            Material.IRON_PICKAXE,
+            Map.of(BingoRewardType.EMERALD, 10)
+    ),
+    HONEY_FILLER(
+            NamedTextColor.GOLD,
+            Material.GOLD_NUGGET,
+            Map.of(BingoRewardType.EMERALD, 3)
+    ),
+    BEEHIVE_BREAKER(
+            NamedTextColor.GOLD,
+            Material.WOODEN_HOE,
+            Map.of(BingoRewardType.EMERALD, 0)
     );
 
     private final TextColor color;

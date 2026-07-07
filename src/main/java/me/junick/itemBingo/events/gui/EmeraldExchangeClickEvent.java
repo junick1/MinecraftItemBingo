@@ -3,7 +3,6 @@ package me.junick.itemBingo.events.gui;
 import me.junick.itemBingo.ItemBingo;
 import me.junick.itemBingo.enums.BingoRewardType;
 import me.junick.itemBingo.gui.BingoGuiHolder;
-import me.junick.itemBingo.gui.DiamondExchangeGUI;
 import me.junick.itemBingo.gui.EmeraldExchangeGUI;
 import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
@@ -86,7 +85,7 @@ public class EmeraldExchangeClickEvent implements Listener {
     private void confirm(Player p, int amount) {
         int diamonds = countDiamonds(p);
         if (diamonds < amount) {
-            p.sendMessage(Messages.get(p, "gui.diamond.not-enough"));
+            p.sendMessage(Messages.get(p, "gui.emerald.not-enough"));
             p.playSound(p.getLocation(), Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 0.5f);
             return;
         }
@@ -96,19 +95,19 @@ public class EmeraldExchangeClickEvent implements Listener {
         int gained = amount;
         BingoProgressAccess proga = ProgressFactory.of(p);
 
-        proga.addCurrencyAll(BingoRewardType.DIAMOND, gained);
+        proga.addCurrencyAll(BingoRewardType.EMERALD, gained);
         PlayerDataManager.save(p);
 
         // DIAMOND points are team-shared, so refresh teammates' open shops.
         GuiSync.refreshShops(proga.viewers(p));
 
-        p.sendMessage(Messages.get(p, "gui.diamond.exchanged", "amount", amount, "gained", gained));
+        p.sendMessage(Messages.get(p, "gui.emerald.exchanged", "amount", amount, "gained", gained));
         p.playSound(p.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 2.0f);
         p.closeInventory();
     }
 
     private void cancel(Player p) {
-        p.sendMessage(Messages.get(p, "gui.diamond.cancelled"));
+        p.sendMessage(Messages.get(p, "gui.emerald.cancelled"));
         p.playSound(p.getLocation(), Sound.ENTITY_VILLAGER_NO, 1.0f, 1.0f);
         p.closeInventory();
     }

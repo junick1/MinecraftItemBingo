@@ -106,7 +106,7 @@ reward:
   line:
     name: "§eLine Points"
   emerald:
-    name: "§aEmerald 포인트"
+    name: "§aEmerald Points"
 
 shop:
   disabled: "§cThe shop is disabled."
@@ -232,6 +232,26 @@ item:
     lore:
       - "Obtain pottery sherd according to a set probability."
       - "Includes probability items"
+  golden_pickaxe:
+    name: "Golden Pickaxe"
+    lore:
+      - "Silk Touch"
+  iron_pickaxe:
+    name: "Iron Pickaxe"
+    lore:
+      - "Silk Touch"
+  honey_filler:
+    name: "Honey Filler"
+    lore:
+      - "When used on a bee nest or beehive, immediately sets the honey level to 5."
+  beehive_breaker:
+    name: "Beehive breaker"
+    lore:
+      - "From Chaerinme datapack"
+      - "Can be used on a bee nest or beehive"
+      - "Left Click to get 1 honey bottle; right-click to get 3 honeycomb."
+      - "The beehive is destroyed after use."
+
 
 effect:
   speed:
@@ -390,6 +410,25 @@ gui:
     not-enough: "§cYou don't have enough diamonds!"
     exchanged: "§e[Exchange] §fExchanged §b{amount}§f diamond(s) for §b{gained} points§f!"
     cancelled: "§e[Exchange] §fDiamond exchange cancelled."
+  emerald:
+    title: "§aEmerald Exchange"
+    amount:
+      name: "§e{amount}"
+      lore: "§7The number of emeralds to exchange."
+    emerald-name: "§aEmerald"
+    all:
+      name: "§6Select All"
+      lore: "§7Selects all the emeralds you have."
+    confirm:
+      name: "§aConfirm"
+      lore:
+        - "§7Exchange §a{amount}§7 emerald(s)"
+        - "§7for §a{amount} points§7."
+    cancel:
+      name: "§cCancel"
+    not-enough: "§cYou don't have enough emeralds!"
+    exchanged: "§e[Exchange] §fExchanged §a{amount}§f emerald(s) for §a{gained} points§f!"
+    cancelled: "§e[Exchange] §fEmerald exchange cancelled."
   bingo:
     title: "§fBingo Board"
   summary:

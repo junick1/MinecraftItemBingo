@@ -16,7 +16,7 @@ import org.bukkit.persistence.PersistentDataType;
 
 public class EmeraldExchangeGUI {
     /** Title message key. GUI identity is the {@link BingoGuiHolder} marker, not the title. */
-    public static final String TITLE_KEY = "gui.diamond.title";
+    public static final String TITLE_KEY = "gui.emerald.title";
 
     public static void open(Player p, int amount) {
         if (!Settings.isShopEnabled()) return;
@@ -47,28 +47,28 @@ public class EmeraldExchangeGUI {
 
         inv.setItem(9 * 2 + 4, IconGenerator.icon(
                 Material.OAK_SIGN,
-                Messages.legacy(loc, "gui.diamond.amount.name", "amount", amount),
-                Messages.legacy(loc, "gui.diamond.amount.lore")
+                Messages.legacy(loc, "gui.emerald.amount.name", "amount", amount),
+                Messages.legacy(loc, "gui.emerald.amount.lore")
         ));
 
         inv.setItem(9 * 1 + 4, IconGenerator.icon(
                 Material.EMERALD,
-                Messages.legacy(loc, "gui.diamond.diamond-name"),
+                Messages.legacy(loc, "gui.emerald.diamond-name"),
                 Math.clamp(amount, 1, 64)
         ));
 
         inv.setItem(9 * 2 + 6, IconGenerator.icon(
                 Material.GOLD_INGOT,
-                Messages.legacy(loc, "gui.diamond.all.name"),
-                Messages.legacy(loc, "gui.diamond.all.lore")
+                Messages.legacy(loc, "gui.emerald.all.name"),
+                Messages.legacy(loc, "gui.emerald.all.lore")
         ));
 
         inv.setItem(9 * 3 + 2, IconGenerator.icon(
                 Material.GREEN_TERRACOTTA,
-                Messages.legacy(loc, "gui.diamond.confirm.name"),
-                Messages.legacyList(loc, "gui.diamond.confirm.lore", "amount", amount).toArray(new String[0])
+                Messages.legacy(loc, "gui.emerald.confirm.name"),
+                Messages.legacyList(loc, "gui.emerald.confirm.lore", "amount", amount).toArray(new String[0])
         ));
-        inv.setItem(9 * 3 + 6, IconGenerator.icon(Material.RED_TERRACOTTA, Messages.legacy(loc, "gui.diamond.cancel.name")));
+        inv.setItem(9 * 3 + 6, IconGenerator.icon(Material.RED_TERRACOTTA, Messages.legacy(loc, "gui.emerald.cancel.name")));
 
         for (ItemStack item : inv.getContents()) {
             if (item == null) continue;
