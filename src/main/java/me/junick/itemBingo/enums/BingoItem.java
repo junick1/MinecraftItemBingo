@@ -94,6 +94,16 @@ public enum BingoItem {
             NamedTextColor.GOLD,
             Material.WOODEN_HOE,
             Map.of(BingoRewardType.EMERALD, 0)
+    ),
+    EGG_QOL(
+            NamedTextColor.DARK_RED,
+            Material.BOWL,
+            Map.of(BingoRewardType.EMERALD, 3)
+    ),
+    KNOWLEDGE_BOOK(
+            NamedTextColor.YELLOW,
+            Material.KNOWLEDGE_BOOK,
+            Map.of(BingoRewardType.EMERALD, 10)
     );
 
     private final TextColor color;

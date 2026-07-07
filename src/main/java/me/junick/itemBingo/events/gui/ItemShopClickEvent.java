@@ -76,6 +76,8 @@ public class ItemShopClickEvent implements Listener {
             }
             case HONEY_FILLER -> CustomItems.get(BingoItem.HONEY_FILLER, loc);
             case BEEHIVE_BREAKER -> CustomItems.get(BingoItem.BEEHIVE_BREAKER, loc);
+            case EGG_QOL -> CustomItems.get(BingoItem.EGG_QOL, loc);
+            case KNOWLEDGE_BOOK -> CustomItems.get(BingoItem.KNOWLEDGE_BOOK, loc);
             default -> null;
         };
     }

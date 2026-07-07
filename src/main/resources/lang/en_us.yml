@@ -220,7 +220,7 @@ item:
       - "Right-click an unwaxed copper block to oxidize it one stage."
       - "Right-click a copper golem to instantly turn it into a statue."
   explorer_map:
-    name: "Explorer Map"
+    name: "Structure Map"
     lore:
       - "Pick a structure to get an explorer map to the nearest one."
   biome_map:
@@ -251,7 +251,15 @@ item:
       - "Can be used on a bee nest or beehive"
       - "Left Click to get 1 honey bottle; right-click to get 3 honeycomb."
       - "The beehive is destroyed after use."
-
+  egg_qol:
+    name: "Egg QoL"
+    lore:
+      - "If used on a Sniffer Egg, it will hatch immediately."
+      - "When used on a chicken, it lays an egg immediately."
+  knowledge_book:
+    name: "Knowledge Book for Villagers"
+    lore:
+      - "When used on a villager with a profession, immediately unlocks all trades."
 
 effect:
   speed:
