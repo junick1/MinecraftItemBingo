@@ -7,16 +7,16 @@ import org.bukkit.Material;
 import java.util.Locale;
 
 public enum BingoEffect {
-    SPEED(3, 1, Material.LEATHER_BOOTS),
+    SPEED(5, 1, Material.LEATHER_BOOTS),
     DOLPHINS_GRACE(3, 1, Material.DOLPHIN_SPAWN_EGG),
-    HASTE(5, 2, Material.GOLDEN_PICKAXE),
-    CONDUIT_POWER(2, 1, Material.HEART_OF_THE_SEA),
+    HASTE(10, 2, Material.GOLDEN_PICKAXE),
+    CONDUIT_POWER(1, 1, Material.HEART_OF_THE_SEA),
     STEP_HEIGHT(3, 1, Material.FEATHER),
-    EFFICIENCY(5, 1, Material.DIAMOND_PICKAXE),
+    EFFICIENCY(10, 1, Material.DIAMOND_PICKAXE),
     MENDING(1, 1, Material.EMERALD_BLOCK),
-    STRENGTH(2, 2, Material.IRON_SWORD),
+    STRENGTH(4, 2, Material.IRON_SWORD),
     RESISTANCE(2, 2, Material.SHIELD),
-    HEALTH_BOOST(2, 5, Material.ENCHANTED_GOLDEN_APPLE),
+    HEALTH_BOOST(4, 5, Material.ENCHANTED_GOLDEN_APPLE),
     FIRE_RESISTANCE(1, 1, Material.FIRE_CHARGE),
     IMPROVE_LAVA_MOVEMENT(1, 1, Material.STRIDER_SPAWN_EGG);
 

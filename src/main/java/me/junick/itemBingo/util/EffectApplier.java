@@ -53,7 +53,7 @@ public class EffectApplier extends BukkitRunnable {
                             if (Enchantment.EFFICIENCY.canEnchantItem(item)) {
                                 int enchlvl = item.getEnchantmentLevel(Enchantment.EFFICIENCY);
                                 if (enchlvl < lvl) {
-                                    item.addEnchantment(Enchantment.EFFICIENCY, lvl);
+                                    item.addUnsafeEnchantment(Enchantment.EFFICIENCY, lvl);
                                 }
                             }
                             p.getInventory().setItemInMainHand(item);
