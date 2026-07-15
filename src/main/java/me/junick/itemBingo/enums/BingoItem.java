@@ -58,7 +58,12 @@ public enum BingoItem {
             item.setItemMeta(meta);
             return item;
         }
-    };
+    },
+    MYSTERIOUS_SHERD(
+            TextColor.fromHexString("#9D5848"),
+            Material.BRICK,
+            Map.of(BingoRewardType.DIAMOND, 7)
+    );
 
     private final TextColor color;
     private final Material icon;

@@ -225,6 +225,11 @@ item:
     name: "Biome Map"
     lore:
       - "Pick a biome to get a map pointing to the nearest one."
+  mysterious_sherd:
+    name: "Mysterious Sherd Box"
+    lore:
+      - "Obtain pottery sherd according to a set probability."
+      - "Includes probability items"
 
 effect:
   speed:

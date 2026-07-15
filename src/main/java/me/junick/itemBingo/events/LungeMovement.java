@@ -32,7 +32,6 @@ public class LungeMovement implements Listener {
 
         // 2. 아이템이 우리가 설정한 그 "창"인지 확인합니다 (이름이나 PDC 사용)
         if (item == null || !item.getType().name().toLowerCase().contains("spear")) return;
-
         // 아리스의 추천: 이름으로 판별하기 (PDC를 쓰면 더 좋지만 일단 이름으로!)
         if (!item.getItemMeta().getDisplayName().contains("특정한 창 이름")) return;
 
