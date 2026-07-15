@@ -1,0 +1,26 @@
+{
+  "key.category.itembingo.main": "아이템 빙고",
+  "key.itembingo.open_board": "빙고판 열기",
+  "key.itembingo.toggle_hud": "빙고 오버레이 전환",
+
+  "itembingo.screen.title": "빙고판",
+  "itembingo.screen.progress": "%s/%s",
+  "itembingo.screen.mode.normal": "일반",
+  "itembingo.screen.mode.swappage": "자리 바꾸기",
+  "itembingo.screen.mode.fog_of_war": "전장의 안개",
+  "itembingo.screen.mode.lockout": "락아웃",
+  "itembingo.screen.fog_submit_lock": "[숨겨진 칸 제출 잠금]",
+  "itembingo.screen.no_board": "진행 중인 빙고판이 없습니다.",
+  "itembingo.screen.view_denied": "팀에 소속되어야 빙고판을 볼 수 있습니다.",
+  "itembingo.screen.hint": "드래그: 이동 · 스크롤: 세로 · Shift+스크롤: 가로 · Ctrl+스크롤: 확대/축소",
+  "itembingo.screen.submit_hint": "클릭 후 칸에 놓아 제출 · Shift+클릭: 자동 제출",
+
+  "itembingo.cell.locked": "다른 팀이 선점한 칸입니다",
+  "itembingo.cell.submitted": "제출 완료",
+  "itembingo.cell.submitted_by": "%s 제출",
+  "itembingo.cell.time": "%s 경과",
+
+  "itembingo.status.mismatch": "아이템 빙고 모드 버전이 서버와 다릅니다 (클라이언트 v%s, 서버 v%s) — 단축키가 기본 빙고판을 대신 엽니다.",
+  "itembingo.hud.on": "빙고 오버레이: 켜짐",
+  "itembingo.hud.off": "빙고 오버레이: 꺼짐"
+}

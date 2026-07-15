@@ -1,0 +1,26 @@
+{
+  "key.category.itembingo.main": "ItemBingo",
+  "key.itembingo.open_board": "Open Bingo Board",
+  "key.itembingo.toggle_hud": "Toggle Board Overlay",
+
+  "itembingo.screen.title": "Bingo Board",
+  "itembingo.screen.progress": "%s/%s",
+  "itembingo.screen.mode.normal": "Normal",
+  "itembingo.screen.mode.swappage": "Swappage",
+  "itembingo.screen.mode.fog_of_war": "Fog of War",
+  "itembingo.screen.mode.lockout": "Lockout",
+  "itembingo.screen.fog_submit_lock": "[Hidden cells locked]",
+  "itembingo.screen.no_board": "No bingo board is active.",
+  "itembingo.screen.view_denied": "Join a team to view the board.",
+  "itembingo.screen.hint": "Drag: pan · Scroll: vertical · Shift+Scroll: horizontal · Ctrl+Scroll: zoom",
+  "itembingo.screen.submit_hint": "Click, then drop on a cell to submit · Shift+Click: auto-submit",
+
+  "itembingo.cell.locked": "Claimed by another team",
+  "itembingo.cell.submitted": "Submitted",
+  "itembingo.cell.submitted_by": "by %s",
+  "itembingo.cell.time": "at %s",
+
+  "itembingo.status.mismatch": "ItemBingo Companion version mismatch (client v%s, server v%s) — the key will open the vanilla board instead.",
+  "itembingo.hud.on": "Board overlay: ON",
+  "itembingo.hud.off": "Board overlay: OFF"
+}
