@@ -9,6 +9,13 @@ base {
     archivesName = 'itembingo-fabric'
 }
 
+// Client-only mod: a dedicated-server dev run is useless here, and Loom's
+// `runServer` task would collide with the root project's run-paper task
+// whenever `./gradlew runServer` is invoked without a project path.
+tasks.matching { it.name == 'runServer' }.configureEach {
+    enabled = false
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     implementation "net.fabricmc:fabric-loader:${loader_version}"
