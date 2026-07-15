@@ -245,7 +245,6 @@ public class BingoClickEvent implements Listener {
                 : null;
 
         progress.submit(idx, p);
-        WebUIServer.sendBingoBoard(p);
 
         progress.addCurrencyAll(BingoRewardType.SLOT, 1);
 
@@ -411,6 +410,10 @@ public class BingoClickEvent implements Listener {
                     player.sendMessage(base);
                 }
             }
+        }
+        
+        for (Player member : team) {
+            WebUIServer.sendBingoBoard(member);
         }
 
         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 1.0f, 2.0f);
