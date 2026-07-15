@@ -14,6 +14,7 @@ public interface BingoProgressAccess {
     UUID getSubmitterId(int idx);
     String getSubmitterName(int idx);
     int getSubmissionCount(UUID submitterId);
+    long getSubmissionTime(int idx);
 
     void addCurrencyAll(BingoRewardType type, int amount);
     void addCurrency(Player p, BingoRewardType type, int amount);

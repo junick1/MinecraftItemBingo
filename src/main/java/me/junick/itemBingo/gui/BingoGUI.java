@@ -230,7 +230,8 @@ public class BingoGUI {
     ) {
         if (progress.isSubmitted(index)) {
             UUID owner = progress.getSubmitterId(index);
-            return submittedIcon(owner, progress.getSubmitterName(index), progressFraction(progress, owner, total), loc);
+            return submittedIcon(board.getItems().get(index).getType(), owner, progress.getSubmitterName(index),
+                    progressFraction(progress, owner, total), progress.getSubmissionTime(index), loc);
         } else if (locked.contains(index)) {
             return lockedIcon(loc);
         } else if (fog && !revealed.contains(index)) {
@@ -307,16 +308,29 @@ public class BingoGUI {
         return (double) submitted / total;
     }
 
+    /** Elapsed seconds as {@code H:MM:SS} (hours dropped when zero), for the submit-time lore. */
+    private static String formatElapsed(long totalSeconds) {
+        long h = totalSeconds / 3600;
+        long m = (totalSeconds % 3600) / 60;
+        long s = totalSeconds % 60;
+        return h > 0
+                ? String.format("%d:%02d:%02d", h, m, s)
+                : String.format("%02d:%02d", m, s);
+    }
+
     /**
      * The icon shown for an already-submitted slot, used by both the initial
      * render and live updates so a submitted slot always looks the same.
      *
+     * @param original      the cell's required item, shown by name in the lore
      * @param submitterId   submitter UUID, or {@code null} for the barrier variant
      * @param submitterName submitter name shown in the lore (team match only)
      * @param fraction      progress fraction in [0, 1] driving the durability bar
+     * @param submitSeconds elapsed seconds when it was submitted, or -1 to omit
      * @param loc           the viewer's locale, for the displayed text
      */
-    public static ItemStack submittedIcon(UUID submitterId, String submitterName, double fraction, SupportedLocale loc) {
+    public static ItemStack submittedIcon(Material original, UUID submitterId, String submitterName,
+                                          double fraction, long submitSeconds, SupportedLocale loc) {
         boolean teamMatch = submitterId != null;
 
         ItemStack item = new ItemStack(Material.NETHERITE_AXE);
@@ -328,9 +342,18 @@ public class BingoGUI {
 
         List<Component> lore = new ArrayList<>();
         lore.add(Messages.get(loc, "board.submitted.lore").decoration(TextDecoration.ITALIC, false));
+        // Original item — rendered translatable so it shows in the viewer's client
+        // (or set) language, matching the "-> item" submission broadcast.
+        lore.add(Messages.get(loc, "board.submitted.original")
+                .append(Component.translatable(original.translationKey()).color(NamedTextColor.WHITE))
+                .decoration(TextDecoration.ITALIC, false));
         if (teamMatch) {
             String name = submitterName != null ? submitterName : Messages.legacy(loc, "board.submitted.unknown");
             lore.add(Messages.get(loc, "board.submitted.by", "submitter", name)
+                    .decoration(TextDecoration.ITALIC, false));
+        }
+        if (submitSeconds >= 0) {
+            lore.add(Messages.get(loc, "board.submitted.time", "time", formatElapsed(submitSeconds))
                     .decoration(TextDecoration.ITALIC, false));
         }
         meta.lore(lore);

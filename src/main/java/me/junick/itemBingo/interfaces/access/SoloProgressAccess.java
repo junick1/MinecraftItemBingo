@@ -25,6 +25,7 @@ public class SoloProgressAccess implements BingoProgressAccess {
     @Override public UUID getSubmitterId(int idx) { return null; }
     @Override public String getSubmitterName(int idx) { return null; }
     @Override public int getSubmissionCount(UUID submitterId) { return 0; }
+    @Override public long getSubmissionTime(int idx) { return prog.getSubmissionTime(idx); }
 
     @Override public void addCurrencyAll(BingoRewardType type, int amount) { prog.addCurrency(type, amount); }
     @Override public void addCurrency(Player p, BingoRewardType type, int amount) { prog.addCurrency(type, amount); }

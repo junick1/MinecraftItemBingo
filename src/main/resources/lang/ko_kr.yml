@@ -296,7 +296,9 @@ board:
   submitted:
     name: "§a§l✔ 제출됨"
     lore: "§7이미 제출한 칸입니다."
+    original: "§7원래 아이템: "
     by: "§7제출자: §e{submitter}"
+    time: "§7제출 시점: §f{time}"
     unknown: "알 수 없음"
 
 gui:

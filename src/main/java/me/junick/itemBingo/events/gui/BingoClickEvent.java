@@ -354,9 +354,11 @@ public class BingoClickEvent implements Listener {
 
             UUID owner = progress.getSubmitterId(idx);
             inv.setItem(slot, BingoGUI.submittedIcon(
+                    board.getItems().get(idx).getType(),
                     owner,
                     progress.getSubmitterName(idx),
                     BingoGUI.progressFraction(progress, owner, total),
+                    progress.getSubmissionTime(idx),
                     loc
             ));
         }

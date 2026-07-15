@@ -30,6 +30,7 @@ public class TeamProgressAccess implements BingoProgressAccess {
     @Override public UUID getSubmitterId(int idx) { return prog.getSubmitterId(idx); }
     @Override public String getSubmitterName(int idx) { return prog.getSubmitterName(idx); }
     @Override public int getSubmissionCount(UUID submitterId) { return prog.getSubmissionCountBy(submitterId); }
+    @Override public long getSubmissionTime(int idx) { return prog.getSubmissionTime(idx); }
 
     @Override public void addCurrencyAll(BingoRewardType type, int amount) {
         if (type.isPersonal()) {

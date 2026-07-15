@@ -73,6 +73,11 @@ public class BingoProgress {
         return submissionTimes;
     }
 
+    /** Elapsed seconds recorded when slot {@code idx} was submitted, or -1 if none. */
+    public long getSubmissionTime(int idx) {
+        return submissionTimes.getOrDefault(idx, -1L);
+    }
+
     public long getTotalSubmitTime() {
         long total = 0;
         for (long time : submissionTimes.values()) {

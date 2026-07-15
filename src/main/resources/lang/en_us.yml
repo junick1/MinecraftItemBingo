@@ -297,7 +297,9 @@ board:
   submitted:
     name: "§a§l✔ Submitted"
     lore: "§7This tile has already been submitted."
+    original: "§7Original item: "
     by: "§7Submitted by: §e{submitter}"
+    time: "§7Submitted at: §f{time}"
     unknown: "Unknown"
 
 gui:
