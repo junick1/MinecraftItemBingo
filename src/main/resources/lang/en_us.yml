@@ -404,9 +404,14 @@ gui:
     personal-title: "§b§lYour Result"
     my-rank: "§7Rank: §e#{rank} §7/ {total}"
     not-participated: "§7You didn't take part in this game."
+    board-view:
+      name: "§aView Board"
+      lore: "§7Shows the original bingo board."
     close:
       name: "§cClose"
       lore: "§7Closes the results screen."
+  board-preview:
+    title: "§fOriginal Board"
   preset:
     apply-title: "§6Bingo Presets"
     edit-title: "§eSelect Preset to Edit"

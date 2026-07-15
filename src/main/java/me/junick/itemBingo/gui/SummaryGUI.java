@@ -36,6 +36,7 @@ public class SummaryGUI {
 
     private static final int SIZE = 54;
     private static final int INFO_SLOT = 4;
+    private static final int BOARD_SLOT = 45;
     private static final int PERSONAL_SLOT = 49;
     private static final int CLOSE_SLOT = 53;
 
@@ -76,6 +77,7 @@ public class SummaryGUI {
             inv.setItem(ENTRY_SLOTS[i], entryIcon(i + 1, standings.get(i), i == myIndex, loc));
         }
 
+        inv.setItem(BOARD_SLOT, boardButton(loc));
         inv.setItem(PERSONAL_SLOT, personalCard(standings, myIndex, loc));
         inv.setItem(CLOSE_SLOT, closeButton(loc));
 
@@ -178,6 +180,15 @@ public class SummaryGUI {
         }
         meta.lore(lore);
 
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private static ItemStack boardButton(SupportedLocale loc) {
+        ItemStack item = new ItemStack(Material.FILLED_MAP);
+        ItemMeta meta = item.getItemMeta();
+        meta.displayName(line(Messages.legacy(loc, "gui.summary.board-view.name")));
+        meta.lore(List.of(line(Messages.legacy(loc, "gui.summary.board-view.lore"))));
         item.setItemMeta(meta);
         return item;
     }

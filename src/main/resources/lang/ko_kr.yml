@@ -403,9 +403,14 @@ gui:
     personal-title: "§b§l나의 결과"
     my-rank: "§7순위: §e{rank}위 §7/ {total}"
     not-participated: "§7이 게임에 참가하지 않았습니다."
+    board-view:
+      name: "§a빙고판 보기"
+      lore: "§7원본 빙고판을 확인합니다."
     close:
       name: "§c닫기"
       lore: "§7결과 창을 닫습니다."
+  board-preview:
+    title: "§f원본 빙고판"
   preset:
     apply-title: "§6빙고 프리셋"
     edit-title: "§e프리셋 편집 선택"

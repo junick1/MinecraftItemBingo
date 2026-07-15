@@ -42,6 +42,9 @@ public class BingoGUI {
     /** Title message key. GUI identity is the {@link BingoGuiHolder} marker, not the title. */
     public static final String TITLE_KEY = "gui.bingo.title";
 
+    /** Title for the read-only board preview (the original board, no progress overlay). */
+    public static final String PREVIEW_TITLE_KEY = "gui.board-preview.title";
+
     /**
      * Whether {@code p} is allowed to view the bingo board. In team mode only
      * team members (and OPs, who may spectate) may see it; outside team mode
@@ -53,20 +56,39 @@ public class BingoGUI {
         return ItemBingo.getInstance().getTeamManager().getTeamId(p) != TeamManager.NO_TEAM;
     }
 
+    /** Opens the live, interactive bingo board. */
     public static void open(Player p) {
+        openInternal(p, false);
+    }
+
+    /**
+     * Opens a read-only preview of the original board — every cell shown as its
+     * required item, with no submission/fog/lockout overlay and no way to submit.
+     * Oversized boards still scroll exactly like the live board.
+     */
+    public static void openPreview(Player p) {
+        openInternal(p, true);
+    }
+
+    private static void openInternal(Player p, boolean preview) {
         BingoBoard board = ItemBingo.currentBingo;
         if (board == null) {
             p.sendMessage(Messages.get(p, "board.none"));
             return;
         }
 
-        if (!canView(p)) {
+        // The preview is a post-game recap of the shared board, so it isn't gated
+        // by team-view rules the way the live board is.
+        if (!preview && !canView(p)) {
             p.sendMessage(Messages.get(p, "board.team-only"));
             return;
         }
 
         SupportedLocale loc = Messages.localeOf(p);
         BingoProgressAccess progress = ProgressFactory.of(p);
+
+        BingoGuiHolder.Gui type = preview ? BingoGuiHolder.Gui.BOARD_PREVIEW : BingoGuiHolder.Gui.BINGO;
+        String titleKey = preview ? PREVIEW_TITLE_KEY : TITLE_KEY;
 
         // Oversized boards (beyond the 9x6 inventory limit) render through the
         // scrollable viewport instead of the centered full-board layout below.
@@ -78,10 +100,10 @@ public class BingoGUI {
             }
             // The adaptive viewport may use fewer than 6 rows (e.g. a short, wide board).
             int guiRows = BingoViewport.layout(p.getUniqueId(), board).guiRows();
-            BingoGuiHolder holder = new BingoGuiHolder(BingoGuiHolder.Gui.BINGO);
-            Inventory inv = Bukkit.createInventory(holder, GUI_WIDTH * guiRows, Messages.get(loc, TITLE_KEY));
+            BingoGuiHolder holder = new BingoGuiHolder(type);
+            Inventory inv = Bukkit.createInventory(holder, GUI_WIDTH * guiRows, Messages.get(loc, titleKey));
             holder.setInventory(inv);
-            renderScroll(inv, board, progress, p, loc);
+            renderScroll(inv, board, progress, p, loc, preview);
             p.openInventory(inv);
             return;
         }
@@ -95,12 +117,12 @@ public class BingoGUI {
             return;
         }
 
-        BingoGuiHolder holder = new BingoGuiHolder(BingoGuiHolder.Gui.BINGO);
-        Inventory inv = Bukkit.createInventory(holder, GUI_WIDTH * guiHeight, Messages.get(loc, TITLE_KEY));
+        BingoGuiHolder holder = new BingoGuiHolder(type);
+        Inventory inv = Bukkit.createInventory(holder, GUI_WIDTH * guiHeight, Messages.get(loc, titleKey));
         holder.setInventory(inv);
 
         fillBackground(inv);
-        placeBingoItems(inv, board, progress, tightMode, p, loc);
+        placeBingoItems(inv, board, progress, tightMode, p, loc, preview);
 
         p.openInventory(inv);
     }
@@ -120,24 +142,31 @@ public class BingoGUI {
      * inventory (which would drop the player's cursor item).
      */
     public static void rerenderInPlace(Player p) {
-        if (!BingoGuiHolder.is(p.getOpenInventory().getTopInventory(), BingoGuiHolder.Gui.BINGO)) return;
+        Inventory inv = p.getOpenInventory().getTopInventory();
+        boolean preview;
+        if (BingoGuiHolder.is(inv, BingoGuiHolder.Gui.BINGO)) {
+            preview = false;
+        } else if (BingoGuiHolder.is(inv, BingoGuiHolder.Gui.BOARD_PREVIEW)) {
+            preview = true;
+        } else {
+            return;
+        }
 
         BingoBoard board = ItemBingo.currentBingo;
         if (board == null) return;
 
         SupportedLocale loc = Messages.localeOf(p);
         BingoProgressAccess progress = ProgressFactory.of(p);
-        Inventory inv = p.getOpenInventory().getTopInventory();
 
         if (BingoViewport.needsScroll(board)) {
             // Re-renders arrows + cells from scratch (cells scroll in/out of view),
             // so a full redraw is needed rather than only repainting board slots.
-            renderScroll(inv, board, progress, p, loc);
+            renderScroll(inv, board, progress, p, loc, preview);
             return;
         }
 
         boolean tightMode = board.getHeight() > 4;
-        placeBingoItems(inv, board, progress, tightMode, p, loc);
+        placeBingoItems(inv, board, progress, tightMode, p, loc, preview);
     }
 
     private static void placeBingoItems(
@@ -146,7 +175,8 @@ public class BingoGUI {
             BingoProgressAccess progress,
             boolean tightMode,
             Player viewer,
-            SupportedLocale loc
+            SupportedLocale loc,
+            boolean preview
     ) {
         List<ItemStack> items = board.getItems();
         BingoTagLoader tagLoader = ItemBingo.getInstance().getTagLoader();
@@ -156,14 +186,14 @@ public class BingoGUI {
 
         int total = items.size();
 
-        boolean fog = Settings.isFogOfWarMode();
+        boolean fog = !preview && Settings.isFogOfWarMode();
         Set<Integer> revealed = fog
                 ? FogOfWar.revealedSlots(board.getWidth(), board.getHeight(),
                         progress.getSubmittedSlots(), Settings.isFogDiagonalReveal())
                 : null;
 
         // In Lockout, cells claimed by another team show as plain barriers.
-        Set<Integer> locked = Lockout.lockedSlots(viewer);
+        Set<Integer> locked = preview ? Set.of() : Lockout.lockedSlots(viewer);
 
         for (int y = 0; y < board.getHeight(); y++) {
             for (int x = 0; x < board.getWidth(); x++) {
@@ -171,7 +201,7 @@ public class BingoGUI {
                 if (index >= items.size()) continue;
 
                 int slot = (y + offsetY) * GUI_WIDTH + offsetX + x;
-                inv.setItem(slot, cellIcon(board, progress, index, fog, revealed, locked, tagLoader, total, loc));
+                inv.setItem(slot, cellIcon(board, progress, index, fog, revealed, locked, tagLoader, total, loc, preview));
             }
         }
     }
@@ -183,7 +213,7 @@ public class BingoGUI {
      * Used by both the initial open and every live re-render, so a scroll always
      * lands in a fully consistent state.
      */
-    private static void renderScroll(Inventory inv, BingoBoard board, BingoProgressAccess progress, Player viewer, SupportedLocale loc) {
+    private static void renderScroll(Inventory inv, BingoBoard board, BingoProgressAccess progress, Player viewer, SupportedLocale loc, boolean preview) {
         BingoViewport.Layout layout = BingoViewport.layout(viewer.getUniqueId(), board);
 
         fillBackground(inv);
@@ -198,17 +228,17 @@ public class BingoGUI {
 
         BingoTagLoader tagLoader = ItemBingo.getInstance().getTagLoader();
         int total = board.getItems().size();
-        boolean fog = Settings.isFogOfWarMode();
+        boolean fog = !preview && Settings.isFogOfWarMode();
         Set<Integer> revealed = fog
                 ? FogOfWar.revealedSlots(board.getWidth(), board.getHeight(),
                         progress.getSubmittedSlots(), Settings.isFogDiagonalReveal())
                 : null;
-        Set<Integer> locked = Lockout.lockedSlots(viewer);
+        Set<Integer> locked = preview ? Set.of() : Lockout.lockedSlots(viewer);
 
         for (int index = 0; index < board.getItems().size(); index++) {
             int slot = BingoViewport.indexToSlot(index, board, layout);
             if (slot < 0) continue;
-            inv.setItem(slot, cellIcon(board, progress, index, fog, revealed, locked, tagLoader, total, loc));
+            inv.setItem(slot, cellIcon(board, progress, index, fog, revealed, locked, tagLoader, total, loc, preview));
         }
     }
 
@@ -226,8 +256,14 @@ public class BingoGUI {
             Set<Integer> locked,
             BingoTagLoader tagLoader,
             int total,
-            SupportedLocale loc
+            SupportedLocale loc,
+            boolean preview
     ) {
+        // The preview shows the bare board — every cell is just its required item.
+        if (preview) {
+            return withTagLore(board.getItems().get(index), tagLoader, loc);
+        }
+
         if (progress.isSubmitted(index)) {
             UUID owner = progress.getSubmitterId(index);
             return submittedIcon(board.getItems().get(index).getType(), owner, progress.getSubmitterName(index),
