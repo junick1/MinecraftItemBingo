@@ -13,7 +13,7 @@ package me.junick.itemBingo.network;
 public final class ModProtocol {
     private ModProtocol() {}
 
-    public static final int PROTOCOL_VERSION = 2;
+    public static final int PROTOCOL_VERSION = 3;
 
     /** C2S {@code i32 protocolVersion} / S2C {@code i32 serverProtocolVersion, u8 accepted}. */
     public static final String CHANNEL_HELLO = "itembingo:hello";
@@ -39,6 +39,19 @@ public final class ModProtocol {
 
     /** C2S empty body — requests a fresh board push. */
     public static final String CHANNEL_REFRESH = "itembingo:refresh";
+
+    /**
+     * Original (markless) board for image export.
+     * C2S: empty request. S2C: {@code u8 status (ORIGINAL_*)}; when OK:
+     * {@code u16 width, u16 height}, then width*height {@code UTF itemKey}
+     * row-major. Denied while a Fog of War game is running — the original
+     * would reveal exactly what fog hides.
+     */
+    public static final String CHANNEL_ORIGINAL = "itembingo:original";
+
+    public static final byte ORIGINAL_OK = 0;
+    public static final byte ORIGINAL_DENIED_FOG = 1;
+    public static final byte ORIGINAL_NO_BOARD = 2;
 
     public static final byte STATUS_OK = 0;
     public static final byte STATUS_NO_BOARD = 1;

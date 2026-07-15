@@ -13,7 +13,7 @@ package me.junick.itembingo.client.net;
 public final class ModProtocol {
     private ModProtocol() {}
 
-    public static final int PROTOCOL_VERSION = 2;
+    public static final int PROTOCOL_VERSION = 3;
 
     public static final byte STATUS_OK = 0;
     public static final byte STATUS_NO_BOARD = 1;
@@ -29,6 +29,11 @@ public final class ModProtocol {
 
     /** Sentinel inventorySlot: the item is on the player's cursor, not in a slot. */
     public static final int SLOT_CURSOR = 255;
+
+    /** itembingo:original — S2C status codes for the markless-board export. */
+    public static final byte ORIGINAL_OK = 0;
+    public static final byte ORIGINAL_DENIED_FOG = 1;
+    public static final byte ORIGINAL_NO_BOARD = 2;
 
     /** Fog of War submit-lock is active: hidden cells reject submissions. */
     public static final int FLAG_FOG_SUBMIT_LOCK = 1;

@@ -24,5 +24,25 @@
 
   "itembingo.status.mismatch": "아이템 빙고 모드 버전이 서버와 다릅니다 (클라이언트 v%s, 서버 v%s) — 단축키가 기본 빙고판을 대신 엽니다.",
   "itembingo.hud.on": "빙고 오버레이: 켜짐",
-  "itembingo.hud.off": "빙고 오버레이: 꺼짐"
+  "itembingo.hud.off": "빙고 오버레이: 꺼짐",
+
+  "itembingo.export.button": "내보내기…",
+  "itembingo.export.title": "빙고판 이미지 내보내기",
+  "itembingo.export.original": "원본 빙고판",
+  "itembingo.export.progress": "내 진행도",
+  "itembingo.export.copy": "복사",
+  "itembingo.export.save": "저장",
+  "itembingo.export.requesting": "원본 빙고판 요청 중…",
+  "itembingo.export.denied_fog": "전장의 안개 게임 중에는 원본 빙고판을 볼 수 없습니다.",
+  "itembingo.export.no_board": "내보낼 빙고판이 없습니다.",
+  "itembingo.export.failed": "내보내기에 실패했습니다.",
+  "itembingo.export.copied": "빙고판 이미지가 클립보드에 복사되었습니다.",
+  "itembingo.export.copy_failed_saved": "클립보드를 사용할 수 없어 파일로 저장합니다.",
+  "itembingo.export.saved": "빙고판 이미지를 %s(으)로 저장했습니다",
+  "itembingo.export.caption.original": "원본 빙고판 · %s · %s",
+  "itembingo.export.caption.progress": "%s/%s · %s · %s · %s",
+
+  "itembingo.settings.bingo_mod": "/bingo: 모드",
+  "itembingo.settings.bingo_server": "/bingo: 서버",
+  "itembingo.settings.override_tooltip": "/bingo 명령어가 모드 빙고판과 서버 GUI 중 무엇을 열지 설정합니다"
 }

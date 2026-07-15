@@ -1,7 +1,11 @@
 package me.junick.itemBingo.network;
 
 import me.junick.itemBingo.ItemBingo;
+import me.junick.itemBingo.config.Settings;
+import me.junick.itemBingo.model.BingoBoard;
+import me.junick.itemBingo.util.TimerManager;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -29,6 +33,36 @@ public final class ModSync {
      */
     public static void broadcastBoard() {
         ModPlayers.forEach(ModSync::sendBoard);
+    }
+
+    /**
+     * Sends the pristine board for image export, gated like {@code /summary
+     * board} plus a mode exception: allowed whenever the game is not running,
+     * or anytime in modes that never hide items (everything but Fog of War).
+     */
+    public static void sendOriginalBoard(Player p) {
+        if (!ModPlayers.contains(p)) return;
+        try {
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            DataOutputStream out = new DataOutputStream(bytes);
+
+            BingoBoard board = ItemBingo.currentBingo;
+            if (board == null) {
+                out.writeByte(ModProtocol.ORIGINAL_NO_BOARD);
+            } else if (TimerManager.isRunning() && Settings.isFogOfWarMode()) {
+                out.writeByte(ModProtocol.ORIGINAL_DENIED_FOG);
+            } else {
+                out.writeByte(ModProtocol.ORIGINAL_OK);
+                out.writeShort(board.getWidth());
+                out.writeShort(board.getHeight());
+                for (ItemStack item : board.getItems()) {
+                    out.writeUTF(item.getType().getKey().toString());
+                }
+            }
+            p.sendPluginMessage(ItemBingo.getInstance(), ModProtocol.CHANNEL_ORIGINAL, bytes.toByteArray());
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public static void sendHelloAck(Player p, boolean accepted) {

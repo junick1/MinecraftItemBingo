@@ -30,6 +30,7 @@ public final class ModConfig {
         public float scale = 1.0f;
         public int maxGridWidth = 7;
         public int maxGridHeight = 7;
+        public boolean overrideBingoCommand = true;
     }
 
     private ModConfig() {}
@@ -46,6 +47,15 @@ public final class ModConfig {
         data.overlayEnabled = !data.overlayEnabled;
         save();
         return data.overlayEnabled;
+    }
+
+    /** Whether typing /bingo opens the mod board instead of the server GUI. */
+    public static boolean overrideBingo() { return data.overrideBingoCommand; }
+
+    public static boolean toggleOverrideBingo() {
+        data.overrideBingoCommand = !data.overrideBingoCommand;
+        save();
+        return data.overrideBingoCommand;
     }
 
     private static Path file() {

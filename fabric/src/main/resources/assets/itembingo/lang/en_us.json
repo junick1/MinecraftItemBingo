@@ -24,5 +24,25 @@
 
   "itembingo.status.mismatch": "ItemBingo Companion version mismatch (client v%s, server v%s) — the key will open the vanilla board instead.",
   "itembingo.hud.on": "Board overlay: ON",
-  "itembingo.hud.off": "Board overlay: OFF"
+  "itembingo.hud.off": "Board overlay: OFF",
+
+  "itembingo.export.button": "Export…",
+  "itembingo.export.title": "Export board image",
+  "itembingo.export.original": "Original board",
+  "itembingo.export.progress": "My progress",
+  "itembingo.export.copy": "Copy",
+  "itembingo.export.save": "Save",
+  "itembingo.export.requesting": "Requesting original board…",
+  "itembingo.export.denied_fog": "The original board stays hidden during a Fog of War game.",
+  "itembingo.export.no_board": "No board to export.",
+  "itembingo.export.failed": "Export failed.",
+  "itembingo.export.copied": "Board image copied to clipboard.",
+  "itembingo.export.copy_failed_saved": "Clipboard unavailable — saving to a file instead.",
+  "itembingo.export.saved": "Board image saved as %s",
+  "itembingo.export.caption.original": "Original board · %s · %s",
+  "itembingo.export.caption.progress": "%s/%s · %s · %s · %s",
+
+  "itembingo.settings.bingo_mod": "/bingo: mod",
+  "itembingo.settings.bingo_server": "/bingo: server",
+  "itembingo.settings.override_tooltip": "Whether /bingo opens this board or the server's chest GUI"
 }

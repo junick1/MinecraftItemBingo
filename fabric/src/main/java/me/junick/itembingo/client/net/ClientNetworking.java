@@ -1,7 +1,9 @@
 package me.junick.itembingo.client.net;
 
+import me.junick.itembingo.client.export.BoardImageExporter;
 import me.junick.itembingo.client.net.payload.BoardPayload;
 import me.junick.itembingo.client.net.payload.HelloPayload;
+import me.junick.itembingo.client.net.payload.OriginalPayload;
 import me.junick.itembingo.client.net.payload.RefreshPayload;
 import me.junick.itembingo.client.net.payload.SubmitPayload;
 import me.junick.itembingo.client.state.BoardClientState;
@@ -39,6 +41,8 @@ public final class ClientNetworking {
         PayloadTypeRegistry.serverboundPlay().register(SubmitPayload.TYPE, SubmitPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(RefreshPayload.TYPE, RefreshPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(BoardPayload.TYPE, BoardPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(OriginalPayload.TYPE, OriginalPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(OriginalPayload.TYPE, OriginalPayload.CODEC);
 
         // Registering these receivers also makes Fabric announce the S2C
         // channels to the server, which Bukkit requires before it may send.
@@ -46,6 +50,8 @@ public final class ClientNetworking {
                 (payload, context) -> handleHelloAck(payload.data()));
         ClientPlayNetworking.registerGlobalReceiver(BoardPayload.TYPE,
                 (payload, context) -> BoardClientState.applyBoardPacket(payload.data()));
+        ClientPlayNetworking.registerGlobalReceiver(OriginalPayload.TYPE,
+                (payload, context) -> BoardImageExporter.handleOriginalResponse(payload.data()));
 
         ServerboundPlayChannelEvents.REGISTER.register((listener, sender, client, channels) -> {
             if (BoardClientState.connection() == ConnectionState.UNKNOWN
@@ -129,5 +135,12 @@ public final class ClientNetworking {
         if (BoardClientState.connection() != ConnectionState.ACTIVE) return;
         if (!ClientPlayNetworking.canSend(RefreshPayload.TYPE)) return;
         ClientPlayNetworking.send(new RefreshPayload(new byte[0]));
+    }
+
+    /** Asks for the pristine board (image export); answered on itembingo:original. */
+    public static void sendOriginalRequest() {
+        if (BoardClientState.connection() != ConnectionState.ACTIVE) return;
+        if (!ClientPlayNetworking.canSend(OriginalPayload.TYPE)) return;
+        ClientPlayNetworking.send(new OriginalPayload(new byte[0]));
     }
 }

@@ -95,8 +95,10 @@ public final class ItemBingo extends JavaPlugin {
         getServer().getMessenger().registerIncomingPluginChannel(this, ModProtocol.CHANNEL_HELLO, modListener);
         getServer().getMessenger().registerIncomingPluginChannel(this, ModProtocol.CHANNEL_SUBMIT, modListener);
         getServer().getMessenger().registerIncomingPluginChannel(this, ModProtocol.CHANNEL_REFRESH, modListener);
+        getServer().getMessenger().registerIncomingPluginChannel(this, ModProtocol.CHANNEL_ORIGINAL, modListener);
         getServer().getMessenger().registerOutgoingPluginChannel(this, ModProtocol.CHANNEL_HELLO);
         getServer().getMessenger().registerOutgoingPluginChannel(this, ModProtocol.CHANNEL_BOARD);
+        getServer().getMessenger().registerOutgoingPluginChannel(this, ModProtocol.CHANNEL_ORIGINAL);
 
         // /admin
         getCommand("admin").setExecutor(new AdminCommand(this));

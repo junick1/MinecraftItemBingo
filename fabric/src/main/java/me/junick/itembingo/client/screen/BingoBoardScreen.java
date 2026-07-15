@@ -1,6 +1,8 @@
 package me.junick.itembingo.client.screen;
 
 import me.junick.itembingo.client.Keybinds;
+import me.junick.itembingo.client.config.ModConfig;
+import me.junick.itembingo.client.export.BoardImageExporter;
 import me.junick.itembingo.client.net.ClientNetworking;
 import me.junick.itembingo.client.net.ModProtocol;
 import me.junick.itembingo.client.state.BoardClientState;
@@ -56,6 +58,24 @@ public class BingoBoardScreen extends Screen {
 
     private int lastMouseX;
     private int lastMouseY;
+
+    /** Simple hit-test rectangle for the hand-drawn buttons. */
+    private record Rect(int x, int y, int w, int h) {
+        static final Rect EMPTY = new Rect(0, 0, 0, 0);
+
+        boolean contains(double mx, double my) {
+            return mx >= x && mx < x + w && my >= y && my < y + h;
+        }
+    }
+
+    private boolean exportPopupOpen;
+    private Rect btnExport = Rect.EMPTY;
+    private Rect btnBingoToggle = Rect.EMPTY;
+    private Rect btnOrigCopy = Rect.EMPTY;
+    private Rect btnOrigSave = Rect.EMPTY;
+    private Rect btnProgCopy = Rect.EMPTY;
+    private Rect btnProgSave = Rect.EMPTY;
+    private Rect popupPanel = Rect.EMPTY;
 
     public BingoBoardScreen() {
         super(Component.translatable("itembingo.screen.title"));
@@ -137,6 +157,7 @@ public class BingoBoardScreen extends Screen {
 
     @Override
     public void onClose() {
+        BoardImageExporter.cancel();
         camera.save();
         BoardClientState.setHudViewport(camera.visibleTopLeftCol(), camera.visibleTopLeftRow());
         // If something is still on the cursor, close the inventory menu properly
@@ -172,6 +193,34 @@ public class BingoBoardScreen extends Screen {
         int button = event.button();
         boolean left = button == GLFW.GLFW_MOUSE_BUTTON_LEFT;
         boolean right = button == GLFW.GLFW_MOUSE_BUTTON_RIGHT;
+
+        if (BoardImageExporter.armed()) return true; // capturing: ignore input
+
+        if (exportPopupOpen) {
+            if (left) {
+                if (btnOrigCopy.contains(event.x(), event.y())) {
+                    BoardImageExporter.begin(BoardImageExporter.Variant.ORIGINAL, BoardImageExporter.Action.COPY);
+                } else if (btnOrigSave.contains(event.x(), event.y())) {
+                    BoardImageExporter.begin(BoardImageExporter.Variant.ORIGINAL, BoardImageExporter.Action.SAVE);
+                } else if (btnProgCopy.contains(event.x(), event.y())) {
+                    BoardImageExporter.begin(BoardImageExporter.Variant.PROGRESS, BoardImageExporter.Action.COPY);
+                } else if (btnProgSave.contains(event.x(), event.y())) {
+                    BoardImageExporter.begin(BoardImageExporter.Variant.PROGRESS, BoardImageExporter.Action.SAVE);
+                } else if (!popupPanel.contains(event.x(), event.y())) {
+                    exportPopupOpen = false;
+                }
+            }
+            return true; // popup swallows everything
+        }
+
+        if (left && btnExport.contains(event.x(), event.y())) {
+            exportPopupOpen = true;
+            return true;
+        }
+        if (left && btnBingoToggle.contains(event.x(), event.y())) {
+            ModConfig.toggleOverrideBingo();
+            return true;
+        }
 
         if ((left || right) && BoardClientState.hasBoard()) {
             int slot = slotAt(event.x(), event.y());
@@ -285,6 +334,7 @@ public class BingoBoardScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (exportPopupOpen || BoardImageExporter.armed()) return true;
         if (hasCtrl()) {
             camera.zoomAt(mouseX, mouseY - boardTop(), scrollY);
         } else if (hasShift()) {
@@ -299,6 +349,11 @@ public class BingoBoardScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         var options = minecraft().options;
+
+        if (exportPopupOpen && event.isEscape()) {
+            exportPopupOpen = false;
+            return true;
+        }
 
         // The inventory key closes this screen, exactly like closing the
         // vanilla inventory; so does the mod's own open-board key.
@@ -361,6 +416,12 @@ public class BingoBoardScreen extends Screen {
             syncBoardState(false);
         }
 
+        if (BoardImageExporter.armed()) {
+            exportPopupOpen = false;
+            renderExportFrame(g);
+            return;
+        }
+
         g.fill(0, 0, width, height, 0xC8101014);
         renderHeader(g);
 
@@ -372,8 +433,11 @@ public class BingoBoardScreen extends Screen {
         }
 
         renderBoard(g, mouseX, mouseY);
-        renderHintBar(g);
+        renderHintBar(g, mouseX, mouseY);
         renderInventory(g, mouseX, mouseY);
+        if (exportPopupOpen) {
+            renderExportPopup(g, mouseX, mouseY);
+        }
 
         ItemStack cursor = carried();
         if (!cursor.isEmpty()) {
@@ -426,17 +490,147 @@ public class BingoBoardScreen extends Screen {
         }
     }
 
-    /** The band between board and inventory: controls hint + current zoom. */
-    private void renderHintBar(GuiGraphicsExtractor g) {
+    /** The band between board and inventory: hint, export/settings buttons, zoom. */
+    private void renderHintBar(GuiGraphicsExtractor g, int mouseX, int mouseY) {
         int top = boardBottom();
         g.fill(0, top, width, invTop(), 0xE0141418);
         int textY = top + (HINT_BAR_H - 9) / 2 + 1;
 
         String zoom = (int) Math.round(camera.zoom * 100) + "%";
-        g.text(font, zoom, width - font.width(zoom) - 8, textY, 0xFF8899AA);
+        int zoomX = width - font.width(zoom) - 8;
+        g.text(font, zoom, zoomX, textY, 0xFF8899AA);
+
+        Component toggleLabel = Component.translatable(
+                ModConfig.overrideBingo() ? "itembingo.settings.bingo_mod" : "itembingo.settings.bingo_server");
+        btnBingoToggle = placeButton(g, zoomX - 8, top, toggleLabel, mouseX, mouseY);
+        if (btnBingoToggle.contains(mouseX, mouseY)) {
+            g.setTooltipForNextFrame(Component.translatable("itembingo.settings.override_tooltip"), mouseX, mouseY);
+        }
+
+        Component exportLabel = Component.translatable("itembingo.export.button");
+        btnExport = placeButton(g, btnBingoToggle.x() - 6, top, exportLabel, mouseX, mouseY);
 
         Component hint = Component.translatable("itembingo.screen.hint");
-        g.text(font, hint, 8, textY, 0x9099AABB);
+        if (8 + font.width(hint) < btnExport.x() - 8) {
+            g.text(font, hint, 8, textY, 0x9099AABB);
+        }
+    }
+
+    /** Draws a small chip button whose RIGHT edge sits at {@code rightX}. */
+    private Rect placeButton(GuiGraphicsExtractor g, int rightX, int barTop, Component label,
+                             int mouseX, int mouseY) {
+        int w = font.width(label) + 10;
+        int h = HINT_BAR_H - 4;
+        int x = rightX - w;
+        int y = barTop + 2;
+        Rect rect = new Rect(x, y, w, h);
+        g.fill(x, y, x + w, y + h, rect.contains(mouseX, mouseY) ? 0x50FFFFFF : 0x22FFFFFF);
+        g.outline(x, y, w, h, 0xFF3C3C46);
+        g.text(font, label, x + 5, y + (h - 9) / 2 + 1, 0xFFDDE2EE);
+        return rect;
+    }
+
+    private void renderExportPopup(GuiGraphicsExtractor g, int mouseX, int mouseY) {
+        g.nextStratum();
+        g.fill(0, 0, width, height, 0x90000000);
+
+        Component title = Component.translatable("itembingo.export.title");
+        Component copy = Component.translatable("itembingo.export.copy");
+        Component save = Component.translatable("itembingo.export.save");
+        Component original = Component.translatable("itembingo.export.original");
+        Component progress = Component.translatable("itembingo.export.progress");
+        Component status = BoardImageExporter.status();
+
+        int bw = Math.max(font.width(copy), font.width(save)) + 12;
+        int panelW = Math.max(240, font.width(title) + 24);
+        int panelH = 78 + (status != null ? 16 : 0);
+        int px = (width - panelW) / 2;
+        int py = (height - panelH) / 2 - 20;
+        popupPanel = new Rect(px, py, panelW, panelH);
+
+        g.fill(px, py, px + panelW, py + panelH, 0xF8181A20);
+        g.outline(px, py, panelW, panelH, 0xFF4A4A56);
+        g.text(font, title, px + 10, py + 8, 0xFFFFFFFF);
+
+        btnOrigSave = popupRowButton(g, save, px + panelW - 10, py + 24, bw, mouseX, mouseY);
+        btnOrigCopy = popupRowButton(g, copy, btnOrigSave.x() - 4, py + 24, bw, mouseX, mouseY);
+        g.text(font, original, px + 10, py + 28, 0xFFB8C0D0);
+
+        btnProgSave = popupRowButton(g, save, px + panelW - 10, py + 46, bw, mouseX, mouseY);
+        btnProgCopy = popupRowButton(g, copy, btnProgSave.x() - 4, py + 46, bw, mouseX, mouseY);
+        g.text(font, progress, px + 10, py + 50, 0xFFB8C0D0);
+
+        if (status != null) {
+            g.text(font, status, px + 10, py + panelH - 14, 0xFFFFFFFF);
+        }
+    }
+
+    private Rect popupRowButton(GuiGraphicsExtractor g, Component label, int rightX, int y, int w,
+                                int mouseX, int mouseY) {
+        int h = 16;
+        int x = rightX - w;
+        Rect rect = new Rect(x, y, w, h);
+        g.fill(x, y, x + w, y + h, rect.contains(mouseX, mouseY) ? 0x60FFFFFF : 0x28FFFFFF);
+        g.outline(x, y, w, h, 0xFF4A4A56);
+        g.text(font, label, x + (w - font.width(label)) / 2, y + 4, 0xFFE8ECF4);
+        return rect;
+    }
+
+    /** One clean frame for the framebuffer capture: caption + full grid only. */
+    private void renderExportFrame(GuiGraphicsExtractor g) {
+        g.fill(0, 0, width, height, 0xFF0E0F12);
+
+        CellState[] cells = BoardImageExporter.cells();
+        int w = BoardImageExporter.boardWidth();
+        int h = BoardImageExporter.boardHeight();
+        if (cells == null || w <= 0 || h <= 0) return;
+
+        int captionH = 13;
+        int pad = 6;
+        int cell = Math.clamp(Math.min((width - 2 * pad - 8) / w,
+                (height - 2 * pad - 8 - captionH) / h), 6, 48);
+        int gridW = cell * w;
+        int totalH = captionH + cell * h;
+        int x0 = (width - gridW) / 2;
+        int y0 = (height - totalH) / 2;
+
+        g.fill(x0 - pad, y0 - pad, x0 + gridW + pad, y0 + totalH + pad, 0xFF14161C);
+        g.text(font, BoardImageExporter.caption(), x0, y0 + 1, 0xFFCCD2E0);
+
+        for (int row = 0; row < h; row++) {
+            for (int col = 0; col < w; col++) {
+                drawExportCell(g, cells[row * w + col], x0 + col * cell, y0 + captionH + row * cell, cell);
+            }
+        }
+
+        BoardImageExporter.onExportFrame(x0 - pad, y0 - pad, gridW + 2 * pad, totalH + 2 * pad);
+    }
+
+    private void drawExportCell(GuiGraphicsExtractor g, CellState cell, int x, int y, int size) {
+        if (cell == null) return;
+        if (cell.kind() == ModProtocol.CELL_HIDDEN) {
+            g.fillGradient(x + 1, y + 1, x + size - 1, y + size - 1, 0xF02A3247, 0xF0161B26);
+        } else {
+            g.fill(x + 1, y + 1, x + size - 1, y + size - 1,
+                    cell.kind() == ModProtocol.CELL_LOCKED ? 0x80581414 : 0x60000000);
+        }
+        switch (cell.kind()) {
+            case ModProtocol.CELL_LOCKED -> drawScaledItem(g, new ItemStack(Items.BARRIER), x, y, size);
+            case ModProtocol.CELL_VISIBLE, ModProtocol.CELL_SUBMITTED -> {
+                if (cell.item() != null) {
+                    drawScaledItem(g, new ItemStack(cell.item()), x, y, size);
+                } else {
+                    g.centeredText(font, "?", x + size / 2, y + (size - 9) / 2, 0xFFFFCC44);
+                }
+                if (cell.isSubmitted()) {
+                    g.fill(x + 1, y + 1, x + size - 1, y + size - 1, 0x8A1E7A2E);
+                    Glyphs.check(g, x + size / 2.0f, y + size / 2.0f, size * 0.62f,
+                            0xFFEAFFEA, 0x900A2F10);
+                }
+            }
+            default -> {}
+        }
+        g.outline(x, y, size, size, 0xFF3C3C46);
     }
 
     private static String modeKey(byte mode) {

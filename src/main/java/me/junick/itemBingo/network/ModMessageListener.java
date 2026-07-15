@@ -36,6 +36,7 @@ public final class ModMessageListener implements PluginMessageListener {
                 case ModProtocol.CHANNEL_HELLO -> handleHello(p, in);
                 case ModProtocol.CHANNEL_REFRESH -> handleRefresh(p);
                 case ModProtocol.CHANNEL_SUBMIT -> handleSubmit(p, in);
+                case ModProtocol.CHANNEL_ORIGINAL -> ModSync.sendOriginalBoard(p);
                 default -> { /* not ours */ }
             }
         } catch (IOException | RuntimeException e) {
