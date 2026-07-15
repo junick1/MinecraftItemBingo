@@ -22,12 +22,8 @@ import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Fullscreen pannable bingo board.
@@ -48,11 +44,9 @@ public class BingoBoardScreen extends Screen {
     private static final int SLOT = 18;
     private static final int INV_COLS = 9;
 
-    /** How long a freshly-submitted cell glows, in ms. */
-    private static final long FLASH_MS = 700;
-
     private final BoardCamera camera = new BoardCamera();
     private int seenRevision = -1;
+    private boolean cameraAttached;
     private boolean panning;
 
     /** Vanilla quick-craft (drag-distribute) state, mirroring AbstractContainerScreen. */
@@ -62,10 +56,6 @@ public class BingoBoardScreen extends Screen {
 
     private int lastMouseX;
     private int lastMouseY;
-
-    /** Submitted indices from the previous board push, to detect new ones. */
-    private Set<Integer> knownSubmitted;
-    private final Map<Integer, Long> flashes = new HashMap<>();
 
     public BingoBoardScreen() {
         super(Component.translatable("itembingo.screen.title"));
@@ -127,7 +117,10 @@ public class BingoBoardScreen extends Screen {
 
     @Override
     protected void init() {
-        syncBoardState(true);
+        // init() also re-runs on window resize; only the first call may restore
+        // the saved camera — later ones must keep the current pan/zoom.
+        syncBoardState(!cameraAttached);
+        cameraAttached = true;
     }
 
     private void syncBoardState(boolean attach) {
@@ -139,24 +132,6 @@ public class BingoBoardScreen extends Screen {
             camera.boardChanged(w, h);
             camera.resize(width, boardBottom() - boardTop());
         }
-
-        // Diff submitted cells so brand-new ones get a short celebratory flash.
-        Set<Integer> submitted = new HashSet<>();
-        int total = w * h;
-        for (int i = 0; i < total; i++) {
-            CellState cell = BoardClientState.cell(i);
-            if (cell != null && cell.isSubmitted()) submitted.add(i);
-        }
-        if (knownSubmitted != null && submitted.size() >= knownSubmitted.size()) {
-            long now = System.currentTimeMillis();
-            for (int idx : submitted) {
-                if (!knownSubmitted.contains(idx)) flashes.put(idx, now);
-            }
-        } else {
-            flashes.clear();
-        }
-        knownSubmitted = submitted;
-
         seenRevision = BoardClientState.revision();
     }
 
@@ -479,45 +454,45 @@ public class BingoBoardScreen extends Screen {
         g.enableScissor(0, top, width, bottom);
 
         int w = BoardClientState.width();
-        int h = BoardClientState.height();
         double size = camera.cellScreenSize();
         int hoveredIdx = panning ? -1 : cellIndexAt(mouseX, mouseY);
         ItemStack cursor = carried();
         long now = System.currentTimeMillis();
 
-        for (int row = 0; row < h; row++) {
+        // Matching cells highlight for the carried item — or, hands free, for
+        // the inventory stack under the mouse ("does the board want this?").
+        ItemStack reference = cursor;
+        if (reference.isEmpty()) {
+            int hoveredSlot = slotAt(mouseX, mouseY);
+            if (hoveredSlot >= 0) reference = playerStack(hoveredSlot);
+        }
+
+        // Only the cells actually inside the viewport get touched.
+        int firstRow = camera.firstVisibleRow();
+        int lastRow = camera.lastVisibleRow();
+        int firstCol = camera.firstVisibleCol();
+        int lastCol = camera.lastVisibleCol();
+
+        for (int row = firstRow; row <= lastRow; row++) {
             int y = (int) Math.round(camera.cellScreenY(row, top));
-            if (y + size < top || y > bottom) continue;
-            for (int col = 0; col < w; col++) {
+            for (int col = firstCol; col <= lastCol; col++) {
                 int x = (int) Math.round(camera.cellScreenX(col, 0));
-                if (x + size < 0 || x > width) continue;
                 int idx = row * w + col;
                 CellState cell = BoardClientState.cell(col, row);
                 if (cell == null) continue;
-                renderCell(g, cell, x, y, (int) Math.round(size),
-                        hoveredIdx == idx, cursor, mouseX, mouseY, flashAlpha(idx, now));
+                renderCell(g, cell, x, y, (int) Math.round(size), hoveredIdx == idx,
+                        cursor, reference, mouseX, mouseY, BoardClientState.flashAlpha(idx, now));
             }
         }
 
         g.disableScissor();
     }
 
-    /** 0..1 glow strength for a freshly-submitted cell, 0 when idle. */
-    private float flashAlpha(int idx, long now) {
-        Long start = flashes.get(idx);
-        if (start == null) return 0;
-        long age = now - start;
-        if (age >= FLASH_MS) {
-            flashes.remove(idx);
-            return 0;
-        }
-        return 1.0f - (float) age / FLASH_MS;
-    }
-
     private void renderCell(GuiGraphicsExtractor g, CellState cell, int x, int y, int size,
-                            boolean hovered, ItemStack cursor, int mouseX, int mouseY, float flash) {
-        boolean carryingMatch = !cursor.isEmpty() && cell.isVisible()
-                && cell.item() != null && cursor.getItem() == cell.item();
+                            boolean hovered, ItemStack cursor, ItemStack reference,
+                            int mouseX, int mouseY, float flash) {
+        boolean referenceMatch = !reference.isEmpty() && cell.isVisible()
+                && cell.item() != null && reference.getItem() == cell.item();
 
         if (cell.kind() == ModProtocol.CELL_HIDDEN) {
             // Fog: a soft slate-blue gradient, clearly different from the flat
@@ -562,9 +537,9 @@ public class BingoBoardScreen extends Screen {
             g.fill(x + 1, y + 1, x + size - 1, y + size - 1, alpha | 0xFFFFFF);
         }
 
-        // Border last so highlights sit above the cell content: gold pulse on
-        // cells matching the carried item, white on hover.
-        int border = hovered ? 0xFFFFFFFF : carryingMatch ? 0xFFE8C84A : 0xFF3C3C46;
+        // Border last so highlights sit above the cell content: gold on cells
+        // matching the carried or hovered item, white on hover.
+        int border = hovered ? 0xFFFFFFFF : referenceMatch ? 0xFFE8C84A : 0xFF3C3C46;
         g.outline(x, y, size, size, border);
     }
 

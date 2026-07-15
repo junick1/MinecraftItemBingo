@@ -22,7 +22,9 @@ public final class ModConfig {
     /** Serialized shape of the config file. */
     public static final class Data {
         public boolean overlayEnabled = true;
-        public Corner corner = Corner.TOP_RIGHT;
+        // TOP_LEFT by default: the top-right corner is where vanilla stacks
+        // status-effect icons, which are common mid-game.
+        public Corner corner = Corner.TOP_LEFT;
         public int offsetX = 4;
         public int offsetY = 4;
         public float scale = 1.0f;
@@ -33,7 +35,7 @@ public final class ModConfig {
     private ModConfig() {}
 
     public static boolean overlayEnabled() { return data.overlayEnabled; }
-    public static Corner corner() { return data.corner == null ? Corner.TOP_RIGHT : data.corner; }
+    public static Corner corner() { return data.corner == null ? Corner.TOP_LEFT : data.corner; }
     public static int offsetX() { return data.offsetX; }
     public static int offsetY() { return data.offsetY; }
     public static float scale() { return Math.clamp(data.scale, 0.5f, 3.0f); }

@@ -122,6 +122,24 @@ final class BoardCamera {
         return (row < 0 || row >= boardH) ? -1 : row;
     }
 
+    /* Exact visible cell window, so render loops touch only on-screen cells. */
+
+    int firstVisibleCol() {
+        return Math.max(0, (int) Math.floor(offsetX / CELL));
+    }
+
+    int lastVisibleCol() {
+        return Math.min(boardW - 1, (int) Math.floor((offsetX + vpW / (double) zoom) / CELL));
+    }
+
+    int firstVisibleRow() {
+        return Math.max(0, (int) Math.floor(offsetY / CELL));
+    }
+
+    int lastVisibleRow() {
+        return Math.min(boardH - 1, (int) Math.floor((offsetY + vpH / (double) zoom) / CELL));
+    }
+
     int visibleTopLeftCol() {
         return Math.clamp((int) Math.floor(Math.max(0, offsetX) / CELL), 0, Math.max(0, boardW - 1));
     }

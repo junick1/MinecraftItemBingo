@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * The client's single source of truth for everything the server has told us:
@@ -44,6 +46,13 @@ public final class BoardClientState {
     /** Board cell coordinates of the HUD overlay window's top-left corner. */
     private static int hudCol;
     private static int hudRow;
+    /** False until the player frames a region themselves (HUD centers instead). */
+    private static boolean hudViewportSet;
+
+    /** How long a freshly-submitted cell glows, in ms. */
+    public static final long FLASH_MS = 700;
+    /** Cell index → ms timestamp of the push that turned it submitted. */
+    private static final Map<Integer, Long> FLASHES = new HashMap<>();
 
     /* ------------------------- connection ------------------------- */
 
@@ -65,6 +74,8 @@ public final class BoardClientState {
         width = height = submittedCount = totalCells = 0;
         gameMode = 0;
         flags = 0;
+        hudViewportSet = false;
+        FLASHES.clear();
         revision++;
     }
 
@@ -102,6 +113,7 @@ public final class BoardClientState {
                 status = newStatus;
                 cells = new CellState[0];
                 width = height = submittedCount = totalCells = 0;
+                FLASHES.clear();
                 revision++;
                 return;
             }
@@ -131,6 +143,22 @@ public final class BoardClientState {
                 };
             }
 
+            // Same board still in play: flash cells that just turned submitted.
+            // A new/resized board (or the first push) starts with a clean slate,
+            // and the HUD re-centers on it.
+            boolean sameBoard = status == ModProtocol.STATUS_OK && w == width && h == height;
+            if (sameBoard) {
+                long now = System.currentTimeMillis();
+                for (int i = 0; i < newCells.length; i++) {
+                    if (newCells[i].isSubmitted() && !cells[i].isSubmitted()) {
+                        FLASHES.put(i, now);
+                    }
+                }
+            } else {
+                FLASHES.clear();
+                hudViewportSet = false;
+            }
+
             status = ModProtocol.STATUS_OK;
             gameMode = newMode;
             flags = newFlags;
@@ -148,13 +176,32 @@ public final class BoardClientState {
         }
     }
 
+    /* ------------------------- flashes ------------------------- */
+
+    /** 0..1 glow strength for a freshly-submitted cell, 0 when idle. */
+    public static float flashAlpha(int idx, long now) {
+        if (FLASHES.isEmpty()) return 0;
+        Long start = FLASHES.get(idx);
+        if (start == null) return 0;
+        long age = now - start;
+        if (age >= FLASH_MS) {
+            FLASHES.remove(idx);
+            return 0;
+        }
+        return 1.0f - (float) age / FLASH_MS;
+    }
+
     /* ------------------------- HUD viewport ------------------------- */
 
     public static int hudCol() { return hudCol; }
     public static int hudRow() { return hudRow; }
 
+    /** Whether the player has framed a region themselves (via the fullscreen GUI). */
+    public static boolean hasHudViewport() { return hudViewportSet; }
+
     public static void setHudViewport(int col, int row) {
         hudCol = Math.clamp(col, 0, Math.max(0, width - 1));
         hudRow = Math.clamp(row, 0, Math.max(0, height - 1));
+        hudViewportSet = true;
     }
 }

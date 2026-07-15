@@ -43,8 +43,17 @@ public final class BoardHudOverlay implements HudElement {
         int boardH = BoardClientState.height();
         int gridW = Math.min(boardW, ModConfig.maxGridWidth());
         int gridH = Math.min(boardH, ModConfig.maxGridHeight());
-        int startCol = Math.clamp(BoardClientState.hudCol(), 0, boardW - gridW);
-        int startRow = Math.clamp(BoardClientState.hudRow(), 0, boardH - gridH);
+        // Until the player frames a region in the fullscreen GUI, show the
+        // board's center (mirrors the chest GUI's center-on-first-open).
+        int startCol;
+        int startRow;
+        if (BoardClientState.hasHudViewport()) {
+            startCol = Math.clamp(BoardClientState.hudCol(), 0, boardW - gridW);
+            startRow = Math.clamp(BoardClientState.hudRow(), 0, boardH - gridH);
+        } else {
+            startCol = (boardW - gridW) / 2;
+            startRow = (boardH - gridH) / 2;
+        }
 
         int cell = Math.max(6, Math.round(BASE_CELL * ModConfig.scale()));
         int panelW = gridW * cell + 4;
@@ -61,11 +70,14 @@ public final class BoardHudOverlay implements HudElement {
 
         g.fill(x, y, x + panelW, y + panelH, 0x90101014);
 
+        long now = System.currentTimeMillis();
         for (int r = 0; r < gridH; r++) {
             for (int c = 0; c < gridW; c++) {
                 CellState state = BoardClientState.cell(startCol + c, startRow + r);
                 if (state == null) continue;
-                renderCell(g, state, x + 2 + c * cell, y + 2 + r * cell, cell);
+                int idx = (startRow + r) * boardW + (startCol + c);
+                renderCell(g, state, x + 2 + c * cell, y + 2 + r * cell, cell,
+                        BoardClientState.flashAlpha(idx, now));
             }
         }
 
@@ -79,7 +91,7 @@ public final class BoardHudOverlay implements HudElement {
                 x + (panelW - minecraft.font.width(progress)) / 2, y + panelH - 10, 0xFFCCCCCC);
     }
 
-    private void renderCell(GuiGraphicsExtractor g, CellState state, int x, int y, int cell) {
+    private void renderCell(GuiGraphicsExtractor g, CellState state, int x, int y, int cell, float flash) {
         switch (state.kind()) {
             case ModProtocol.CELL_HIDDEN ->
                     g.fillGradient(x, y, x + cell - 1, y + cell - 1, 0xF02A3247, 0xF0161B26);
@@ -103,6 +115,10 @@ public final class BoardHudOverlay implements HudElement {
                             cell * 0.62f, 0xFFEAFFEA, 0x900A2F10);
                 }
             }
+        }
+        if (flash > 0) {
+            int alpha = (int) (flash * 0xA0) << 24;
+            g.fill(x, y, x + cell - 1, y + cell - 1, alpha | 0xFFFFFF);
         }
     }
 
