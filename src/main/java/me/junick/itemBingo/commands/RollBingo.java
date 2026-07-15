@@ -5,10 +5,13 @@ import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.util.BingoItemSelector;
 import me.junick.itemBingo.util.ConfirmationManager;
+import me.junick.itemBingo.webserver.WebUIServer;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +57,11 @@ public class RollBingo implements CommandExecutor, TabCompleter {
 
             sender.sendMessage(Messages.get(sender, "command.rollbingo.created",
                     "width", width, "height", height));
+
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                WebUIServer.sendBingoBoard(p);
+            }
+
         } catch (NumberFormatException e) {
             sender.sendMessage(Messages.get(sender, "command.invalid-number"));
         }
