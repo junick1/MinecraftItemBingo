@@ -14,7 +14,9 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
@@ -22,6 +24,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -51,6 +54,11 @@ public class BingoBoardScreen extends Screen {
     private final BoardCamera camera = new BoardCamera();
     private int seenRevision = -1;
     private boolean panning;
+
+    /** Vanilla quick-craft (drag-distribute) state, mirroring AbstractContainerScreen. */
+    private boolean quickCrafting;
+    private int quickCraftType; // QUICKCRAFT_TYPE_CHARITABLE (left) or _GREEDY (right)
+    private final LinkedHashSet<Integer> quickCraftSlots = new LinkedHashSet<>(); // vanilla inv indexes
 
     private int lastMouseX;
     private int lastMouseY;
@@ -194,10 +202,22 @@ public class BingoBoardScreen extends Screen {
             int slot = slotAt(event.x(), event.y());
             if (slot >= 0) {
                 ItemStack stack = playerStack(slot);
-                if (left && hasShift() && carried().isEmpty() && !stack.isEmpty()) {
-                    ClientNetworking.sendSubmit(ModProtocol.SUBMIT_SHIFT, -1, slot, keyOf(stack));
+                if (carried().isEmpty()) {
+                    if (left && hasShift() && !stack.isEmpty()) {
+                        ClientNetworking.sendSubmit(ModProtocol.SUBMIT_SHIFT, -1, slot, keyOf(stack));
+                    } else {
+                        containerClick(menuSlot(slot), left ? 0 : 1, ContainerInput.PICKUP);
+                    }
                 } else {
-                    containerClick(menuSlot(slot), left ? 0 : 1, ContainerInput.PICKUP);
+                    // Carrying something: like vanilla, don't place on mouse-down —
+                    // begin a quick-craft. A plain click resolves on release; a
+                    // drag distributes evenly (left) or one-by-one (right).
+                    quickCrafting = true;
+                    quickCraftType = left
+                            ? AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE
+                            : AbstractContainerMenu.QUICKCRAFT_TYPE_GREEDY;
+                    quickCraftSlots.clear();
+                    tryAddQuickCraftSlot(slot);
                 }
                 return true;
             }
@@ -226,6 +246,11 @@ public class BingoBoardScreen extends Screen {
             camera.pan(dx, dy);
             return true;
         }
+        if (quickCrafting) {
+            int slot = slotAt(event.x(), event.y());
+            if (slot >= 0) tryAddQuickCraftSlot(slot);
+            return true;
+        }
         return super.mouseDragged(event, dx, dy);
     }
 
@@ -235,7 +260,52 @@ public class BingoBoardScreen extends Screen {
             panning = false;
             return true;
         }
+        if (quickCrafting) {
+            finishQuickCraft(event);
+            return true;
+        }
         return super.mouseReleased(event);
+    }
+
+    /** Vanilla acceptance rules for adding a slot to the drag-distribute set. */
+    private void tryAddQuickCraftSlot(int invIndex) {
+        var player = minecraft().player;
+        ItemStack cursor = carried();
+        if (player == null || cursor.isEmpty()) return;
+        Slot slot = player.inventoryMenu.getSlot(menuSlot(invIndex));
+        if (!AbstractContainerMenu.canItemQuickReplace(slot, cursor, true)) return;
+        if (!slot.mayPlace(cursor)) return;
+        if (quickCraftType == AbstractContainerMenu.QUICKCRAFT_TYPE_GREEDY
+                && quickCraftSlots.size() >= cursor.getCount()) return;
+        quickCraftSlots.add(invIndex);
+    }
+
+    private void finishQuickCraft(MouseButtonEvent event) {
+        quickCrafting = false;
+        int button = quickCraftType == AbstractContainerMenu.QUICKCRAFT_TYPE_CHARITABLE ? 0 : 1;
+
+        if (quickCraftSlots.size() > 1) {
+            // Real drag: replay it through vanilla's QUICK_CRAFT protocol so the
+            // even/one-by-one distribution is computed by the shared menu logic.
+            containerClick(-999, AbstractContainerMenu.getQuickcraftMask(
+                    AbstractContainerMenu.QUICKCRAFT_HEADER_START, quickCraftType), ContainerInput.QUICK_CRAFT);
+            for (int invIndex : quickCraftSlots) {
+                containerClick(menuSlot(invIndex), AbstractContainerMenu.getQuickcraftMask(
+                        AbstractContainerMenu.QUICKCRAFT_HEADER_CONTINUE, quickCraftType), ContainerInput.QUICK_CRAFT);
+            }
+            containerClick(-999, AbstractContainerMenu.getQuickcraftMask(
+                    AbstractContainerMenu.QUICKCRAFT_HEADER_END, quickCraftType), ContainerInput.QUICK_CRAFT);
+        } else {
+            // Plain click (possibly a swap with an incompatible stack): apply a
+            // normal PICKUP to the slot under the cursor at release time.
+            int target = quickCraftSlots.size() == 1
+                    ? quickCraftSlots.iterator().next()
+                    : slotAt(event.x(), event.y());
+            if (target >= 0) {
+                containerClick(menuSlot(target), button, ContainerInput.PICKUP);
+            }
+        }
+        quickCraftSlots.clear();
     }
 
     @Override
@@ -253,25 +323,31 @@ public class BingoBoardScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
-        if (Keybinds.openBoard != null && Keybinds.openBoard.matches(event)) {
+        var options = minecraft().options;
+
+        // The inventory key closes this screen, exactly like closing the
+        // vanilla inventory; so does the mod's own open-board key.
+        if (options.keyInventory.matches(event)
+                || (Keybinds.openBoard != null && Keybinds.openBoard.matches(event))) {
             onClose();
             return true;
         }
 
-        // Vanilla inventory shortcuts on the hovered slot: 1-9 hotbar swap,
-        // F offhand swap, Q drop one (Ctrl+Q drops the stack).
+        // Vanilla inventory shortcuts on the hovered slot, honoring the
+        // player's actual keybinds: hotbar swap, offhand swap, drop.
         int hovered = slotAt(lastMouseX, lastMouseY);
         if (hovered >= 0) {
-            int key = event.key();
-            if (key >= GLFW.GLFW_KEY_1 && key <= GLFW.GLFW_KEY_9) {
-                containerClick(menuSlot(hovered), key - GLFW.GLFW_KEY_1, ContainerInput.SWAP);
-                return true;
+            for (int i = 0; i < options.keyHotbarSlots.length && i < 9; i++) {
+                if (options.keyHotbarSlots[i].matches(event)) {
+                    containerClick(menuSlot(hovered), i, ContainerInput.SWAP);
+                    return true;
+                }
             }
-            if (key == GLFW.GLFW_KEY_F) {
+            if (options.keySwapOffhand.matches(event)) {
                 containerClick(menuSlot(hovered), 40, ContainerInput.SWAP);
                 return true;
             }
-            if (key == GLFW.GLFW_KEY_Q) {
+            if (options.keyDrop.matches(event)) {
                 containerClick(menuSlot(hovered), hasCtrl() ? 1 : 0, ContainerInput.THROW);
                 return true;
             }
@@ -326,10 +402,34 @@ public class BingoBoardScreen extends Screen {
 
         ItemStack cursor = carried();
         if (!cursor.isEmpty()) {
+            // While drag-distributing, show what would remain on the cursor
+            // (vanilla behavior); hide it entirely when everything would land.
+            ItemStack shown = cursor;
+            if (quickCrafting && quickCraftSlots.size() > 1) {
+                int remaining = quickCraftRemaining(cursor);
+                if (remaining <= 0) return;
+                shown = cursor.copyWithCount(remaining);
+            }
             g.nextStratum();
-            g.item(cursor, mouseX - 8, mouseY - 8);
-            g.itemDecorations(font, cursor, mouseX - 8, mouseY - 8);
+            g.item(shown, mouseX - 8, mouseY - 8);
+            g.itemDecorations(font, shown, mouseX - 8, mouseY - 8);
         }
+    }
+
+    /** Cursor count left over if the current drag-distribute were applied now. */
+    private int quickCraftRemaining(ItemStack cursor) {
+        var player = minecraft().player;
+        if (player == null) return cursor.getCount();
+        int remaining = cursor.getCount();
+        int perSlot = AbstractContainerMenu.getQuickCraftPlaceCount(
+                quickCraftSlots.size(), quickCraftType, cursor);
+        for (int invIndex : quickCraftSlots) {
+            Slot slot = player.inventoryMenu.getSlot(menuSlot(invIndex));
+            int room = Math.min(cursor.getMaxStackSize(), slot.getMaxStackSize(cursor))
+                    - slot.getItem().getCount();
+            remaining -= Math.min(perSlot, Math.max(0, room));
+        }
+        return remaining;
     }
 
     private void renderHeader(GuiGraphicsExtractor g) {
@@ -428,7 +528,7 @@ public class BingoBoardScreen extends Screen {
 
         switch (cell.kind()) {
             case ModProtocol.CELL_HIDDEN ->
-                    g.centeredText(font, "?", x + size / 2, y + (size - 9) / 2, 0xFF666677);
+                    Glyphs.fog(g, x + size / 2.0f, y + size / 2.0f, size * 0.66f, 0x6E9AA6C4);
             case ModProtocol.CELL_LOCKED -> {
                 drawScaledItem(g, new ItemStack(Items.BARRIER), x, y, size);
                 if (hovered) {
@@ -446,7 +546,7 @@ public class BingoBoardScreen extends Screen {
                     // Layered "done" treatment: icon below, translucent green
                     // wash above it, and a big check on top.
                     g.fill(x + 1, y + 1, x + size - 1, y + size - 1, 0x8A1E7A2E);
-                    Checkmark.draw(g, x + size / 2.0f, y + size / 2.0f, size * 0.62f,
+                    Glyphs.check(g, x + size / 2.0f, y + size / 2.0f, size * 0.62f,
                             0xFFEAFFEA, 0x900A2F10);
                 }
                 if (hovered) {
@@ -525,11 +625,24 @@ public class BingoBoardScreen extends Screen {
             int x = left + col * SLOT;
             int y = top + rowOnScreen * SLOT + (i < 9 ? 4 : 0);
 
-            g.fill(x, y, x + SLOT, y + SLOT, i == hoveredSlot ? 0x50FFFFFF : 0x30000000);
+            boolean dragTarget = quickCrafting && quickCraftSlots.size() > 1 && quickCraftSlots.contains(i);
+            g.fill(x, y, x + SLOT, y + SLOT,
+                    dragTarget ? 0x60FFFFFF : i == hoveredSlot ? 0x50FFFFFF : 0x30000000);
             g.outline(x, y, SLOT, SLOT, 0xFF2A2A32);
 
             ItemStack stack = playerStack(i);
-            if (!stack.isEmpty()) {
+            if (dragTarget) {
+                // Ghost preview of the distributed result, like vanilla.
+                ItemStack cursor = carried();
+                int perSlot = AbstractContainerMenu.getQuickCraftPlaceCount(
+                        quickCraftSlots.size(), quickCraftType, cursor);
+                int projected = Math.min(stack.getCount() + perSlot,
+                        Math.min(cursor.getMaxStackSize(),
+                                minecraft().player.inventoryMenu.getSlot(menuSlot(i)).getMaxStackSize(cursor)));
+                ItemStack ghost = cursor.copyWithCount(Math.max(1, projected));
+                g.item(ghost, x + 1, y + 1);
+                g.itemDecorations(font, ghost, x + 1, y + 1);
+            } else if (!stack.isEmpty()) {
                 g.item(stack, x + 1, y + 1);
                 g.itemDecorations(font, stack, x + 1, y + 1);
             }
