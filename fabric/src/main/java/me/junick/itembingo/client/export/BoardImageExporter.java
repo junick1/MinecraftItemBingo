@@ -12,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.ChatVisiblity;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Toolkit;
@@ -24,22 +25,31 @@ import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Exports the board as a PNG: either the pristine original (server-gated —
- * denied mid-Fog-of-War) or the player's current per-viewer progress view.
+ * Exports the board as a PNG "results card": header (title + size/progress/
+ * date chips), the full grid, and — in team play — a ranked team-contribution
+ * list with skin-face avatars. Variants: the pristine original (server-gated,
+ * denied mid-Fog-of-War) or the player's current progress view. Teammates all
+ * receive identical progress exports, since team progress is shared state.
  *
  * <p>Capture strategy: while armed, {@link BingoBoardScreen} renders a clean
- * export layout instead of its normal UI for a couple of frames; we then read
- * the main framebuffer (physical resolution — GUI scale gives 2-3x the logical
- * pixels) and crop the board rectangle. No offscreen render plumbing, real
- * item models, version-proof.
+ * export layout instead of its normal UI for a couple of frames (chat is
+ * hidden so it can't photobomb the corner); we then read the main framebuffer
+ * (physical resolution) and crop the card rectangle.
  */
 public final class BoardImageExporter {
     private BoardImageExporter() {}
 
     public enum Variant { ORIGINAL, PROGRESS }
     public enum Action { COPY, SAVE }
+
+    /** One teammate's row in the contribution list. */
+    public record Contribution(String name, int count) {}
 
     private enum Phase { IDLE, WAIT_ORIGINAL, ARMED }
 
@@ -51,7 +61,9 @@ public final class BoardImageExporter {
     private static CellState[] cells;
     private static int boardW;
     private static int boardH;
-    private static Component caption;
+    private static Component title = Component.empty();
+    private static List<Component> chips = List.of();
+    private static List<Contribution> contributions = List.of();
 
     /** Feedback line shown in the export popup ({@code null} = nothing). */
     @Nullable
@@ -59,6 +71,9 @@ public final class BoardImageExporter {
 
     private static int framesRendered;
     private static int rectX, rectY, rectW, rectH;
+
+    @Nullable
+    private static ChatVisiblity previousChatVisibility;
 
     public static void init() {
         ClientTickEvents.END_CLIENT_TICK.register(BoardImageExporter::tick);
@@ -72,9 +87,11 @@ public final class BoardImageExporter {
     public static CellState[] cells() { return cells; }
     public static int boardWidth() { return boardW; }
     public static int boardHeight() { return boardH; }
-    public static Component caption() { return caption; }
+    public static Component title() { return title; }
+    public static List<Component> chips() { return chips; }
+    public static List<Contribution> contributions() { return contributions; }
 
-    /** The screen reports the logical rect it drew the export layout into. */
+    /** The screen reports the logical rect it drew the export card into. */
     public static void onExportFrame(int x, int y, int w, int h) {
         rectX = x;
         rectY = y;
@@ -108,15 +125,35 @@ public final class BoardImageExporter {
                 case 3 -> "itembingo.screen.mode.lockout";
                 default -> "itembingo.screen.mode.normal";
             });
-            arm(snapshot, w, h, Component.translatable("itembingo.export.caption.progress",
-                    BoardClientState.submittedCount(), BoardClientState.totalCells(), modeName,
-                    w + "x" + h, dateStamp()));
+            title = Component.translatable("itembingo.export.header.progress");
+            chips = List.of(
+                    Component.literal(w + "×" + h),
+                    Component.literal(BoardClientState.submittedCount() + "/" + BoardClientState.totalCells())
+                            .append(" · ").append(modeName),
+                    Component.literal(dateStamp()));
+            contributions = tallyContributions(snapshot);
+            arm(snapshot, w, h);
         } else {
             status = Component.translatable("itembingo.export.requesting").withStyle(ChatFormatting.GRAY);
             phase = Phase.WAIT_ORIGINAL;
             timeoutTicks = 100;
             ClientNetworking.sendOriginalRequest();
         }
+    }
+
+    /** Cells-submitted-per-teammate, most first. Empty outside team play. */
+    private static List<Contribution> tallyContributions(CellState[] snapshot) {
+        Map<String, Integer> counts = new HashMap<>();
+        for (CellState cell : snapshot) {
+            if (cell != null && cell.isSubmitted() && cell.hasSubmitter() && !cell.submitterName().isEmpty()) {
+                counts.merge(cell.submitterName(), 1, Integer::sum);
+            }
+        }
+        List<Contribution> list = new ArrayList<>();
+        counts.forEach((name, count) -> list.add(new Contribution(name, count)));
+        list.sort((x, y) -> y.count != x.count ? Integer.compare(y.count, x.count)
+                : x.name.compareToIgnoreCase(y.name));
+        return list;
     }
 
     /** Parses the {@code itembingo:original} response. */
@@ -133,8 +170,10 @@ public final class BoardImageExporter {
                     for (int i = 0; i < board.length; i++) {
                         board[i] = CellState.visible(in.readUTF());
                     }
-                    arm(board, w, h, Component.translatable("itembingo.export.caption.original",
-                            w + "x" + h, dateStamp()));
+                    title = Component.translatable("itembingo.export.header.original");
+                    chips = List.of(Component.literal(w + "×" + h), Component.literal(dateStamp()));
+                    contributions = List.of();
+                    arm(board, w, h);
                 }
                 case ModProtocol.ORIGINAL_DENIED_FOG -> fail("itembingo.export.denied_fog");
                 default -> fail("itembingo.export.no_board");
@@ -144,14 +183,14 @@ public final class BoardImageExporter {
         }
     }
 
-    private static void arm(CellState[] board, int w, int h, Component cap) {
+    private static void arm(CellState[] board, int w, int h) {
         cells = board;
         boardW = w;
         boardH = h;
-        caption = cap;
         framesRendered = 0;
         status = null;
         phase = Phase.ARMED;
+        hideChat();
     }
 
     private static void fail(String key) {
@@ -161,9 +200,28 @@ public final class BoardImageExporter {
 
     /** Screen closed or state reset — abandon whatever was pending. */
     public static void cancel() {
+        restoreChat();
         phase = Phase.IDLE;
         status = null;
         cells = null;
+    }
+
+    /** Chat and toasts render above screens and would be baked into the capture. */
+    private static void hideChat() {
+        Minecraft mc = Minecraft.getInstance();
+        var option = mc.options.chatVisibility();
+        if (previousChatVisibility == null) {
+            previousChatVisibility = option.get();
+        }
+        option.set(ChatVisiblity.HIDDEN);
+        mc.gui.toastManager().clear();
+    }
+
+    private static void restoreChat() {
+        if (previousChatVisibility != null) {
+            Minecraft.getInstance().options.chatVisibility().set(previousChatVisibility);
+            previousChatVisibility = null;
+        }
     }
 
     private static void tick(Minecraft mc) {
@@ -186,6 +244,7 @@ public final class BoardImageExporter {
 
     private static void capture(Minecraft mc) {
         phase = Phase.IDLE; // the framebuffer already holds the export frame
+        restoreChat();
         Variant v = variant;
         Action a = action;
         int scale = mc.getWindow().getGuiScale();
@@ -200,7 +259,9 @@ public final class BoardImageExporter {
                 int cy = Math.clamp(sy, 0, full.getHeight() - 1);
                 int cw = Math.min(sw, full.getWidth() - cx);
                 int ch = Math.min(sh, full.getHeight() - cy);
-                NativeImage cropped = new NativeImage(cw, ch, false);
+                // Same pixel format as the source — a format mismatch here
+                // swaps red/blue and tints the whole image.
+                NativeImage cropped = new NativeImage(full.format(), cw, ch, false);
                 full.copyRect(cropped, cx, cy, 0, 0, cw, ch, false, false);
                 deliver(mc, cropped, v, a);
             } catch (Exception e) {
@@ -227,16 +288,19 @@ public final class BoardImageExporter {
             System.setProperty("java.awt.headless", "false");
             int w = image.getWidth();
             int h = image.getHeight();
-            BufferedImage awt = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-            for (int y = 0; y < h; y++) {
-                for (int x = 0; x < w; x++) {
-                    int abgr = image.getPixel(x, y);
-                    int r = abgr & 0xFF;
-                    int g = (abgr >> 8) & 0xFF;
-                    int b = (abgr >> 16) & 0xFF;
-                    awt.setRGB(x, y, (r << 16) | (g << 8) | b);
-                }
+            // getPixelsABGR has a documented layout (A<<24 | B<<16 | G<<8 | R),
+            // so the channel mapping below can't silently swap red and blue.
+            int[] abgr = image.getPixelsABGR();
+            int[] argb = new int[abgr.length];
+            for (int i = 0; i < abgr.length; i++) {
+                int p = abgr[i];
+                int r = p & 0xFF;
+                int g = (p >> 8) & 0xFF;
+                int b = (p >> 16) & 0xFF;
+                argb[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
             }
+            BufferedImage awt = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+            awt.setRGB(0, 0, w, h, argb, 0, w);
             Transferable payload = new Transferable() {
                 @Override
                 public DataFlavor[] getTransferDataFlavors() {

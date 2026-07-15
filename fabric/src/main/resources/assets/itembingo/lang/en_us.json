@@ -39,8 +39,10 @@
   "itembingo.export.copied": "Board image copied to clipboard.",
   "itembingo.export.copy_failed_saved": "Clipboard unavailable — saving to a file instead.",
   "itembingo.export.saved": "Board image saved as %s",
-  "itembingo.export.caption.original": "Original board · %s · %s",
-  "itembingo.export.caption.progress": "%s/%s · %s · %s · %s",
+  "itembingo.export.header.original": "Bingo Board",
+  "itembingo.export.header.progress": "Bingo Progress",
+  "itembingo.export.contribution": "Team contribution",
+  "itembingo.export.more": "+%s more",
 
   "itembingo.settings.bingo_mod": "/bingo: mod",
   "itembingo.settings.bingo_server": "/bingo: server",
