@@ -6,6 +6,7 @@ import me.junick.itemBingo.gui.BingoGuiHolder;
 import me.junick.itemBingo.gui.BingoGuiHolder.Gui;
 import me.junick.itemBingo.gui.MenuGUI;
 import me.junick.itemBingo.i18n.Messages;
+import me.junick.itemBingo.network.ModSync;
 import me.junick.itemBingo.util.BingoScoreboard;
 import me.junick.itemBingo.util.ChestManager;
 import me.junick.itemBingo.util.GuiSync;
@@ -203,7 +204,12 @@ public class AdminClickListener implements Listener {
                 }
                 case FOG_OF_WAR -> {
                     switch (slot) {
-                        case 29 -> Settings.toggleFogSubmitLock();
+                        case 29 -> {
+                            Settings.toggleFogSubmitLock();
+                            // Doesn't change what the chest GUI shows, but modded
+                            // clients display and enforce the flag — re-push it.
+                            ModSync.broadcastBoard();
+                        }
                         case 31 -> Settings.toggleFogRevealAlert();
                         case 33 -> {
                             // Diagonal reveal changes which cells are revealed, so

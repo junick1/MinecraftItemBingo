@@ -11,6 +11,7 @@ import me.junick.itemBingo.i18n.Messages;
 import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
 import me.junick.itemBingo.model.BingoBoard;
+import me.junick.itemBingo.network.ModSync;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.title.Title;
@@ -167,6 +168,10 @@ public final class SubmissionService {
         GuiSync.refreshShops(progress.viewers(p));
 
         sendFeedback(p, progress, board.getItems().get(idx).getType());
+
+        // Companion-mod clients need the new cell state too (a lockout claim or
+        // fog reveal can change every viewer's board, so push to all of them).
+        ModSync.broadcastBoard();
     }
 
     /* ========================= Failure Feedback ========================= */

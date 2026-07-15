@@ -8,6 +8,7 @@ import me.junick.itemBingo.gui.ItemShopGUI;
 import me.junick.itemBingo.gui.MenuGUI;
 import me.junick.itemBingo.gui.ShopGUI;
 import me.junick.itemBingo.gui.SummaryGUI;
+import me.junick.itemBingo.network.ModSync;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -111,6 +112,10 @@ public final class GuiSync {
         });
         forEachViewer(BingoGuiHolder.Gui.ITEM_SHOP, ItemShopGUI::open);
         forEachViewer(BingoGuiHolder.Gui.EFFECT_SHOP, EffectShopGUI::open);
+
+        // Companion-mod clients keep board state client-side (screen + HUD), so
+        // any bulk change that reopens GUIs must also re-push their view.
+        ModSync.broadcastBoard();
     }
 
     /**

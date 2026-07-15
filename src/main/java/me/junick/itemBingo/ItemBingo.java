@@ -14,6 +14,9 @@ import me.junick.itemBingo.events.LungeMovement;
 import me.junick.itemBingo.events.gui.*;
 import me.junick.itemBingo.events.items.*;
 import me.junick.itemBingo.model.BingoBoard;
+import me.junick.itemBingo.network.ModMessageListener;
+import me.junick.itemBingo.network.ModPlayers;
+import me.junick.itemBingo.network.ModProtocol;
 import me.junick.itemBingo.util.*;
 import org.bukkit.*;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -83,6 +86,16 @@ public final class ItemBingo extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new BoardPreviewClickEvent(), this);
         Bukkit.getPluginManager().registerEvents(ChestManager.listener(), this);
         EffectApplier.start();
+
+        // Companion Fabric mod channels: modded clients say hello, then get
+        // per-viewer board pushes and may submit over the wire.
+        Bukkit.getPluginManager().registerEvents(new ModPlayers(), this);
+        ModMessageListener modListener = new ModMessageListener();
+        getServer().getMessenger().registerIncomingPluginChannel(this, ModProtocol.CHANNEL_HELLO, modListener);
+        getServer().getMessenger().registerIncomingPluginChannel(this, ModProtocol.CHANNEL_SUBMIT, modListener);
+        getServer().getMessenger().registerIncomingPluginChannel(this, ModProtocol.CHANNEL_REFRESH, modListener);
+        getServer().getMessenger().registerOutgoingPluginChannel(this, ModProtocol.CHANNEL_HELLO);
+        getServer().getMessenger().registerOutgoingPluginChannel(this, ModProtocol.CHANNEL_BOARD);
 
         // /admin
         getCommand("admin").setExecutor(new AdminCommand(this));
@@ -191,6 +204,9 @@ public final class ItemBingo extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        getServer().getMessenger().unregisterIncomingPluginChannel(this);
+        getServer().getMessenger().unregisterOutgoingPluginChannel(this);
+
         instance = null;
 
         if (currentBingo != null) {
