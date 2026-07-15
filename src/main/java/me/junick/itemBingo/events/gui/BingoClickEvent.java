@@ -14,6 +14,7 @@ import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.model.PlayerBingoProgress;
 import me.junick.itemBingo.model.TeamBingoProgress;
 import me.junick.itemBingo.util.*;
+import me.junick.itemBingo.webserver.WebUIServer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -244,6 +245,8 @@ public class BingoClickEvent implements Listener {
                 : null;
 
         progress.submit(idx, p);
+        WebUIServer.sendBingoBoard(p);
+
         progress.addCurrencyAll(BingoRewardType.SLOT, 1);
 
         checkAndAwardLine(p, progress, board.getWidth(), board.getHeight(), idx);

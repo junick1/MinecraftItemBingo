@@ -15,6 +15,7 @@ import me.junick.itemBingo.events.gui.*;
 import me.junick.itemBingo.events.items.*;
 import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.util.*;
+import me.junick.itemBingo.webserver.WebUIServer;
 import org.bukkit.*;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -32,6 +33,8 @@ public final class ItemBingo extends JavaPlugin {
     public static BingoBoard currentBingo = null;
     public static NamespacedKey KEY_EFFECT;
     public static NamespacedKey KEY_BUNDLE_TEMPLATE;
+
+    public static WebUIServer WebUI;
 
     @Override
     public void onEnable() {
@@ -168,6 +171,11 @@ public final class ItemBingo extends JavaPlugin {
 
         getLogger().info("ItemBingo plugin has been enabled!");
 
+        WebUI = new WebUIServer();
+        WebUI.startServer(3030);
+
+        getLogger().info("WebUI Server Started!!");
+
     }
 
     /**
@@ -207,5 +215,9 @@ public final class ItemBingo extends JavaPlugin {
         ChatManager.save();
         ChestManager.save();
         LanguageManager.save();
+
+        WebUI.stopServer();
+
+        getLogger().info("WebUI Server Closed.");
     }
 }

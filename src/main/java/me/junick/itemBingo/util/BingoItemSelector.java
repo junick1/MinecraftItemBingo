@@ -112,6 +112,7 @@ public class BingoItemSelector {
             if (!tags.isEmpty()) {
                 for (BingoItemTag tag : tags) {
                     switch(tag) {
+                        /*
                         case COLOR -> weight -= 0;
                         case SILK_TOUCH -> weight -= 0;
                         case WAXED -> weight -= 75;
@@ -121,6 +122,16 @@ public class BingoItemSelector {
                         //case THE_NETHER -> weight -= 200;
                         case POTTERY_SHERD -> weight -= 0;
                         case SMITHING_TEMPLATE -> weight -= 0;
+                        */
+                        case COLOR -> weight -= 170;
+                        case SILK_TOUCH -> weight -= 100;
+                        case WAXED -> weight -= 75;
+                        case DISC -> weight += 120;
+                        case COPPER -> weight += -75;
+                        case THE_END -> weight -= 50;
+                        case THE_NETHER -> weight -= 0;
+                        case POTTERY_SHERD -> weight += 120;
+                        case SMITHING_TEMPLATE -> weight += 120;
                     }
                 }
             }
