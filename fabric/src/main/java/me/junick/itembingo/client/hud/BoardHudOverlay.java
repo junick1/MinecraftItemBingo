@@ -2,6 +2,7 @@ package me.junick.itembingo.client.hud;
 
 import me.junick.itembingo.client.config.ModConfig;
 import me.junick.itembingo.client.net.ModProtocol;
+import me.junick.itembingo.client.screen.Checkmark;
 import me.junick.itembingo.client.state.BoardClientState;
 import me.junick.itembingo.client.state.BoardClientState.ConnectionState;
 import me.junick.itembingo.client.state.CellState;
@@ -94,8 +95,11 @@ public final class BoardHudOverlay implements HudElement {
                     pose.popMatrix();
                 }
                 if (state.isSubmitted()) {
-                    // Small solid corner triangle-substitute: green square badge.
-                    g.fill(x + cell - 5, y + 1, x + cell - 1, y + 5, 0xFF2ECC40);
+                    // Same layered treatment as the fullscreen board, miniaturized:
+                    // green wash over the icon, check on top.
+                    g.fill(x, y, x + cell - 1, y + cell - 1, 0x8A1E7A2E);
+                    Checkmark.draw(g, x + (cell - 1) / 2.0f, y + (cell - 1) / 2.0f,
+                            cell * 0.62f, 0xFFEAFFEA, 0x900A2F10);
                 }
             }
         }

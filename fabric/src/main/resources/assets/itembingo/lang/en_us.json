@@ -13,12 +13,14 @@
   "itembingo.screen.no_board": "No bingo board is active.",
   "itembingo.screen.view_denied": "Join a team to view the board.",
   "itembingo.screen.hint": "Drag: pan · Scroll: vertical · Shift+Scroll: horizontal · Ctrl+Scroll: zoom",
-  "itembingo.screen.submit_hint": "Click, then drop on a cell to submit · Shift+Click: auto-submit",
+  "itembingo.screen.submit_hint": "Pick up, then click a matching cell to submit · Shift+Click: auto-submit",
 
   "itembingo.cell.locked": "Claimed by another team",
   "itembingo.cell.submitted": "Submitted",
   "itembingo.cell.submitted_by": "by %s",
   "itembingo.cell.time": "at %s",
+  "itembingo.cell.click_to_submit": "Click to submit!",
+  "itembingo.cell.wrong_item": "Doesn't match this cell",
 
   "itembingo.status.mismatch": "ItemBingo Companion version mismatch (client v%s, server v%s) — the key will open the vanilla board instead.",
   "itembingo.hud.on": "Board overlay: ON",

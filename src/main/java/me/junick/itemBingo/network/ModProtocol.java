@@ -13,7 +13,7 @@ package me.junick.itemBingo.network;
 public final class ModProtocol {
     private ModProtocol() {}
 
-    public static final int PROTOCOL_VERSION = 1;
+    public static final int PROTOCOL_VERSION = 2;
 
     /** C2S {@code i32 protocolVersion} / S2C {@code i32 serverProtocolVersion, u8 accepted}. */
     public static final String CHANNEL_HELLO = "itembingo:hello";
@@ -31,7 +31,8 @@ public final class ModProtocol {
 
     /**
      * C2S submission request:
-     * {@code u8 mode, i32 cellIndex (-1 for SHIFT), u8 inventorySlot (0-35),
+     * {@code u8 mode, i32 cellIndex (-1 for SHIFT), u8 inventorySlot (0-35, or
+     * SLOT_CURSOR for the item carried on the cursor — DIRECT only),
      * UTF expectedItemKey ("" = skip staleness check)}.
      */
     public static final String CHANNEL_SUBMIT = "itembingo:submit";
@@ -50,6 +51,9 @@ public final class ModProtocol {
 
     public static final byte SUBMIT_DIRECT = 0;
     public static final byte SUBMIT_SHIFT = 1;
+
+    /** Sentinel inventorySlot: the item is on the player's cursor, not in a slot. */
+    public static final int SLOT_CURSOR = 255;
 
     /** Fog of War submit-lock is active: hidden cells reject submissions. */
     public static final int FLAG_FOG_SUBMIT_LOCK = 1;

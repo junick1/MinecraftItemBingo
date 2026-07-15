@@ -5,6 +5,7 @@ import me.junick.itembingo.client.net.ClientNetworking;
 import me.junick.itembingo.client.net.ModProtocol;
 import me.junick.itembingo.client.state.BoardClientState;
 import me.junick.itembingo.client.state.CellState;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
@@ -13,34 +14,50 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Fullscreen pannable bingo board.
  *
- * <p>Controls: drag the board to pan, scroll to pan vertically, Shift+scroll
- * horizontally, Ctrl+scroll to zoom. Click an inventory item to pick it up and
- * drop it on a cell to submit; Shift+click auto-submits to the first matching
- * cell. All submissions are requests — the server validates and the pushed
- * board update is the only thing that changes what's shown.
+ * <p>Board controls: drag to pan, scroll = vertical, Shift+scroll =
+ * horizontal, Ctrl+scroll = zoom toward the cursor.
+ *
+ * <p>The inventory strip is the player's REAL inventory: clicks go through
+ * vanilla container logic ({@code handleContainerInput} on menu 0), so
+ * pick-up/place/split/swap behave exactly like the survival inventory —
+ * including number-key swaps, F (offhand) and Q (drop). Submitting = pick an
+ * item onto the cursor, then click a matching cell (the server validates and
+ * consumes from the real cursor stack); Shift+click a stack auto-submits it.
  */
 public class BingoBoardScreen extends Screen {
     private static final int HEADER_H = 24;
+    private static final int HINT_BAR_H = 16;
     private static final int SLOT = 18;
     private static final int INV_COLS = 9;
 
+    /** How long a freshly-submitted cell glows, in ms. */
+    private static final long FLASH_MS = 700;
+
     private final BoardCamera camera = new BoardCamera();
     private int seenRevision = -1;
-
-    /** Inventory slot being dragged (vanilla index 0-35), or -1. */
-    private int draggingSlot = -1;
-    private ItemStack draggingStack = ItemStack.EMPTY;
     private boolean panning;
+
+    private int lastMouseX;
+    private int lastMouseY;
+
+    /** Submitted indices from the previous board push, to detect new ones. */
+    private Set<Integer> knownSubmitted;
+    private final Map<Integer, Long> flashes = new HashMap<>();
 
     public BingoBoardScreen() {
         super(Component.translatable("itembingo.screen.title"));
@@ -62,7 +79,7 @@ public class BingoBoardScreen extends Screen {
     }
 
     private int boardBottom() {
-        return invTop() - 4;
+        return invTop() - HINT_BAR_H;
     }
 
     /** Vanilla inventory index (0-35) at a screen point, or -1. */
@@ -81,6 +98,11 @@ public class BingoBoardScreen extends Screen {
         return -1;
     }
 
+    /** Vanilla inventory index → slot id in the player's InventoryMenu. */
+    private static int menuSlot(int invIndex) {
+        return invIndex < 9 ? 36 + invIndex : invIndex;
+    }
+
     private boolean inBoardArea(double mx, double my) {
         return my >= boardTop() && my < boardBottom();
     }
@@ -97,10 +119,10 @@ public class BingoBoardScreen extends Screen {
 
     @Override
     protected void init() {
-        syncCamera(true);
+        syncBoardState(true);
     }
 
-    private void syncCamera(boolean attach) {
+    private void syncBoardState(boolean attach) {
         int w = Math.max(1, BoardClientState.width());
         int h = Math.max(1, BoardClientState.height());
         if (attach) {
@@ -109,6 +131,24 @@ public class BingoBoardScreen extends Screen {
             camera.boardChanged(w, h);
             camera.resize(width, boardBottom() - boardTop());
         }
+
+        // Diff submitted cells so brand-new ones get a short celebratory flash.
+        Set<Integer> submitted = new HashSet<>();
+        int total = w * h;
+        for (int i = 0; i < total; i++) {
+            CellState cell = BoardClientState.cell(i);
+            if (cell != null && cell.isSubmitted()) submitted.add(i);
+        }
+        if (knownSubmitted != null && submitted.size() >= knownSubmitted.size()) {
+            long now = System.currentTimeMillis();
+            for (int idx : submitted) {
+                if (!knownSubmitted.contains(idx)) flashes.put(idx, now);
+            }
+        } else {
+            flashes.clear();
+        }
+        knownSubmitted = submitted;
+
         seenRevision = BoardClientState.revision();
     }
 
@@ -116,6 +156,12 @@ public class BingoBoardScreen extends Screen {
     public void onClose() {
         camera.save();
         BoardClientState.setHudViewport(camera.visibleTopLeftCol(), camera.visibleTopLeftRow());
+        // If something is still on the cursor, close the inventory menu properly
+        // so the server puts the carried stack back (vanilla close semantics).
+        var player = minecraft().player;
+        if (player != null && !player.inventoryMenu.getCarried().isEmpty()) {
+            player.closeContainer();
+        }
         super.onClose();
     }
 
@@ -126,24 +172,47 @@ public class BingoBoardScreen extends Screen {
 
     /* ------------------------- input ------------------------- */
 
+    private ItemStack carried() {
+        var player = minecraft().player;
+        return player == null ? ItemStack.EMPTY : player.inventoryMenu.getCarried();
+    }
+
+    /** Vanilla container click on the player's own inventory menu. */
+    private void containerClick(int menuSlotId, int button, ContainerInput input) {
+        var mc = minecraft();
+        if (mc.player == null || mc.gameMode == null) return;
+        mc.gameMode.handleContainerInput(mc.player.inventoryMenu.containerId, menuSlotId, button, input, mc.player);
+    }
+
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubled) {
-        if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT && BoardClientState.hasBoard()) {
+        int button = event.button();
+        boolean left = button == GLFW.GLFW_MOUSE_BUTTON_LEFT;
+        boolean right = button == GLFW.GLFW_MOUSE_BUTTON_RIGHT;
+
+        if ((left || right) && BoardClientState.hasBoard()) {
             int slot = slotAt(event.x(), event.y());
             if (slot >= 0) {
                 ItemStack stack = playerStack(slot);
-                if (!stack.isEmpty()) {
-                    if (hasShift()) {
-                        ClientNetworking.sendSubmit(ModProtocol.SUBMIT_SHIFT, -1, slot, keyOf(stack));
-                    } else {
-                        draggingSlot = slot;
-                        draggingStack = stack.copy();
-                    }
-                    return true;
+                if (left && hasShift() && carried().isEmpty() && !stack.isEmpty()) {
+                    ClientNetworking.sendSubmit(ModProtocol.SUBMIT_SHIFT, -1, slot, keyOf(stack));
+                } else {
+                    containerClick(menuSlot(slot), left ? 0 : 1, ContainerInput.PICKUP);
                 }
-                return true; // empty slot: swallow the click
+                return true;
             }
-            if (inBoardArea(event.x(), event.y())) {
+
+            if (left && inBoardArea(event.x(), event.y())) {
+                ItemStack cursor = carried();
+                if (!cursor.isEmpty()) {
+                    int idx = cellIndexAt(event.x(), event.y());
+                    CellState cell = idx >= 0 ? BoardClientState.cell(idx) : null;
+                    if (cell != null && cell.isVisible()) {
+                        ClientNetworking.sendSubmit(ModProtocol.SUBMIT_DIRECT, idx,
+                                ModProtocol.SLOT_CURSOR, keyOf(cursor));
+                        return true;
+                    }
+                }
                 panning = true;
                 return true;
             }
@@ -157,28 +226,14 @@ public class BingoBoardScreen extends Screen {
             camera.pan(dx, dy);
             return true;
         }
-        if (draggingSlot >= 0) {
-            return true; // ghost item follows the cursor in render()
-        }
         return super.mouseDragged(event, dx, dy);
     }
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-            if (panning) {
-                panning = false;
-                return true;
-            }
-            if (draggingSlot >= 0) {
-                int idx = cellIndexAt(event.x(), event.y());
-                if (idx >= 0 && !draggingStack.isEmpty()) {
-                    ClientNetworking.sendSubmit(ModProtocol.SUBMIT_DIRECT, idx, draggingSlot, keyOf(draggingStack));
-                }
-                draggingSlot = -1;
-                draggingStack = ItemStack.EMPTY;
-                return true;
-            }
+        if (panning && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            panning = false;
+            return true;
         }
         return super.mouseReleased(event);
     }
@@ -201,6 +256,25 @@ public class BingoBoardScreen extends Screen {
         if (Keybinds.openBoard != null && Keybinds.openBoard.matches(event)) {
             onClose();
             return true;
+        }
+
+        // Vanilla inventory shortcuts on the hovered slot: 1-9 hotbar swap,
+        // F offhand swap, Q drop one (Ctrl+Q drops the stack).
+        int hovered = slotAt(lastMouseX, lastMouseY);
+        if (hovered >= 0) {
+            int key = event.key();
+            if (key >= GLFW.GLFW_KEY_1 && key <= GLFW.GLFW_KEY_9) {
+                containerClick(menuSlot(hovered), key - GLFW.GLFW_KEY_1, ContainerInput.SWAP);
+                return true;
+            }
+            if (key == GLFW.GLFW_KEY_F) {
+                containerClick(menuSlot(hovered), 40, ContainerInput.SWAP);
+                return true;
+            }
+            if (key == GLFW.GLFW_KEY_Q) {
+                containerClick(menuSlot(hovered), hasCtrl() ? 1 : 0, ContainerInput.THROW);
+                return true;
+            }
         }
         return super.keyPressed(event);
     }
@@ -230,8 +304,10 @@ public class BingoBoardScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
         if (BoardClientState.revision() != seenRevision) {
-            syncCamera(false);
+            syncBoardState(false);
         }
 
         g.fill(0, 0, width, height, 0xC8101014);
@@ -245,11 +321,14 @@ public class BingoBoardScreen extends Screen {
         }
 
         renderBoard(g, mouseX, mouseY);
+        renderHintBar(g);
         renderInventory(g, mouseX, mouseY);
 
-        if (draggingSlot >= 0 && !draggingStack.isEmpty()) {
+        ItemStack cursor = carried();
+        if (!cursor.isEmpty()) {
             g.nextStratum();
-            g.item(draggingStack, mouseX - 8, mouseY - 8);
+            g.item(cursor, mouseX - 8, mouseY - 8);
+            g.itemDecorations(font, cursor, mouseX - 8, mouseY - 8);
         }
     }
 
@@ -258,18 +337,31 @@ public class BingoBoardScreen extends Screen {
         g.text(font, title, 8, (HEADER_H - 9) / 2, 0xFFFFFFFF);
 
         if (BoardClientState.hasBoard()) {
-            Component progress = Component.translatable("itembingo.screen.progress",
-                    BoardClientState.submittedCount(), BoardClientState.totalCells());
-            Component mode = Component.translatable(modeKey(BoardClientState.gameMode()));
-            Component right = BoardClientState.fogSubmitLock()
-                    ? Component.empty().append(progress).append("  ").append(mode)
-                            .append("  ").append(Component.translatable("itembingo.screen.fog_submit_lock"))
-                    : Component.empty().append(progress).append("  ").append(mode);
-            g.text(font, right, width - font.width(right) - 8, (HEADER_H - 9) / 2, 0xFFB0FFB0);
-
-            Component hint = Component.translatable("itembingo.screen.hint");
-            g.text(font, hint, 8, boardBottom() - 12, 0x90FFFFFF);
+            Component progress = Component.literal(
+                    BoardClientState.submittedCount() + "/" + BoardClientState.totalCells())
+                    .withStyle(ChatFormatting.GREEN);
+            Component mode = Component.translatable(modeKey(BoardClientState.gameMode()))
+                    .withStyle(ChatFormatting.AQUA);
+            var right = Component.empty().append(progress).append("  ").append(mode);
+            if (BoardClientState.fogSubmitLock()) {
+                right.append("  ").append(Component.translatable("itembingo.screen.fog_submit_lock")
+                        .withStyle(ChatFormatting.RED));
+            }
+            g.text(font, right, width - font.width(right) - 8, (HEADER_H - 9) / 2, 0xFFFFFFFF);
         }
+    }
+
+    /** The band between board and inventory: controls hint + current zoom. */
+    private void renderHintBar(GuiGraphicsExtractor g) {
+        int top = boardBottom();
+        g.fill(0, top, width, invTop(), 0xE0141418);
+        int textY = top + (HINT_BAR_H - 9) / 2 + 1;
+
+        String zoom = (int) Math.round(camera.zoom * 100) + "%";
+        g.text(font, zoom, width - font.width(zoom) - 8, textY, 0xFF8899AA);
+
+        Component hint = Component.translatable("itembingo.screen.hint");
+        g.text(font, hint, 8, textY, 0x9099AABB);
     }
 
     private static String modeKey(byte mode) {
@@ -289,9 +381,9 @@ public class BingoBoardScreen extends Screen {
         int w = BoardClientState.width();
         int h = BoardClientState.height();
         double size = camera.cellScreenSize();
-        int hoveredIdx = (draggingSlot >= 0 || panning || !inBoardArea(mouseX, mouseY))
-                ? (draggingSlot >= 0 ? cellIndexAt(mouseX, mouseY) : -1)
-                : cellIndexAt(mouseX, mouseY);
+        int hoveredIdx = panning ? -1 : cellIndexAt(mouseX, mouseY);
+        ItemStack cursor = carried();
+        long now = System.currentTimeMillis();
 
         for (int row = 0; row < h; row++) {
             int y = (int) Math.round(camera.cellScreenY(row, top));
@@ -299,26 +391,40 @@ public class BingoBoardScreen extends Screen {
             for (int col = 0; col < w; col++) {
                 int x = (int) Math.round(camera.cellScreenX(col, 0));
                 if (x + size < 0 || x > width) continue;
+                int idx = row * w + col;
                 CellState cell = BoardClientState.cell(col, row);
                 if (cell == null) continue;
                 renderCell(g, cell, x, y, (int) Math.round(size),
-                        hoveredIdx == row * w + col, mouseX, mouseY);
+                        hoveredIdx == idx, cursor, mouseX, mouseY, flashAlpha(idx, now));
             }
         }
 
         g.disableScissor();
     }
 
+    /** 0..1 glow strength for a freshly-submitted cell, 0 when idle. */
+    private float flashAlpha(int idx, long now) {
+        Long start = flashes.get(idx);
+        if (start == null) return 0;
+        long age = now - start;
+        if (age >= FLASH_MS) {
+            flashes.remove(idx);
+            return 0;
+        }
+        return 1.0f - (float) age / FLASH_MS;
+    }
+
     private void renderCell(GuiGraphicsExtractor g, CellState cell, int x, int y, int size,
-                            boolean hovered, int mouseX, int mouseY) {
+                            boolean hovered, ItemStack cursor, int mouseX, int mouseY, float flash) {
+        boolean carryingMatch = !cursor.isEmpty() && cell.isVisible()
+                && cell.item() != null && cursor.getItem() == cell.item();
+
         int bg = switch (cell.kind()) {
             case ModProtocol.CELL_HIDDEN -> 0xE0181820;
             case ModProtocol.CELL_LOCKED -> 0x80581414;
-            case ModProtocol.CELL_SUBMITTED -> 0x601E5A28;
             default -> 0x60000000;
         };
         g.fill(x + 1, y + 1, x + size - 1, y + size - 1, bg);
-        g.outline(x, y, size, size, hovered ? 0xFFFFFFFF : 0xFF3C3C46);
 
         switch (cell.kind()) {
             case ModProtocol.CELL_HIDDEN ->
@@ -326,7 +432,8 @@ public class BingoBoardScreen extends Screen {
             case ModProtocol.CELL_LOCKED -> {
                 drawScaledItem(g, new ItemStack(Items.BARRIER), x, y, size);
                 if (hovered) {
-                    g.setTooltipForNextFrame(Component.translatable("itembingo.cell.locked"), mouseX, mouseY);
+                    g.setTooltipForNextFrame(Component.translatable("itembingo.cell.locked")
+                            .withStyle(ChatFormatting.RED), mouseX, mouseY);
                 }
             }
             case ModProtocol.CELL_VISIBLE, ModProtocol.CELL_SUBMITTED -> {
@@ -336,16 +443,28 @@ public class BingoBoardScreen extends Screen {
                     g.centeredText(font, "?", x + size / 2, y + (size - 9) / 2, 0xFFFFCC44);
                 }
                 if (cell.isSubmitted()) {
-                    // Green check badge in the corner keeps the icon recognizable
-                    // while making "done" readable at any zoom.
-                    g.fill(x + size - 8, y + 2, x + size - 2, y + 8, 0xFF2ECC40);
+                    // Layered "done" treatment: icon below, translucent green
+                    // wash above it, and a big check on top.
+                    g.fill(x + 1, y + 1, x + size - 1, y + size - 1, 0x8A1E7A2E);
+                    Checkmark.draw(g, x + size / 2.0f, y + size / 2.0f, size * 0.62f,
+                            0xFFEAFFEA, 0x900A2F10);
                 }
                 if (hovered) {
-                    g.setTooltipForNextFrame(cellTooltip(cell), mouseX, mouseY);
+                    g.setTooltipForNextFrame(cellTooltip(cell, cursor), mouseX, mouseY);
                 }
             }
             default -> {}
         }
+
+        if (flash > 0) {
+            int alpha = (int) (flash * 0xA0) << 24;
+            g.fill(x + 1, y + 1, x + size - 1, y + size - 1, alpha | 0xFFFFFF);
+        }
+
+        // Border last so highlights sit above the cell content: gold pulse on
+        // cells matching the carried item, white on hover.
+        int border = hovered ? 0xFFFFFFFF : carryingMatch ? 0xFFE8C84A : 0xFF3C3C46;
+        g.outline(x, y, size, size, border);
     }
 
     private void drawScaledItem(GuiGraphicsExtractor g, ItemStack stack, int x, int y, int size) {
@@ -358,22 +477,34 @@ public class BingoBoardScreen extends Screen {
         pose.popMatrix();
     }
 
-    private List<FormattedCharSequence> cellTooltip(CellState cell) {
+    private List<FormattedCharSequence> cellTooltip(CellState cell, ItemStack cursor) {
         List<FormattedCharSequence> lines = new ArrayList<>();
         Component name = cell.item() != null
-                ? cell.item().getName(new ItemStack(cell.item()))
-                : Component.literal(String.valueOf(cell.rawItemKey()));
+                ? cell.item().getName(new ItemStack(cell.item())).copy().withStyle(ChatFormatting.BOLD)
+                : Component.literal(String.valueOf(cell.rawItemKey())).withStyle(ChatFormatting.YELLOW);
         lines.add(name.getVisualOrderText());
+
         if (cell.isSubmitted()) {
-            lines.add(Component.translatable("itembingo.cell.submitted").getVisualOrderText());
+            lines.add(Component.literal("✔ ").withStyle(ChatFormatting.GREEN)
+                    .append(Component.translatable("itembingo.cell.submitted").withStyle(ChatFormatting.GREEN))
+                    .getVisualOrderText());
             if (cell.hasSubmitter() && !cell.submitterName().isEmpty()) {
-                lines.add(Component.translatable("itembingo.cell.submitted_by", cell.submitterName())
-                        .getVisualOrderText());
+                lines.add(Component.translatable("itembingo.cell.submitted_by",
+                                Component.literal(cell.submitterName()).withStyle(ChatFormatting.GOLD))
+                        .withStyle(ChatFormatting.GRAY).getVisualOrderText());
             }
             if (cell.elapsedSeconds() >= 0) {
-                lines.add(Component.translatable("itembingo.cell.time", formatElapsed(cell.elapsedSeconds()))
-                        .getVisualOrderText());
+                lines.add(Component.translatable("itembingo.cell.time",
+                                Component.literal(formatElapsed(cell.elapsedSeconds())).withStyle(ChatFormatting.WHITE))
+                        .withStyle(ChatFormatting.DARK_GRAY).getVisualOrderText());
             }
+        } else if (!cursor.isEmpty()) {
+            // Carrying something: say immediately whether this cell takes it.
+            boolean match = cell.item() != null && cursor.getItem() == cell.item();
+            lines.add((match
+                    ? Component.translatable("itembingo.cell.click_to_submit").withStyle(ChatFormatting.GREEN)
+                    : Component.translatable("itembingo.cell.wrong_item").withStyle(ChatFormatting.RED))
+                    .getVisualOrderText());
         }
         return lines;
     }
@@ -398,20 +529,21 @@ public class BingoBoardScreen extends Screen {
             g.outline(x, y, SLOT, SLOT, 0xFF2A2A32);
 
             ItemStack stack = playerStack(i);
-            if (!stack.isEmpty() && !(draggingSlot == i)) {
+            if (!stack.isEmpty()) {
                 g.item(stack, x + 1, y + 1);
                 g.itemDecorations(font, stack, x + 1, y + 1);
             }
         }
 
-        if (hoveredSlot >= 0 && draggingSlot < 0) {
+        if (hoveredSlot >= 0 && carried().isEmpty()) {
             ItemStack stack = playerStack(hoveredSlot);
             if (!stack.isEmpty()) {
                 List<FormattedCharSequence> lines = new ArrayList<>();
                 for (Component line : getTooltipFromItem(minecraft(), stack)) {
                     lines.add(line.getVisualOrderText());
                 }
-                lines.add(Component.translatable("itembingo.screen.submit_hint").getVisualOrderText());
+                lines.add(Component.translatable("itembingo.screen.submit_hint")
+                        .withStyle(ChatFormatting.DARK_GRAY).getVisualOrderText());
                 g.setTooltipForNextFrame(lines, mouseX, mouseY);
             }
         }

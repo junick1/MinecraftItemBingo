@@ -13,7 +13,7 @@ package me.junick.itembingo.client.net;
 public final class ModProtocol {
     private ModProtocol() {}
 
-    public static final int PROTOCOL_VERSION = 1;
+    public static final int PROTOCOL_VERSION = 2;
 
     public static final byte STATUS_OK = 0;
     public static final byte STATUS_NO_BOARD = 1;
@@ -26,6 +26,9 @@ public final class ModProtocol {
 
     public static final byte SUBMIT_DIRECT = 0;
     public static final byte SUBMIT_SHIFT = 1;
+
+    /** Sentinel inventorySlot: the item is on the player's cursor, not in a slot. */
+    public static final int SLOT_CURSOR = 255;
 
     /** Fog of War submit-lock is active: hidden cells reject submissions. */
     public static final int FLAG_FOG_SUBMIT_LOCK = 1;

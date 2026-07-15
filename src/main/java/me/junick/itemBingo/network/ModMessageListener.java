@@ -82,9 +82,11 @@ public final class ModMessageListener implements PluginMessageListener {
         TeamManager tm = ItemBingo.getInstance().getTeamManager();
         if (Settings.isTeamEnabled() && tm.getTeamId(p) == TeamManager.NO_TEAM) return;
 
-        if (invSlot > 35) return; // hotbar 0-8 + main inventory 9-35 only
+        boolean fromCursor = invSlot == ModProtocol.SLOT_CURSOR;
+        if (!fromCursor && invSlot > 35) return; // hotbar 0-8 + main inventory 9-35 only
+        if (fromCursor && mode != ModProtocol.SUBMIT_DIRECT) return; // shift-submit is slot-based
 
-        ItemStack item = p.getInventory().getItem(invSlot);
+        ItemStack item = fromCursor ? p.getItemOnCursor() : p.getInventory().getItem(invSlot);
 
         // Staleness guard: the client names the item it thinks it is submitting.
         // If the live slot disagrees, the client's inventory view was outdated —
@@ -100,7 +102,7 @@ public final class ModMessageListener implements PluginMessageListener {
         if (mode == ModProtocol.SUBMIT_DIRECT) {
             switch (SubmissionService.validateDirect(p, progress, board, cellIndex, item)) {
                 case OK, OK_FILLER -> {
-                    consumeOne(p, invSlot, item);
+                    consumeOne(p, fromCursor ? -1 : invSlot, item);
                     SubmissionService.completeSubmission(p, progress, board, cellIndex);
                 }
                 case LOCKED -> SubmissionService.sendLockedMessage(p);
@@ -118,8 +120,14 @@ public final class ModMessageListener implements PluginMessageListener {
         }
     }
 
+    /** Consumes one from a slot, or from the cursor when {@code slot} is -1. */
     private void consumeOne(Player p, int slot, ItemStack item) {
         item.setAmount(item.getAmount() - 1);
-        p.getInventory().setItem(slot, item.getAmount() <= 0 ? null : item);
+        ItemStack remainder = item.getAmount() <= 0 ? null : item;
+        if (slot < 0) {
+            p.setItemOnCursor(remainder);
+        } else {
+            p.getInventory().setItem(slot, remainder);
+        }
     }
 }
