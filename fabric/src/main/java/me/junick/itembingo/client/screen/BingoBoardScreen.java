@@ -519,16 +519,17 @@ public class BingoBoardScreen extends Screen {
         boolean carryingMatch = !cursor.isEmpty() && cell.isVisible()
                 && cell.item() != null && cursor.getItem() == cell.item();
 
-        int bg = switch (cell.kind()) {
-            case ModProtocol.CELL_HIDDEN -> 0xE0181820;
-            case ModProtocol.CELL_LOCKED -> 0x80581414;
-            default -> 0x60000000;
-        };
-        g.fill(x + 1, y + 1, x + size - 1, y + size - 1, bg);
+        if (cell.kind() == ModProtocol.CELL_HIDDEN) {
+            // Fog: a soft slate-blue gradient, clearly different from the flat
+            // near-black of ordinary cells — no glyph, just "misted over".
+            g.fillGradient(x + 1, y + 1, x + size - 1, y + size - 1, 0xF02A3247, 0xF0161B26);
+        } else {
+            g.fill(x + 1, y + 1, x + size - 1, y + size - 1,
+                    cell.kind() == ModProtocol.CELL_LOCKED ? 0x80581414 : 0x60000000);
+        }
 
         switch (cell.kind()) {
-            case ModProtocol.CELL_HIDDEN ->
-                    Glyphs.fog(g, x + size / 2.0f, y + size / 2.0f, size * 0.66f, 0x6E9AA6C4);
+            case ModProtocol.CELL_HIDDEN -> { /* fog is just the tinted cell */ }
             case ModProtocol.CELL_LOCKED -> {
                 drawScaledItem(g, new ItemStack(Items.BARRIER), x, y, size);
                 if (hovered) {

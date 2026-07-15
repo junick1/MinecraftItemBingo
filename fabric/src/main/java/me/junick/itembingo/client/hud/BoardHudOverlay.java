@@ -81,10 +81,8 @@ public final class BoardHudOverlay implements HudElement {
 
     private void renderCell(GuiGraphicsExtractor g, CellState state, int x, int y, int cell) {
         switch (state.kind()) {
-            case ModProtocol.CELL_HIDDEN -> {
-                g.fill(x, y, x + cell - 1, y + cell - 1, 0xE01A1A22);
-                Glyphs.fog(g, x + (cell - 1) / 2.0f, y + (cell - 1) / 2.0f, cell * 0.7f, 0x559AA6C4);
-            }
+            case ModProtocol.CELL_HIDDEN ->
+                    g.fillGradient(x, y, x + cell - 1, y + cell - 1, 0xF02A3247, 0xF0161B26);
             case ModProtocol.CELL_LOCKED -> g.fill(x, y, x + cell - 1, y + cell - 1, 0xC0701818);
             default -> {
                 g.fill(x, y, x + cell - 1, y + cell - 1, 0x60000000);
