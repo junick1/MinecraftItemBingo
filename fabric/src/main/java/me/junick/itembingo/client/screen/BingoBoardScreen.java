@@ -10,7 +10,6 @@ import me.junick.itembingo.client.state.CellState;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.PlayerFaceExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -21,7 +20,6 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
@@ -171,12 +169,6 @@ public class BingoBoardScreen extends Screen {
         boolean left = button == GLFW.GLFW_MOUSE_BUTTON_LEFT;
         boolean right = button == GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
-        if (BoardImageExporter.armed()) return true; // capturing: ignore input
-        if (BoardImageExporter.showing()) {
-            BoardImageExporter.dismiss(); // any click ends the confirmation beat
-            return true;
-        }
-
         if (exportPopupOpen) {
             if (left) {
                 if (btnOrigCopy.contains(event.x(), event.y())) {
@@ -315,7 +307,7 @@ public class BingoBoardScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (exportPopupOpen || BoardImageExporter.armed()) return true;
+        if (exportPopupOpen) return true;
         if (hasCtrl()) {
             camera.zoomAt(mouseX, mouseY - boardTop(), scrollY);
         } else if (hasShift()) {
@@ -331,10 +323,6 @@ public class BingoBoardScreen extends Screen {
     public boolean keyPressed(KeyEvent event) {
         var options = minecraft().options;
 
-        if (BoardImageExporter.showing()) {
-            BoardImageExporter.dismiss();
-            return true;
-        }
         if (exportPopupOpen && event.isEscape()) {
             exportPopupOpen = false;
             return true;
@@ -399,12 +387,6 @@ public class BingoBoardScreen extends Screen {
         lastMouseY = mouseY;
         camera.sync(BoardClientState.width(), BoardClientState.height(),
                 width, boardBottom() - boardTop());
-
-        if (BoardImageExporter.armed() || BoardImageExporter.showing()) {
-            exportPopupOpen = false;
-            renderExportFrame(g);
-            return;
-        }
 
         g.fill(0, 0, width, height, 0xC8101014);
         renderHeader(g);
@@ -563,171 +545,6 @@ public class BingoBoardScreen extends Screen {
         return rect;
     }
 
-    /** One clean frame for the framebuffer capture: the "results card". */
-    private void renderExportFrame(GuiGraphicsExtractor g) {
-        g.fill(0, 0, width, height, 0xFF0E0F12);
-
-        CellState[] cells = BoardImageExporter.cells();
-        int w = BoardImageExporter.boardWidth();
-        int h = BoardImageExporter.boardHeight();
-        if (cells == null || w <= 0 || h <= 0) return;
-
-        List<BoardImageExporter.Contribution> contribs = BoardImageExporter.contributions();
-        int shownRows = Math.min(contribs.size(), 8);
-        boolean truncated = contribs.size() > shownRows;
-
-        int pad = 8;
-        int headerH = 24;
-        int contribH = shownRows > 0 ? 18 + shownRows * 22 + (truncated ? 12 : 0) : 0;
-        int cell = Math.clamp(Math.min((width - 2 * pad - 16) / w,
-                (height - 2 * pad - 16 - headerH - contribH) / h), 6, 48);
-        int gridW = cell * w;
-        int panelW = Math.max(gridW, shownRows > 0 ? 230 : 170);
-        int totalH = headerH + cell * h + contribH;
-        int x0 = (width - panelW) / 2;
-        int y0 = (height - totalH) / 2;
-
-        g.fill(x0 - pad, y0 - pad, x0 + panelW + pad, y0 + totalH + pad, 0xFF14161C);
-        g.outline(x0 - pad, y0 - pad, panelW + 2 * pad, totalH + 2 * pad, 0xFF2A303E);
-
-        // Header: title at 1.4x, chips right-aligned.
-        var pose = g.pose();
-        pose.pushMatrix();
-        pose.translate(x0, y0 + 3);
-        pose.scale(1.4f, 1.4f);
-        g.text(font, BoardImageExporter.title(), 0, 0, 0xFFFFFFFF);
-        pose.popMatrix();
-
-        int chipRight = x0 + panelW;
-        List<Component> chipList = BoardImageExporter.chips();
-        for (int i = chipList.size() - 1; i >= 0; i--) {
-            Component chip = chipList.get(i);
-            int cw = font.width(chip) + 8;
-            int cx = chipRight - cw;
-            g.fill(cx, y0 + 2, cx + cw, y0 + 16, 0xFF1E2430);
-            g.outline(cx, y0 + 2, cw, 14, 0xFF394152);
-            g.text(font, chip, cx + 4, y0 + 5, 0xFFB8C4DA);
-            chipRight = cx - 4;
-        }
-
-        // Board grid, centered when the contribution list is wider.
-        int gx = x0 + (panelW - gridW) / 2;
-        int gy = y0 + headerH;
-        for (int row = 0; row < h; row++) {
-            for (int col = 0; col < w; col++) {
-                drawExportCell(g, cells[row * w + col], gx + col * cell, gy + row * cell, cell);
-            }
-        }
-
-        if (shownRows > 0) {
-            renderContributions(g, contribs, shownRows, truncated, x0, gy + cell * h + 4, panelW);
-        }
-
-        BoardImageExporter.onExportFrame(x0 - pad, y0 - pad, panelW + 2 * pad, totalH + 2 * pad);
-
-        // Post-capture confirmation beat: the card holds with a result badge
-        // (kept OUTSIDE the reported crop rect so it never bakes into the PNG).
-        if (BoardImageExporter.showing()) {
-            Component badge = BoardImageExporter.resultBadge();
-            if (badge != null) {
-                int bw = font.width(badge) + 16;
-                int bx = (width - bw) / 2;
-                int by = y0 + totalH + pad + 8;
-                g.fill(bx, by, bx + bw, by + 16, 0xF0181A20);
-                g.outline(bx, by, bw, 16, 0xFF4A5266);
-                g.text(font, badge, bx + 8, by + 4, 0xFFFFFFFF);
-            }
-        }
-    }
-
-    /** Ranked teammate list: avatar, name, bar, cell count; gold #1 row. */
-    private void renderContributions(GuiGraphicsExtractor g, List<BoardImageExporter.Contribution> contribs,
-                                     int shownRows, boolean truncated, int x0, int y, int panelW) {
-        g.text(font, Component.translatable("itembingo.export.contribution"), x0, y + 3, 0xFFDDE2EE);
-
-        int maxCount = Math.max(1, contribs.getFirst().count());
-        int nameColW = 40;
-        for (int i = 0; i < shownRows; i++) {
-            nameColW = Math.max(nameColW, Math.min(104, font.width(contribs.get(i).name()) + 6));
-        }
-        int rowsTop = y + 15;
-        for (int i = 0; i < shownRows; i++) {
-            BoardImageExporter.Contribution entry = contribs.get(i);
-            int ry = rowsTop + i * 22;
-            boolean mvp = i == 0;
-
-            g.fill(x0, ry, x0 + panelW, ry + 20, mvp ? 0x30E8C84A : 0x14FFFFFF);
-            if (mvp) {
-                g.outline(x0, ry, panelW, 20, 0xFFE8C84A);
-            }
-
-            g.text(font, String.valueOf(i + 1), x0 + 6, ry + 6, mvp ? 0xFFE8C84A : 0xFF8A93A6);
-
-            drawPlayerFace(g, entry.name(), x0 + 18, ry + 1, 18);
-
-            int nameX = x0 + 42;
-            g.text(font, entry.name(), nameX, ry + 6, mvp ? 0xFFF6E6A8 : 0xFFE8ECF4);
-
-            String count = String.valueOf(entry.count());
-            int countW = font.width(count);
-            g.text(font, count, x0 + panelW - countW - 6, ry + 6, 0xFFFFFFFF);
-
-            int barX = nameX + nameColW;
-            int barW = x0 + panelW - countW - 14 - barX;
-            if (barW > 24) {
-                int barY = ry + 8;
-                g.fill(barX, barY, barX + barW, barY + 4, 0xFF262B36);
-                int fill = Math.max(2, (int) ((long) barW * entry.count() / maxCount));
-                g.fill(barX, barY, barX + fill, barY + 4, mvp ? 0xFFE8C84A : 0xFF4C7DD8);
-            }
-        }
-
-        if (truncated) {
-            g.text(font, Component.translatable("itembingo.export.more", contribs.size() - shownRows),
-                    x0 + 4, rowsTop + shownRows * 22 + 2, 0xFF8A93A6);
-        }
-    }
-
-    /** Skin face for online teammates; tinted initial tile for offline ones. */
-    private void drawPlayerFace(GuiGraphicsExtractor g, String name, int x, int y, int size) {
-        var connection = minecraft().getConnection();
-        var info = connection != null ? connection.getPlayerInfo(name) : null;
-        if (info != null) {
-            PlayerFaceExtractor.extractRenderState(g, info.getSkin(), x, y, size);
-            return;
-        }
-        int[] palette = {0xFF534AB7, 0xFF0F6E56, 0xFF993C1D, 0xFF993556, 0xFF185FA5, 0xFF854F0B};
-        g.fill(x, y, x + size, y + size, palette[Math.floorMod(name.hashCode(), palette.length)]);
-        String initial = name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase();
-        g.centeredText(font, initial, x + size / 2, y + (size - 9) / 2 + 1, 0xFFFFFFFF);
-    }
-
-    private void drawExportCell(GuiGraphicsExtractor g, CellState cell, int x, int y, int size) {
-        if (cell == null) return;
-        if (cell.kind() == ModProtocol.CELL_HIDDEN) {
-            g.fillGradient(x + 1, y + 1, x + size - 1, y + size - 1, 0xF02A3247, 0xF0161B26);
-        } else {
-            g.fill(x + 1, y + 1, x + size - 1, y + size - 1,
-                    cell.kind() == ModProtocol.CELL_LOCKED ? 0x80581414 : 0x60000000);
-        }
-        switch (cell.kind()) {
-            case ModProtocol.CELL_LOCKED -> drawScaledItem(g, CellState.BARRIER_STACK, x, y, size);
-            case ModProtocol.CELL_VISIBLE, ModProtocol.CELL_SUBMITTED -> {
-                if (cell.stack() != null) {
-                    drawScaledItem(g, cell.stack(), x, y, size);
-                } else {
-                    g.centeredText(font, "?", x + size / 2, y + (size - 9) / 2, 0xFFFFCC44);
-                }
-                if (cell.isSubmitted()) {
-                    g.fill(x + 1, y + 1, x + size - 1, y + size - 1, 0x8A1E7A2E);
-                    Glyphs.check(g, x + size / 2.0f, y + size / 2.0f, size * 0.62f,
-                            0xFFEAFFEA, 0x900A2F10);
-                }
-            }
-            default -> {}
-        }
-        g.outline(x, y, size, size, 0xFF3C3C46);
-    }
 
     private static String modeKey(byte mode) {
         return switch (mode) {

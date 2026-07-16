@@ -10,6 +10,7 @@
   "entrypoints": {
     "client": ["me.junick.itembingo.client.ItemBingoClient"]
   },
+  "mixins": ["itembingo.mixins.json"],
   "depends": {
     "fabricloader": "*",
     "fabric-api": "*",
