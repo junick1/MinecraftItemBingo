@@ -719,7 +719,6 @@ public class BingoBoardScreen extends Screen {
         g.enableScissor(0, top, width, bottom);
 
         int w = BoardClientState.width();
-        double size = camera.cellScreenSize();
         int hoveredIdx = panning ? -1 : cellIndexAt(mouseX, mouseY);
         ItemStack cursor = carried();
         long now = System.currentTimeMillis();
@@ -732,7 +731,9 @@ public class BingoBoardScreen extends Screen {
             if (hoveredSlot >= 0) reference = playerStack(hoveredSlot);
         }
 
-        // Only the cells actually inside the viewport get touched.
+        // Only the cells actually inside the viewport get touched. Each cell is
+        // tiled to its neighbor's ROUNDED edge — rounding position and size
+        // independently leaves 1px gaps at fractional zooms.
         int firstRow = camera.firstVisibleRow();
         int lastRow = camera.lastVisibleRow();
         int firstCol = camera.firstVisibleCol();
@@ -740,12 +741,14 @@ public class BingoBoardScreen extends Screen {
 
         for (int row = firstRow; row <= lastRow; row++) {
             int y = (int) Math.round(camera.cellScreenY(row, top));
+            int y2 = (int) Math.round(camera.cellScreenY(row + 1, top));
             for (int col = firstCol; col <= lastCol; col++) {
                 int x = (int) Math.round(camera.cellScreenX(col, 0));
+                int x2 = (int) Math.round(camera.cellScreenX(col + 1, 0));
                 int idx = row * w + col;
                 CellState cell = BoardClientState.cell(col, row);
                 if (cell == null) continue;
-                renderCell(g, cell, x, y, (int) Math.round(size), hoveredIdx == idx,
+                renderCell(g, cell, x, y, x2 - x, y2 - y, hoveredIdx == idx,
                         cursor, reference, mouseX, mouseY, BoardClientState.flashAlpha(idx, now));
             }
         }
@@ -753,25 +756,29 @@ public class BingoBoardScreen extends Screen {
         g.disableScissor();
     }
 
-    private void renderCell(GuiGraphicsExtractor g, CellState cell, int x, int y, int size,
+    private void renderCell(GuiGraphicsExtractor g, CellState cell, int x, int y, int cw, int ch,
                             boolean hovered, ItemStack cursor, ItemStack reference,
                             int mouseX, int mouseY, float flash) {
+        int size = Math.min(cw, ch);
         boolean referenceMatch = !reference.isEmpty() && cell.isVisible()
                 && cell.item() != null && reference.getItem() == cell.item();
+
+        int ix = x + (cw - size) / 2;
+        int iy = y + (ch - size) / 2;
 
         if (cell.kind() == ModProtocol.CELL_HIDDEN) {
             // Fog: a soft slate-blue gradient, clearly different from the flat
             // near-black of ordinary cells — no glyph, just "misted over".
-            g.fillGradient(x + 1, y + 1, x + size - 1, y + size - 1, 0xF02A3247, 0xF0161B26);
+            g.fillGradient(x + 1, y + 1, x + cw - 1, y + ch - 1, 0xF02A3247, 0xF0161B26);
         } else {
-            g.fill(x + 1, y + 1, x + size - 1, y + size - 1,
+            g.fill(x + 1, y + 1, x + cw - 1, y + ch - 1,
                     cell.kind() == ModProtocol.CELL_LOCKED ? 0x80581414 : 0x60000000);
         }
 
         switch (cell.kind()) {
             case ModProtocol.CELL_HIDDEN -> { /* fog is just the tinted cell */ }
             case ModProtocol.CELL_LOCKED -> {
-                drawScaledItem(g, new ItemStack(Items.BARRIER), x, y, size);
+                drawScaledItem(g, new ItemStack(Items.BARRIER), ix, iy, size);
                 if (hovered) {
                     g.setTooltipForNextFrame(Component.translatable("itembingo.cell.locked")
                             .withStyle(ChatFormatting.RED), mouseX, mouseY);
@@ -779,15 +786,15 @@ public class BingoBoardScreen extends Screen {
             }
             case ModProtocol.CELL_VISIBLE, ModProtocol.CELL_SUBMITTED -> {
                 if (cell.item() != null) {
-                    drawScaledItem(g, new ItemStack(cell.item()), x, y, size);
+                    drawScaledItem(g, new ItemStack(cell.item()), ix, iy, size);
                 } else {
-                    g.centeredText(font, "?", x + size / 2, y + (size - 9) / 2, 0xFFFFCC44);
+                    g.centeredText(font, "?", x + cw / 2, y + (ch - 9) / 2, 0xFFFFCC44);
                 }
                 if (cell.isSubmitted()) {
                     // Layered "done" treatment: icon below, translucent green
                     // wash above it, and a big check on top.
-                    g.fill(x + 1, y + 1, x + size - 1, y + size - 1, 0x8A1E7A2E);
-                    Glyphs.check(g, x + size / 2.0f, y + size / 2.0f, size * 0.62f,
+                    g.fill(x + 1, y + 1, x + cw - 1, y + ch - 1, 0x8A1E7A2E);
+                    Glyphs.check(g, x + cw / 2.0f, y + ch / 2.0f, size * 0.62f,
                             0xFFEAFFEA, 0x900A2F10);
                 }
                 if (hovered) {
@@ -799,13 +806,13 @@ public class BingoBoardScreen extends Screen {
 
         if (flash > 0) {
             int alpha = (int) (flash * 0xA0) << 24;
-            g.fill(x + 1, y + 1, x + size - 1, y + size - 1, alpha | 0xFFFFFF);
+            g.fill(x + 1, y + 1, x + cw - 1, y + ch - 1, alpha | 0xFFFFFF);
         }
 
         // Border last so highlights sit above the cell content: gold on cells
         // matching the carried or hovered item, white on hover.
         int border = hovered ? 0xFFFFFFFF : referenceMatch ? 0xFFE8C84A : 0xFF3C3C46;
-        g.outline(x, y, size, size, border);
+        g.outline(x, y, cw, ch, border);
     }
 
     private void drawScaledItem(GuiGraphicsExtractor g, ItemStack stack, int x, int y, int size) {

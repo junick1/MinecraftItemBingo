@@ -30,6 +30,10 @@ public final class ModConfig {
         public float scale = 1.0f;
         public int maxGridWidth = 7;
         public int maxGridHeight = 7;
+        /** Overlay board viewport in camera units; -1 = derive from maxGrid*. */
+        public int overlayWidth = -1;
+        public int overlayHeight = -1;
+        public boolean overlayLocked = false;
         public boolean overrideBingoCommand = true;
     }
 
@@ -58,6 +62,31 @@ public final class ModConfig {
         data.offsetX = Math.max(0, offsetX);
         data.offsetY = Math.max(0, offsetY);
         save();
+    }
+
+    /** Overlay board viewport width in camera units (66 = 3 cells minimum). */
+    public static int overlayWidth() {
+        int w = data.overlayWidth > 0 ? data.overlayWidth : maxGridWidth() * 22;
+        return Math.clamp(w, 66, 1320);
+    }
+
+    public static int overlayHeight() {
+        int h = data.overlayHeight > 0 ? data.overlayHeight : maxGridHeight() * 22;
+        return Math.clamp(h, 66, 1320);
+    }
+
+    public static void setOverlaySize(int width, int height) {
+        data.overlayWidth = Math.clamp(width, 66, 1320);
+        data.overlayHeight = Math.clamp(height, 66, 1320);
+        save();
+    }
+
+    public static boolean overlayLocked() { return data.overlayLocked; }
+
+    public static boolean toggleOverlayLocked() {
+        data.overlayLocked = !data.overlayLocked;
+        save();
+        return data.overlayLocked;
     }
 
     public static boolean toggleOverrideBingo() {
