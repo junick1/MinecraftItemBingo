@@ -13,7 +13,24 @@ package me.junick.itembingo.client.net;
 public final class ModProtocol {
     private ModProtocol() {}
 
-    public static final int PROTOCOL_VERSION = 4;
+    public static final int PROTOCOL_VERSION = 5;
+
+    public static final byte HELLO_REJECTED = 0;
+    public static final byte HELLO_ACCEPTED = 1;
+    /** Server asks the client to re-send its hello (plugin reloaded). */
+    public static final byte HELLO_REQUEST = 2;
+
+    public static final byte ACK_OK = 0;
+    public static final byte ACK_LOCKED = 1;
+    public static final byte ACK_MISMATCH = 2;
+    public static final byte ACK_STALE = 3;
+    public static final byte ACK_NOT_RUNNING = 4;
+
+    /** Explicit wire values for the game mode — never enum ordinals. */
+    public static final byte MODE_NORMAL = 0;
+    public static final byte MODE_SWAPPAGE = 1;
+    public static final byte MODE_FOG_OF_WAR = 2;
+    public static final byte MODE_LOCKOUT = 3;
 
     public static final byte STATUS_OK = 0;
     public static final byte STATUS_NO_BOARD = 1;
@@ -34,6 +51,7 @@ public final class ModProtocol {
     public static final byte ORIGINAL_OK = 0;
     public static final byte ORIGINAL_DENIED_FOG = 1;
     public static final byte ORIGINAL_NO_BOARD = 2;
+    public static final byte ORIGINAL_VIEW_DENIED = 3;
 
     /** Game lifecycle stage carried in the board payload. */
     public static final byte STAGE_NOT_STARTED = 0;
@@ -42,4 +60,6 @@ public final class ModProtocol {
 
     /** Fog of War submit-lock is active: hidden cells reject submissions. */
     public static final int FLAG_FOG_SUBMIT_LOCK = 1;
+    /** Team mode is enabled (labels shift from "my" to "team" wording). */
+    public static final int FLAG_TEAM_MODE = 2;
 }

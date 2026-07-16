@@ -43,7 +43,16 @@ public final class SubmissionService {
 
     /** Outcome of validating a direct (specific-cell) submission attempt. */
     public enum DirectResult {
-        OK, OK_FILLER, OUT_OF_RANGE, ALREADY_SUBMITTED, FOG_HIDDEN, LOCKED, INVALID_ITEM, ITEM_MISMATCH
+        OK, OK_FILLER, GAME_NOT_RUNNING, OUT_OF_RANGE, ALREADY_SUBMITTED, FOG_HIDDEN, LOCKED, INVALID_ITEM, ITEM_MISMATCH
+    }
+
+    /**
+     * Whether submissions are currently accepted: always when the timer gate
+     * is disabled in settings, otherwise only while a game is RUNNING.
+     */
+    public static boolean isSubmissionOpen() {
+        return !Settings.isRequireTimerForSubmits()
+                || TimerManager.getStage() == TimerManager.GameStage.RUNNING;
     }
 
     /**
@@ -54,6 +63,7 @@ public final class SubmissionService {
      */
     public static DirectResult validateDirect(Player p, BingoProgressAccess progress,
                                               BingoBoard board, int idx, ItemStack candidate) {
+        if (!isSubmissionOpen()) return DirectResult.GAME_NOT_RUNNING;
         if (idx < 0 || idx >= board.getItems().size()) return DirectResult.OUT_OF_RANGE;
         if (progress.isSubmitted(idx)) return DirectResult.ALREADY_SUBMITTED;
 
@@ -83,6 +93,7 @@ public final class SubmissionService {
      */
     public static int findShiftTarget(Player p, BingoProgressAccess progress,
                                       BingoBoard board, ItemStack candidate) {
+        if (!isSubmissionOpen()) return -1;
         if (!isValidItem(candidate)) return -1;
         if (CustomItems.is(candidate, BingoItem.BINGO_FILLER)) return -1;
 
@@ -185,6 +196,12 @@ public final class SubmissionService {
     /** 잘못된 아이템 메세지 */
     public static void sendInvalidItemMessage(Player p) {
         p.sendMessage(Messages.get(p, "board.invalid-item"));
+        playErrorSound(p);
+    }
+
+    /** 게임이 진행 중이 아닐 때 제출 시도 메세지 */
+    public static void sendGameNotRunningMessage(Player p) {
+        p.sendMessage(Messages.get(p, "board.game-not-running"));
         playErrorSound(p);
     }
 

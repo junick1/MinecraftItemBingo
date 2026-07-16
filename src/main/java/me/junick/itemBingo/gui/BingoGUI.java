@@ -8,6 +8,7 @@ import me.junick.itemBingo.i18n.SupportedLocale;
 import me.junick.itemBingo.interfaces.access.BingoProgressAccess;
 import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.util.BingoTagLoader;
+import me.junick.itemBingo.util.BoardCellView;
 import me.junick.itemBingo.util.FogOfWar;
 import me.junick.itemBingo.util.Lockout;
 import me.junick.itemBingo.util.ProgressFactory;
@@ -264,17 +265,16 @@ public class BingoGUI {
             return withTagLore(board.getItems().get(index), tagLoader, loc);
         }
 
-        if (progress.isSubmitted(index)) {
-            UUID owner = progress.getSubmitterId(index);
-            return submittedIcon(board.getItems().get(index).getType(), owner, progress.getSubmitterName(index),
-                    progressFraction(progress, owner, total), progress.getSubmissionTime(index), loc);
-        } else if (locked.contains(index)) {
-            return lockedIcon(loc);
-        } else if (fog && !revealed.contains(index)) {
-            return hiddenCell();
-        } else {
-            return withTagLore(board.getItems().get(index), tagLoader, loc);
-        }
+        return switch (BoardCellView.of(index, progress, fog ? revealed : null, locked)) {
+            case SUBMITTED -> {
+                UUID owner = progress.getSubmitterId(index);
+                yield submittedIcon(board.getItems().get(index).getType(), owner, progress.getSubmitterName(index),
+                        progressFraction(progress, owner, total), progress.getSubmissionTime(index), loc);
+            }
+            case LOCKED -> lockedIcon(loc);
+            case HIDDEN -> hiddenCell();
+            case VISIBLE -> withTagLore(board.getItems().get(index), tagLoader, loc);
+        };
     }
 
     /** A scroll-arrow button (one per live edge); cosmetic only — handled by slot in the click listener. */

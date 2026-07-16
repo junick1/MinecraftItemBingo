@@ -34,6 +34,7 @@ public final class ModConfig {
         public int overlayWidth = -1;
         public int overlayHeight = -1;
         public boolean overlayLocked = false;
+        public boolean overlayHintShown = false;
         public boolean overrideBingoCommand = true;
     }
 
@@ -87,6 +88,16 @@ public final class ModConfig {
         data.overlayLocked = !data.overlayLocked;
         save();
         return data.overlayLocked;
+    }
+
+    /** One-time overlay gesture hint: shown until the player interacts once. */
+    public static boolean overlayHintShown() { return data.overlayHintShown; }
+
+    public static void markOverlayHintShown() {
+        if (!data.overlayHintShown) {
+            data.overlayHintShown = true;
+            save();
+        }
     }
 
     public static boolean toggleOverrideBingo() {

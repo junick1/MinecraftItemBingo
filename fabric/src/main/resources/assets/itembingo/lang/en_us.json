@@ -33,6 +33,7 @@
   "itembingo.export.title": "Export board image",
   "itembingo.export.original": "Original board",
   "itembingo.export.progress": "My progress",
+  "itembingo.export.progress.team": "Team progress",
   "itembingo.export.copy": "Copy",
   "itembingo.export.save": "Save",
   "itembingo.export.requesting": "Requesting original board…",
@@ -44,9 +45,15 @@
   "itembingo.export.saved": "Board image saved as %s",
   "itembingo.export.header.original": "Bingo Board",
   "itembingo.export.header.progress": "Bingo Progress",
+  "itembingo.export.header.progress.team": "Team Bingo Progress",
   "itembingo.export.contribution": "Team contribution",
   "itembingo.export.more": "+%s more",
   "itembingo.export.starter_only": "Starter reveals only",
+
+  "itembingo.overlay.hint": "Drag: move · Scroll: pan · Ctrl+Scroll: zoom · Padlock: lock",
+  "itembingo.overlay.lock_locked": "Locked — dragging pans the board. Click to unlock.",
+  "itembingo.overlay.lock_unlocked": "Click to lock position and size.",
+  "itembingo.overlay.resize": "Drag to resize",
 
   "itembingo.settings.bingo_mod": "/bingo: mod",
   "itembingo.settings.bingo_server": "/bingo: server",

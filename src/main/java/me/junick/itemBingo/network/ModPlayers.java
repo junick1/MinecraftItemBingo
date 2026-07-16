@@ -45,5 +45,6 @@ public final class ModPlayers implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         remove(e.getPlayer());
+        ModMessageListener.clearRate(e.getPlayer().getUniqueId());
     }
 }

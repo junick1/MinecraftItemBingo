@@ -120,7 +120,7 @@ public final class BoardHudOverlay implements HudElement {
         panelW = Math.round((innerW() + 4) * s);
         panelH = Math.round((innerH() + 4) * s) + 11; // + progress line (unscaled)
 
-        if (dragging) {
+        if (dragging || resizing) {
             panelX = dragX;
             panelY = dragY;
         } else {
@@ -210,6 +210,44 @@ public final class BoardHudOverlay implements HudElement {
         String progress = BoardClientState.submittedCount() + "/" + BoardClientState.totalCells();
         g.text(mc.font, progress, panelX + (panelW - mc.font.width(progress)) / 2,
                 panelY + panelH - 10, 0xFFCCCCCC);
+
+        if (hoveredNow) {
+            renderHoverHints(g, mc, locked, mouseX, mouseY);
+        }
+    }
+
+    /** Tooltips for the controls, plus a one-time gesture hint under the panel. */
+    private static void renderHoverHints(GuiGraphicsExtractor g, Minecraft mc, boolean locked,
+                                         int mouseX, int mouseY) {
+        net.minecraft.network.chat.Component tip = null;
+        if (inLockButton(mouseX, mouseY)) {
+            tip = net.minecraft.network.chat.Component.translatable(
+                    locked ? "itembingo.overlay.lock_locked" : "itembingo.overlay.lock_unlocked");
+        } else if (!locked && inResizeGrip(mouseX, mouseY)) {
+            tip = net.minecraft.network.chat.Component.translatable("itembingo.overlay.resize");
+        }
+        if (tip != null) {
+            drawMiniTooltip(g, mc, tip, mouseX, mouseY);
+        }
+
+        if (!ModConfig.overlayHintShown()) {
+            var hint = net.minecraft.network.chat.Component.translatable("itembingo.overlay.hint");
+            int hw = mc.font.width(hint);
+            int hx = Math.clamp(panelX + (panelW - hw) / 2, 2, Math.max(2, guiW - hw - 2));
+            int hy = panelY + panelH + 3 + 12 <= guiH ? panelY + panelH + 3 : panelY - 13;
+            g.fill(hx - 3, hy - 2, hx + hw + 3, hy + 11, 0xE0181A20);
+            g.text(mc.font, hint, hx, hy, 0xFFCCD6E8);
+        }
+    }
+
+    private static void drawMiniTooltip(GuiGraphicsExtractor g, Minecraft mc,
+                                        net.minecraft.network.chat.Component text, int mouseX, int mouseY) {
+        int tw = mc.font.width(text);
+        int tx = Math.clamp(mouseX + 8, 2, Math.max(2, guiW - tw - 8));
+        int ty = Math.clamp(mouseY - 14, 2, Math.max(2, guiH - 14));
+        g.fill(tx - 3, ty - 2, tx + tw + 3, ty + 11, 0xF0181A20);
+        g.outline(tx - 3, ty - 2, tw + 6, 13, 0xFF4A5266);
+        g.text(mc.font, text, tx, ty, 0xFFE8ECF4);
     }
 
     private static void renderCell(GuiGraphicsExtractor g, CellState cell, int x, int y,
@@ -222,13 +260,13 @@ public final class BoardHudOverlay implements HudElement {
             default -> {
                 g.fill(x + 1, y + 1, x + cw - 1, y + ch - 1, 0x60000000);
                 int size = Math.min(cw, ch);
-                if (cell.item() != null) {
+                if (cell.stack() != null) {
                     float iconScale = (size - 4) / 16.0f;
                     var pose = g.pose();
                     pose.pushMatrix();
                     pose.translate(x + (cw - size) / 2f + 2, y + (ch - size) / 2f + 2);
                     pose.scale(iconScale, iconScale);
-                    g.item(new ItemStack(cell.item()), 0, 0);
+                    g.item(cell.stack(), 0, 0);
                     pose.popMatrix();
                 }
                 if (cell.isSubmitted()) {
@@ -297,6 +335,7 @@ public final class BoardHudOverlay implements HudElement {
     private static boolean handleClick(MouseButtonEvent event) {
         if (!visible() || !inPanel(event.x(), event.y())) return false;
         if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            ModConfig.markOverlayHintShown();
             boolean locked = ModConfig.overlayLocked();
             if (inLockButton(event.x(), event.y())) {
                 ModConfig.toggleOverlayLocked();
@@ -304,6 +343,10 @@ public final class BoardHudOverlay implements HudElement {
                 resizing = true;
                 resizeW = ModConfig.overlayWidth();
                 resizeH = ModConfig.overlayHeight();
+                // Freeze the top-left for the drag so the grip tracks the
+                // cursor 1:1 even when the panel is anchored to a right corner.
+                dragX = panelX;
+                dragY = panelY;
             } else if (locked) {
                 panningBoard = true;
             } else {
@@ -345,26 +388,37 @@ public final class BoardHudOverlay implements HudElement {
         if (resizing) {
             resizing = false;
             ModConfig.setOverlaySize(resizeW, resizeH);
+            // Re-anchor from the frozen top-left with the NEW panel size, so
+            // the panel stays exactly where the player watched it grow.
+            float s = scale();
+            int newW = Math.round((ModConfig.overlayWidth() + 4) * s);
+            int newH = Math.round((ModConfig.overlayHeight() + 4) * s) + 11;
+            snapAndSave(dragX, dragY, newW, newH);
             return true;
         }
         if (dragging) {
             dragging = false;
-            // Snap to the nearest corner so the position survives window resizes.
-            boolean left = dragX + panelW / 2 < guiW / 2;
-            boolean top = dragY + panelH / 2 < guiH / 2;
-            ModConfig.Corner corner = left
-                    ? (top ? ModConfig.Corner.TOP_LEFT : ModConfig.Corner.BOTTOM_LEFT)
-                    : (top ? ModConfig.Corner.TOP_RIGHT : ModConfig.Corner.BOTTOM_RIGHT);
-            int offsetX = left ? dragX : guiW - (dragX + panelW);
-            int offsetY = top ? dragY : guiH - (dragY + panelH);
-            ModConfig.setPosition(corner, offsetX, offsetY);
+            snapAndSave(dragX, dragY, panelW, panelH);
             return true;
         }
         return false;
     }
 
+    /** Persists a position as offsets from the nearest screen corner. */
+    private static void snapAndSave(int px, int py, int pw, int ph) {
+        boolean left = px + pw / 2 < guiW / 2;
+        boolean top = py + ph / 2 < guiH / 2;
+        ModConfig.Corner corner = left
+                ? (top ? ModConfig.Corner.TOP_LEFT : ModConfig.Corner.BOTTOM_LEFT)
+                : (top ? ModConfig.Corner.TOP_RIGHT : ModConfig.Corner.BOTTOM_RIGHT);
+        int offsetX = left ? px : guiW - (px + pw);
+        int offsetY = top ? py : guiH - (py + ph);
+        ModConfig.setPosition(corner, offsetX, offsetY);
+    }
+
     private static boolean handleScroll(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (!visible() || !inPanel(mouseX, mouseY)) return false;
+        ModConfig.markOverlayHintShown();
         Minecraft mc = Minecraft.getInstance();
         float s = scale();
         double viewX = (mouseX - (panelX + 2 * s)) / s;

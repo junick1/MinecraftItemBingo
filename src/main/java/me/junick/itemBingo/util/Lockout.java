@@ -34,6 +34,29 @@ public final class Lockout {
      * <p>Cells the viewer's own team has submitted are excluded — those render as
      * normal submitted cells, not locks.
      */
+    /**
+     * Every claimed cell by ANYONE, viewer-agnostic. Broadcasts compute this
+     * once and derive each viewer's locked set as {@code allClaimed − own
+     * submissions}, instead of rescanning all progress data per viewer.
+     * Empty when not in Lockout mode.
+     */
+    public static Set<Integer> allClaimedSlots() {
+        if (!Settings.isLockoutMode()) return Collections.emptySet();
+
+        Set<Integer> claimed = new HashSet<>();
+        TeamManager tm = ItemBingo.getInstance().getTeamManager();
+        if (Settings.isTeamEnabled() && tm != null) {
+            for (TeamBingoProgress progress : TeamDataManager.getAllData().values()) {
+                claimed.addAll(progress.getSubmittedSlots());
+            }
+        } else {
+            for (PlayerBingoProgress progress : PlayerDataManager.getAllData().values()) {
+                claimed.addAll(progress.getSubmittedSlots());
+            }
+        }
+        return claimed;
+    }
+
     public static Set<Integer> lockedSlots(Player viewer) {
         if (!Settings.isLockoutMode()) return Collections.emptySet();
 

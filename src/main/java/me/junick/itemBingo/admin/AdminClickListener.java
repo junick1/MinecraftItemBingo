@@ -117,6 +117,10 @@ public class AdminClickListener implements Listener {
                         refreshGame();
                     }
                 }
+                case 29 -> {
+                    Settings.toggleRequireTimerForSubmits();
+                    refreshGame();
+                }
                 case 31 -> {
                     Settings.togglePenaltyInt();
                     refreshGame();

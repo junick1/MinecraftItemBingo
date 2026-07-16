@@ -49,6 +49,14 @@ public final class BoardClientState {
     /** Cell index → ms timestamp of the push that turned it submitted. */
     private static final Map<Integer, Long> FLASHES = new HashMap<>();
 
+    /** How long a rejected cell flashes red, in ms. */
+    public static final long REJECT_MS = 450;
+    /** Cell index → ms timestamp of the rejection ack. */
+    private static final Map<Integer, Long> REJECTS = new HashMap<>();
+
+    /** Boards larger than this are considered hostile/corrupt and dropped. */
+    private static final int MAX_DIM = 256;
+
     /* ------------------------- connection ------------------------- */
 
     public static ConnectionState connection() { return connection; }
@@ -70,6 +78,7 @@ public final class BoardClientState {
         gameMode = 0;
         flags = 0;
         FLASHES.clear();
+        REJECTS.clear();
         revision++;
     }
 
@@ -80,6 +89,7 @@ public final class BoardClientState {
     public static byte gameMode() { return gameMode; }
     public static byte gameStage() { return gameStage; }
     public static boolean fogSubmitLock() { return (flags & ModProtocol.FLAG_FOG_SUBMIT_LOCK) != 0; }
+    public static boolean isTeamMode() { return (flags & ModProtocol.FLAG_TEAM_MODE) != 0; }
     public static int width() { return width; }
     public static int height() { return height; }
     public static int submittedCount() { return submittedCount; }
@@ -118,6 +128,9 @@ public final class BoardClientState {
             byte newFlags = in.readByte();
             int w = in.readUnsignedShort();
             int h = in.readUnsignedShort();
+            if (w > MAX_DIM || h > MAX_DIM) {
+                throw new IOException("implausible board size " + w + "x" + h);
+            }
             int submitted = in.readUnsignedShort();
             int total = in.readUnsignedShort();
 
@@ -173,15 +186,31 @@ public final class BoardClientState {
 
     /** 0..1 glow strength for a freshly-submitted cell, 0 when idle. */
     public static float flashAlpha(int idx, long now) {
-        if (FLASHES.isEmpty()) return 0;
-        Long start = FLASHES.get(idx);
+        return decay(FLASHES, idx, now, FLASH_MS);
+    }
+
+    /** Marks a cell as just-rejected so the views can flash it red. */
+    public static void flagRejected(int idx) {
+        if (idx >= 0) {
+            REJECTS.put(idx, System.currentTimeMillis());
+        }
+    }
+
+    /** 0..1 strength of the red rejection flash, 0 when idle. */
+    public static float rejectAlpha(int idx, long now) {
+        return decay(REJECTS, idx, now, REJECT_MS);
+    }
+
+    private static float decay(Map<Integer, Long> map, int idx, long now, long duration) {
+        if (map.isEmpty()) return 0;
+        Long start = map.get(idx);
         if (start == null) return 0;
         long age = now - start;
-        if (age >= FLASH_MS) {
-            FLASHES.remove(idx);
+        if (age >= duration) {
+            map.remove(idx);
             return 0;
         }
-        return 1.0f - (float) age / FLASH_MS;
+        return 1.0f - (float) age / duration;
     }
 
 }

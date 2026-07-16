@@ -45,6 +45,7 @@ public class Settings {
      * {@link me.junick.itemBingo.util.Leaderboard}.
      */
     private static boolean hideLeaderboard;
+    private static boolean requireTimerForSubmits;
 
     /**
      * The three game modes are mutually exclusive — only one is active at a time.
@@ -92,6 +93,7 @@ public class Settings {
         chestRows = Math.max(0, Math.min(6, config.getInt("game.chestRows", 0)));
         tpaEnabled = config.getBoolean("game.tpaEnabled", false);
         hideLeaderboard = config.getBoolean("game.hideLeaderboard", false);
+        requireTimerForSubmits = config.getBoolean("game.requireTimerForSubmits", true);
 
         // Mode: prefer the new "mode.type" key, falling back to the legacy
         // "mode.positionSwap" boolean so existing configs keep working.
@@ -143,6 +145,7 @@ public class Settings {
         config.set("game.chestRows", chestRows);
         config.set("game.tpaEnabled", tpaEnabled);
         config.set("game.hideLeaderboard", hideLeaderboard);
+        config.set("game.requireTimerForSubmits", requireTimerForSubmits);
 
         config.set("mode.type", gameMode.name());
         config.set("mode.swap.alert", swapAlert);
@@ -189,6 +192,9 @@ public class Settings {
     /** Whether rankings are hidden during play (revealed when the timer stops). */
     public static boolean isHideLeaderboard() { return hideLeaderboard; }
     public static void toggleHideLeaderboard() { hideLeaderboard = !hideLeaderboard; }
+
+    public static boolean isRequireTimerForSubmits() { return requireTimerForSubmits; }
+    public static void toggleRequireTimerForSubmits() { requireTimerForSubmits = !requireTimerForSubmits; }
 
     // ===== Game mode =====
     public static GameMode getGameMode() { return gameMode; }

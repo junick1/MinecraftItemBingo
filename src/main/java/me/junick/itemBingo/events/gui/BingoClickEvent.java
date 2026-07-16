@@ -100,6 +100,10 @@ public class BingoClickEvent implements Listener {
         e.setCancelled(true);
 
         ItemStack clicked = e.getCurrentItem();
+        if (clicked != null && !clicked.getType().isAir() && !SubmissionService.isSubmissionOpen()) {
+            SubmissionService.sendGameNotRunningMessage(p);
+            return;
+        }
         int idx = SubmissionService.findShiftTarget(p, progress, board, clicked);
         if (idx < 0) return;
 
@@ -127,6 +131,12 @@ public class BingoClickEvent implements Listener {
             }
             case LOCKED -> SubmissionService.sendLockedMessage(p);
             case ITEM_MISMATCH -> SubmissionService.sendInvalidItemMessage(p);
+            case GAME_NOT_RUNNING -> {
+                // Only nag when the player was actually trying to place an item.
+                if (submitted != null && !submitted.getType().isAir()) {
+                    SubmissionService.sendGameNotRunningMessage(p);
+                }
+            }
             default -> {
                 // Already submitted, fog-hidden, or empty cursor: silently ignored,
                 // matching the pre-refactor behavior.

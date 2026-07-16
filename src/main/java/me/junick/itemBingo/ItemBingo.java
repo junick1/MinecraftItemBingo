@@ -17,6 +17,7 @@ import me.junick.itemBingo.model.BingoBoard;
 import me.junick.itemBingo.network.ModMessageListener;
 import me.junick.itemBingo.network.ModPlayers;
 import me.junick.itemBingo.network.ModProtocol;
+import me.junick.itemBingo.network.ModSync;
 import me.junick.itemBingo.util.*;
 import org.bukkit.*;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -99,6 +100,10 @@ public final class ItemBingo extends JavaPlugin {
         getServer().getMessenger().registerOutgoingPluginChannel(this, ModProtocol.CHANNEL_HELLO);
         getServer().getMessenger().registerOutgoingPluginChannel(this, ModProtocol.CHANNEL_BOARD);
         getServer().getMessenger().registerOutgoingPluginChannel(this, ModProtocol.CHANNEL_ORIGINAL);
+        getServer().getMessenger().registerOutgoingPluginChannel(this, ModProtocol.CHANNEL_ACK);
+        // After a plugin reload the handshake set is empty but modded clients
+        // still think they're connected — ask them to re-hello.
+        Bukkit.getScheduler().runTask(this, ModSync::requestReHello);
 
         // /admin
         getCommand("admin").setExecutor(new AdminCommand(this));

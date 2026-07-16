@@ -172,6 +172,10 @@ public class BingoBoardScreen extends Screen {
         boolean right = button == GLFW.GLFW_MOUSE_BUTTON_RIGHT;
 
         if (BoardImageExporter.armed()) return true; // capturing: ignore input
+        if (BoardImageExporter.showing()) {
+            BoardImageExporter.dismiss(); // any click ends the confirmation beat
+            return true;
+        }
 
         if (exportPopupOpen) {
             if (left) {
@@ -327,6 +331,10 @@ public class BingoBoardScreen extends Screen {
     public boolean keyPressed(KeyEvent event) {
         var options = minecraft().options;
 
+        if (BoardImageExporter.showing()) {
+            BoardImageExporter.dismiss();
+            return true;
+        }
         if (exportPopupOpen && event.isEscape()) {
             exportPopupOpen = false;
             return true;
@@ -392,7 +400,7 @@ public class BingoBoardScreen extends Screen {
         camera.sync(BoardClientState.width(), BoardClientState.height(),
                 width, boardBottom() - boardTop());
 
-        if (BoardImageExporter.armed()) {
+        if (BoardImageExporter.armed() || BoardImageExporter.showing()) {
             exportPopupOpen = false;
             renderExportFrame(g);
             return;
@@ -516,7 +524,8 @@ public class BingoBoardScreen extends Screen {
         Component copy = Component.translatable("itembingo.export.copy");
         Component save = Component.translatable("itembingo.export.save");
         Component original = Component.translatable("itembingo.export.original");
-        Component progress = Component.translatable("itembingo.export.progress");
+        Component progress = Component.translatable(BoardClientState.isTeamMode()
+                ? "itembingo.export.progress.team" : "itembingo.export.progress");
         Component status = BoardImageExporter.status();
 
         int bw = Math.max(font.width(copy), font.width(save)) + 12;
@@ -615,6 +624,20 @@ public class BingoBoardScreen extends Screen {
         }
 
         BoardImageExporter.onExportFrame(x0 - pad, y0 - pad, panelW + 2 * pad, totalH + 2 * pad);
+
+        // Post-capture confirmation beat: the card holds with a result badge
+        // (kept OUTSIDE the reported crop rect so it never bakes into the PNG).
+        if (BoardImageExporter.showing()) {
+            Component badge = BoardImageExporter.resultBadge();
+            if (badge != null) {
+                int bw = font.width(badge) + 16;
+                int bx = (width - bw) / 2;
+                int by = y0 + totalH + pad + 8;
+                g.fill(bx, by, bx + bw, by + 16, 0xF0181A20);
+                g.outline(bx, by, bw, 16, 0xFF4A5266);
+                g.text(font, badge, bx + 8, by + 4, 0xFFFFFFFF);
+            }
+        }
     }
 
     /** Ranked teammate list: avatar, name, bar, cell count; gold #1 row. */
@@ -688,10 +711,10 @@ public class BingoBoardScreen extends Screen {
                     cell.kind() == ModProtocol.CELL_LOCKED ? 0x80581414 : 0x60000000);
         }
         switch (cell.kind()) {
-            case ModProtocol.CELL_LOCKED -> drawScaledItem(g, new ItemStack(Items.BARRIER), x, y, size);
+            case ModProtocol.CELL_LOCKED -> drawScaledItem(g, CellState.BARRIER_STACK, x, y, size);
             case ModProtocol.CELL_VISIBLE, ModProtocol.CELL_SUBMITTED -> {
-                if (cell.item() != null) {
-                    drawScaledItem(g, new ItemStack(cell.item()), x, y, size);
+                if (cell.stack() != null) {
+                    drawScaledItem(g, cell.stack(), x, y, size);
                 } else {
                     g.centeredText(font, "?", x + size / 2, y + (size - 9) / 2, 0xFFFFCC44);
                 }
@@ -708,9 +731,9 @@ public class BingoBoardScreen extends Screen {
 
     private static String modeKey(byte mode) {
         return switch (mode) {
-            case 1 -> "itembingo.screen.mode.swappage";
-            case 2 -> "itembingo.screen.mode.fog_of_war";
-            case 3 -> "itembingo.screen.mode.lockout";
+            case ModProtocol.MODE_SWAPPAGE -> "itembingo.screen.mode.swappage";
+            case ModProtocol.MODE_FOG_OF_WAR -> "itembingo.screen.mode.fog_of_war";
+            case ModProtocol.MODE_LOCKOUT -> "itembingo.screen.mode.lockout";
             default -> "itembingo.screen.mode.normal";
         };
     }
@@ -763,7 +786,8 @@ public class BingoBoardScreen extends Screen {
                 CellState cell = BoardClientState.cell(col, row);
                 if (cell == null) continue;
                 renderCell(g, cell, x, y, x2 - x, y2 - y, hoveredIdx == idx,
-                        cursor, reference, mouseX, mouseY, BoardClientState.flashAlpha(idx, now));
+                        cursor, reference, mouseX, mouseY,
+                        BoardClientState.flashAlpha(idx, now), BoardClientState.rejectAlpha(idx, now));
             }
         }
 
@@ -772,7 +796,7 @@ public class BingoBoardScreen extends Screen {
 
     private void renderCell(GuiGraphicsExtractor g, CellState cell, int x, int y, int cw, int ch,
                             boolean hovered, ItemStack cursor, ItemStack reference,
-                            int mouseX, int mouseY, float flash) {
+                            int mouseX, int mouseY, float flash, float reject) {
         int size = Math.min(cw, ch);
         boolean referenceMatch = !reference.isEmpty() && cell.isVisible()
                 && cell.item() != null && reference.getItem() == cell.item();
@@ -792,15 +816,15 @@ public class BingoBoardScreen extends Screen {
         switch (cell.kind()) {
             case ModProtocol.CELL_HIDDEN -> { /* fog is just the tinted cell */ }
             case ModProtocol.CELL_LOCKED -> {
-                drawScaledItem(g, new ItemStack(Items.BARRIER), ix, iy, size);
+                drawScaledItem(g, CellState.BARRIER_STACK, ix, iy, size);
                 if (hovered) {
                     g.setTooltipForNextFrame(Component.translatable("itembingo.cell.locked")
                             .withStyle(ChatFormatting.RED), mouseX, mouseY);
                 }
             }
             case ModProtocol.CELL_VISIBLE, ModProtocol.CELL_SUBMITTED -> {
-                if (cell.item() != null) {
-                    drawScaledItem(g, new ItemStack(cell.item()), ix, iy, size);
+                if (cell.stack() != null) {
+                    drawScaledItem(g, cell.stack(), ix, iy, size);
                 } else {
                     g.centeredText(font, "?", x + cw / 2, y + (ch - 9) / 2, 0xFFFFCC44);
                 }
@@ -821,6 +845,10 @@ public class BingoBoardScreen extends Screen {
         if (flash > 0) {
             int alpha = (int) (flash * 0xA0) << 24;
             g.fill(x + 1, y + 1, x + cw - 1, y + ch - 1, alpha | 0xFFFFFF);
+        }
+        if (reject > 0) {
+            int alpha = (int) (reject * 0xA8) << 24;
+            g.fill(x + 1, y + 1, x + cw - 1, y + ch - 1, alpha | 0xE03030);
         }
 
         // Border last so highlights sit above the cell content: gold on cells

@@ -4,6 +4,7 @@ import me.junick.itembingo.client.net.ModProtocol;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,24 +14,33 @@ import org.jetbrains.annotations.Nullable;
  * @param kind          one of {@code ModProtocol.CELL_*}
  * @param item          resolved item for VISIBLE/SUBMITTED cells; {@code null}
  *                      for HIDDEN/LOCKED or when the key didn't resolve
+ * @param stack         display stack for {@code item}, built once at decode so
+ *                      render loops don't allocate every frame; never mutated
  * @param rawItemKey    the wire item key, kept for a fallback tooltip when the
  *                      client couldn't resolve it (registry skew)
  * @param hasSubmitter  SUBMITTED only: whether a submitter is known (team play)
  * @param submitterName SUBMITTED only: display name of the submitter, or ""
  * @param elapsedSeconds SUBMITTED only: game time at submission, -1 if unknown
  */
-public record CellState(byte kind, @Nullable Item item, @Nullable String rawItemKey,
+public record CellState(byte kind, @Nullable Item item, @Nullable ItemStack stack, @Nullable String rawItemKey,
                         boolean hasSubmitter, String submitterName, long elapsedSeconds) {
 
-    public static final CellState HIDDEN = new CellState(ModProtocol.CELL_HIDDEN, null, null, false, "", -1);
-    public static final CellState LOCKED = new CellState(ModProtocol.CELL_LOCKED, null, null, false, "", -1);
+    public static final CellState HIDDEN = new CellState(ModProtocol.CELL_HIDDEN, null, null, null, false, "", -1);
+    public static final CellState LOCKED = new CellState(ModProtocol.CELL_LOCKED, null, null, null, false, "", -1);
+
+    /** Shared display stack for lockout barriers (render-only, never mutated). */
+    public static final ItemStack BARRIER_STACK = new ItemStack(Items.BARRIER);
 
     public static CellState visible(String itemKey) {
-        return new CellState(ModProtocol.CELL_VISIBLE, resolve(itemKey), itemKey, false, "", -1);
+        Item item = resolve(itemKey);
+        return new CellState(ModProtocol.CELL_VISIBLE, item, item == null ? null : new ItemStack(item),
+                itemKey, false, "", -1);
     }
 
     public static CellState submitted(String itemKey, boolean hasSubmitter, String submitterName, long elapsedSeconds) {
-        return new CellState(ModProtocol.CELL_SUBMITTED, resolve(itemKey), itemKey, hasSubmitter, submitterName, elapsedSeconds);
+        Item item = resolve(itemKey);
+        return new CellState(ModProtocol.CELL_SUBMITTED, item, item == null ? null : new ItemStack(item),
+                itemKey, hasSubmitter, submitterName, elapsedSeconds);
     }
 
     @Nullable

@@ -15,6 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 /**
@@ -28,8 +31,29 @@ import java.util.logging.Level;
  */
 public final class ModMessageListener implements PluginMessageListener {
 
+    /** Per-player message budget: at most this many packets per second. */
+    private static final int RATE_LIMIT_PER_SECOND = 10;
+    /** uuid → {windowStartMillis, countInWindow}. */
+    private static final Map<UUID, long[]> RATE = new ConcurrentHashMap<>();
+
+    static void clearRate(UUID id) {
+        RATE.remove(id);
+    }
+
+    /** True when this packet exceeds the player's budget (drop silently). */
+    private static boolean rateLimited(Player p) {
+        long now = System.currentTimeMillis();
+        long[] window = RATE.computeIfAbsent(p.getUniqueId(), id -> new long[]{now, 0});
+        if (now - window[0] >= 1000) {
+            window[0] = now;
+            window[1] = 0;
+        }
+        return ++window[1] > RATE_LIMIT_PER_SECOND;
+    }
+
     @Override
     public void onPluginMessageReceived(@NotNull String channel, @NotNull Player p, byte @NotNull [] message) {
+        if (rateLimited(p)) return;
         try {
             DataInputStream in = new DataInputStream(new ByteArrayInputStream(message));
             switch (channel) {
@@ -53,7 +77,7 @@ public final class ModMessageListener implements PluginMessageListener {
         if (accepted) {
             ModPlayers.add(p);
         }
-        ModSync.sendHelloAck(p, accepted);
+        ModSync.sendHelloAck(p, accepted ? ModProtocol.HELLO_ACCEPTED : ModProtocol.HELLO_REJECTED);
         if (accepted) {
             ModSync.sendBoard(p);
         }
@@ -95,6 +119,7 @@ public final class ModMessageListener implements PluginMessageListener {
         if (!expectedItemKey.isEmpty()
                 && (item == null || !item.getType().getKey().toString().equals(expectedItemKey))) {
             ModSync.sendBoard(p);
+            ModSync.sendSubmitAck(p, cellIndex, ModProtocol.ACK_STALE);
             return;
         }
 
@@ -105,18 +130,39 @@ public final class ModMessageListener implements PluginMessageListener {
                 case OK, OK_FILLER -> {
                     consumeOne(p, fromCursor ? -1 : invSlot, item);
                     SubmissionService.completeSubmission(p, progress, board, cellIndex);
+                    ModSync.sendSubmitAck(p, cellIndex, ModProtocol.ACK_OK);
                 }
-                case LOCKED -> SubmissionService.sendLockedMessage(p);
-                case ITEM_MISMATCH -> SubmissionService.sendInvalidItemMessage(p);
-                default -> ModSync.sendBoard(p); // stale view (already submitted, hidden, ...)
+                case LOCKED -> {
+                    SubmissionService.sendLockedMessage(p);
+                    ModSync.sendSubmitAck(p, cellIndex, ModProtocol.ACK_LOCKED);
+                }
+                case ITEM_MISMATCH -> {
+                    SubmissionService.sendInvalidItemMessage(p);
+                    ModSync.sendSubmitAck(p, cellIndex, ModProtocol.ACK_MISMATCH);
+                }
+                case GAME_NOT_RUNNING -> {
+                    SubmissionService.sendGameNotRunningMessage(p);
+                    ModSync.sendSubmitAck(p, cellIndex, ModProtocol.ACK_NOT_RUNNING);
+                }
+                default -> {
+                    ModSync.sendBoard(p); // stale view (already submitted, hidden, ...)
+                    ModSync.sendSubmitAck(p, cellIndex, ModProtocol.ACK_STALE);
+                }
             }
         } else if (mode == ModProtocol.SUBMIT_SHIFT) {
+            if (!SubmissionService.isSubmissionOpen()) {
+                SubmissionService.sendGameNotRunningMessage(p);
+                ModSync.sendSubmitAck(p, -1, ModProtocol.ACK_NOT_RUNNING);
+                return;
+            }
             int idx = SubmissionService.findShiftTarget(p, progress, board, item);
             if (idx >= 0) {
                 consumeOne(p, invSlot, item);
                 SubmissionService.completeSubmission(p, progress, board, idx);
+                ModSync.sendSubmitAck(p, idx, ModProtocol.ACK_OK);
             } else {
                 ModSync.sendBoard(p); // nothing eligible — client view was stale
+                ModSync.sendSubmitAck(p, -1, ModProtocol.ACK_STALE);
             }
         }
     }

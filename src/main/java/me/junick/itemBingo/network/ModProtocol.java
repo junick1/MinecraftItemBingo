@@ -13,10 +13,18 @@ package me.junick.itemBingo.network;
 public final class ModProtocol {
     private ModProtocol() {}
 
-    public static final int PROTOCOL_VERSION = 4;
+    public static final int PROTOCOL_VERSION = 5;
 
-    /** C2S {@code i32 protocolVersion} / S2C {@code i32 serverProtocolVersion, u8 accepted}. */
+    /**
+     * C2S {@code i32 protocolVersion} / S2C {@code i32 serverProtocolVersion,
+     * u8 code (HELLO_*)}. {@code HELLO_REQUEST} asks the client to re-send its
+     * hello — used after a plugin reload wipes the handshake set.
+     */
     public static final String CHANNEL_HELLO = "itembingo:hello";
+
+    public static final byte HELLO_REJECTED = 0;
+    public static final byte HELLO_ACCEPTED = 1;
+    public static final byte HELLO_REQUEST = 2;
 
     /**
      * S2C full per-viewer board view:
@@ -42,6 +50,18 @@ public final class ModProtocol {
     public static final String CHANNEL_REFRESH = "itembingo:refresh";
 
     /**
+     * S2C submission acknowledgement: {@code i32 cellIndex (-1 when unknown),
+     * u8 result (ACK_*)} — lets the client give immediate rejection feedback.
+     */
+    public static final String CHANNEL_ACK = "itembingo:submit_ack";
+
+    public static final byte ACK_OK = 0;
+    public static final byte ACK_LOCKED = 1;
+    public static final byte ACK_MISMATCH = 2;
+    public static final byte ACK_STALE = 3;
+    public static final byte ACK_NOT_RUNNING = 4;
+
+    /**
      * Original (markless) board for image export.
      * C2S: empty request. S2C: {@code u8 status (ORIGINAL_*)}; when OK:
      * {@code u8 partial}, {@code u16 width, u16 height}, then width*height
@@ -55,10 +75,17 @@ public final class ModProtocol {
     public static final byte ORIGINAL_OK = 0;
     public static final byte ORIGINAL_DENIED_FOG = 1;
     public static final byte ORIGINAL_NO_BOARD = 2;
+    public static final byte ORIGINAL_VIEW_DENIED = 3;
 
     public static final byte STAGE_NOT_STARTED = 0;
     public static final byte STAGE_RUNNING = 1;
     public static final byte STAGE_ENDED = 2;
+
+    /** Explicit wire values for the game mode — never enum ordinals. */
+    public static final byte MODE_NORMAL = 0;
+    public static final byte MODE_SWAPPAGE = 1;
+    public static final byte MODE_FOG_OF_WAR = 2;
+    public static final byte MODE_LOCKOUT = 3;
 
     public static final byte STATUS_OK = 0;
     public static final byte STATUS_NO_BOARD = 1;
@@ -77,4 +104,6 @@ public final class ModProtocol {
 
     /** Fog of War submit-lock is active: hidden cells reject submissions. */
     public static final int FLAG_FOG_SUBMIT_LOCK = 1;
+    /** Team mode is enabled (labels shift from "my" to "team" wording). */
+    public static final int FLAG_TEAM_MODE = 2;
 }

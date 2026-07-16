@@ -7,12 +7,13 @@ import me.junick.itembingo.client.screen.BingoBoardScreen;
 import me.junick.itembingo.client.state.BoardClientState;
 import me.junick.itembingo.client.state.CellState;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.ChatVisiblity;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Toolkit;
@@ -51,7 +52,7 @@ public final class BoardImageExporter {
     /** One teammate's row in the contribution list. */
     public record Contribution(String name, int count) {}
 
-    private enum Phase { IDLE, WAIT_ORIGINAL, ARMED }
+    private enum Phase { IDLE, WAIT_ORIGINAL, ARMED, SHOWING }
 
     private static Phase phase = Phase.IDLE;
     private static Variant variant;
@@ -72,17 +73,39 @@ public final class BoardImageExporter {
     private static int framesRendered;
     private static int rectX, rectY, rectW, rectH;
 
+    /** How long the card stays up after capture, as a confirmation beat. */
+    private static final long SHOW_MS = 1500;
+    private static long showUntil;
     @Nullable
-    private static ChatVisiblity previousChatVisibility;
+    private static Component resultBadge;
 
     public static void init() {
         ClientTickEvents.END_CLIENT_TICK.register(BoardImageExporter::tick);
+        // Chat renders above screens and would photobomb the capture; suppress
+        // the HUD layer itself while exporting — nothing persisted is touched.
+        HudElementRegistry.replaceElement(VanillaHudElements.CHAT, original ->
+                (g, tickCounter) -> {
+                    if (phase != Phase.ARMED && phase != Phase.SHOWING) {
+                        original.extractRenderState(g, tickCounter);
+                    }
+                });
     }
 
     /* ------------------------- state for the screen ------------------------- */
 
     public static boolean armed() { return phase == Phase.ARMED; }
+    /** The post-capture confirmation beat: card stays up with a result badge. */
+    public static boolean showing() { return phase == Phase.SHOWING; }
+    @Nullable public static Component resultBadge() { return resultBadge; }
     public static boolean busy() { return phase != Phase.IDLE; }
+
+    /** Player clicked/typed during the confirmation beat — end it early. */
+    public static void dismiss() {
+        if (phase == Phase.SHOWING) {
+            phase = Phase.IDLE;
+            resultBadge = null;
+        }
+    }
     @Nullable public static Component status() { return status; }
     public static CellState[] cells() { return cells; }
     public static int boardWidth() { return boardW; }
@@ -97,7 +120,9 @@ public final class BoardImageExporter {
         rectY = y;
         rectW = w;
         rectH = h;
-        framesRendered++;
+        if (phase == Phase.ARMED) {
+            framesRendered++;
+        }
     }
 
     /* ------------------------- flow ------------------------- */
@@ -120,12 +145,13 @@ public final class BoardImageExporter {
                 snapshot[i] = BoardClientState.cell(i);
             }
             Component modeName = Component.translatable(switch (BoardClientState.gameMode()) {
-                case 1 -> "itembingo.screen.mode.swappage";
-                case 2 -> "itembingo.screen.mode.fog_of_war";
-                case 3 -> "itembingo.screen.mode.lockout";
+                case ModProtocol.MODE_SWAPPAGE -> "itembingo.screen.mode.swappage";
+                case ModProtocol.MODE_FOG_OF_WAR -> "itembingo.screen.mode.fog_of_war";
+                case ModProtocol.MODE_LOCKOUT -> "itembingo.screen.mode.lockout";
                 default -> "itembingo.screen.mode.normal";
             });
-            title = Component.translatable("itembingo.export.header.progress");
+            title = Component.translatable(BoardClientState.isTeamMode()
+                    ? "itembingo.export.header.progress.team" : "itembingo.export.header.progress");
             chips = List.of(
                     BingoBoardScreen.stageBadge(BoardClientState.gameStage()),
                     Component.literal(w + "×" + h),
@@ -168,6 +194,10 @@ public final class BoardImageExporter {
                     boolean partial = in.readBoolean();
                     int w = in.readUnsignedShort();
                     int h = in.readUnsignedShort();
+                    if (w > 256 || h > 256) {
+                        fail("itembingo.export.failed");
+                        return;
+                    }
                     CellState[] board = new CellState[w * h];
                     for (int i = 0; i < board.length; i++) {
                         // Partial (fog before game start): only the starter
@@ -188,6 +218,7 @@ public final class BoardImageExporter {
                     arm(board, w, h);
                 }
                 case ModProtocol.ORIGINAL_DENIED_FOG -> fail("itembingo.export.denied_fog");
+                case ModProtocol.ORIGINAL_VIEW_DENIED -> fail("itembingo.screen.view_denied");
                 default -> fail("itembingo.export.no_board");
             }
         } catch (IOException e) {
@@ -201,8 +232,11 @@ public final class BoardImageExporter {
         boardH = h;
         framesRendered = 0;
         status = null;
+        resultBadge = null;
         phase = Phase.ARMED;
-        hideChat();
+        // Toasts also draw above screens; they're transient notifications, so
+        // clearing is acceptable (chat is handled by the layer wrapper).
+        Minecraft.getInstance().gui.toastManager().clear();
     }
 
     private static void fail(String key) {
@@ -212,28 +246,10 @@ public final class BoardImageExporter {
 
     /** Screen closed or state reset — abandon whatever was pending. */
     public static void cancel() {
-        restoreChat();
         phase = Phase.IDLE;
         status = null;
+        resultBadge = null;
         cells = null;
-    }
-
-    /** Chat and toasts render above screens and would be baked into the capture. */
-    private static void hideChat() {
-        Minecraft mc = Minecraft.getInstance();
-        var option = mc.options.chatVisibility();
-        if (previousChatVisibility == null) {
-            previousChatVisibility = option.get();
-        }
-        option.set(ChatVisiblity.HIDDEN);
-        mc.gui.toastManager().clear();
-    }
-
-    private static void restoreChat() {
-        if (previousChatVisibility != null) {
-            Minecraft.getInstance().options.chatVisibility().set(previousChatVisibility);
-            previousChatVisibility = null;
-        }
     }
 
     private static void tick(Minecraft mc) {
@@ -248,6 +264,13 @@ public final class BoardImageExporter {
                     capture(mc);
                 }
             }
+            case SHOWING -> {
+                if (!(mc.gui.screen() instanceof BingoBoardScreen)) {
+                    cancel();
+                } else if (System.currentTimeMillis() >= showUntil) {
+                    dismiss();
+                }
+            }
             default -> {}
         }
     }
@@ -255,8 +278,10 @@ public final class BoardImageExporter {
     /* ------------------------- capture + delivery ------------------------- */
 
     private static void capture(Minecraft mc) {
-        phase = Phase.IDLE; // the framebuffer already holds the export frame
-        restoreChat();
+        // Hold the card on screen as a confirmation beat while the readback
+        // finishes; the badge appears once the copy/save lands.
+        phase = Phase.SHOWING;
+        showUntil = System.currentTimeMillis() + SHOW_MS;
         Variant v = variant;
         Action a = action;
         int scale = mc.getWindow().getGuiScale();
@@ -294,8 +319,12 @@ public final class BoardImageExporter {
         save(mc, image, v);
     }
 
-    /** AWT image clipboard; works on Windows/Linux, may refuse on macOS. */
+    /** AWT image clipboard; works on Windows/Linux. Skipped on macOS, where
+     *  initializing AWT next to GLFW can deadlock rather than throw. */
     private static boolean copyToClipboard(NativeImage image) {
+        if (System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT).contains("mac")) {
+            return false;
+        }
         try {
             System.setProperty("java.awt.headless", "false");
             int w = image.getWidth();
@@ -357,6 +386,7 @@ public final class BoardImageExporter {
     }
 
     private static void message(Minecraft mc, Component text) {
+        resultBadge = text; // also shown on the held-up card
         if (mc.player != null) {
             mc.player.sendSystemMessage(text);
         }

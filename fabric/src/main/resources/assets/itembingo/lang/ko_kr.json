@@ -33,6 +33,7 @@
   "itembingo.export.title": "빙고판 이미지 내보내기",
   "itembingo.export.original": "원본 빙고판",
   "itembingo.export.progress": "내 진행도",
+  "itembingo.export.progress.team": "팀 진행도",
   "itembingo.export.copy": "복사",
   "itembingo.export.save": "저장",
   "itembingo.export.requesting": "원본 빙고판 요청 중…",
@@ -44,9 +45,15 @@
   "itembingo.export.saved": "빙고판 이미지를 %s(으)로 저장했습니다",
   "itembingo.export.header.original": "빙고판",
   "itembingo.export.header.progress": "빙고 진행도",
+  "itembingo.export.header.progress.team": "팀 빙고 진행도",
   "itembingo.export.contribution": "팀 기여도",
   "itembingo.export.more": "+%s명 더",
   "itembingo.export.starter_only": "시작 공개 칸만 표시",
+
+  "itembingo.overlay.hint": "드래그: 이동 · 스크롤: 시점 이동 · Ctrl+스크롤: 확대/축소 · 자물쇠: 고정",
+  "itembingo.overlay.lock_locked": "고정됨 — 드래그로 빙고판을 이동합니다. 클릭하여 해제.",
+  "itembingo.overlay.lock_unlocked": "클릭하면 위치와 크기를 고정합니다.",
+  "itembingo.overlay.resize": "드래그하여 크기 조절",
 
   "itembingo.settings.bingo_mod": "/bingo: 모드",
   "itembingo.settings.bingo_server": "/bingo: 서버",

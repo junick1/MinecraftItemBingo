@@ -49,6 +49,11 @@ public class AdminGUI {
         // /tpa — only meaningful when team mode is on.
         inv.setItem(24, tpaItem(loc));
 
+        // Submissions only while a game is running.
+        inv.setItem(29, toggleItem(loc, Material.CLOCK,
+                Messages.legacy(loc, "admin.game.require-timer"), Settings.isRequireTimerForSubmits(),
+                descs(loc, "admin.game.require-timer-desc1", "admin.game.require-timer-desc2")));
+
         // Score calculation (penalty).
         inv.setItem(31, toggleChoiceItem(loc, Material.COMPARATOR,
                 Messages.legacy(loc, "admin.game.penalty"), Settings.getPenaltyDisplay(loc),

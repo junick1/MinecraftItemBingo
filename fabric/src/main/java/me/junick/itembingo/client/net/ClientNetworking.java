@@ -5,6 +5,7 @@ import me.junick.itembingo.client.net.payload.BoardPayload;
 import me.junick.itembingo.client.net.payload.HelloPayload;
 import me.junick.itembingo.client.net.payload.OriginalPayload;
 import me.junick.itembingo.client.net.payload.RefreshPayload;
+import me.junick.itembingo.client.net.payload.SubmitAckPayload;
 import me.junick.itembingo.client.net.payload.SubmitPayload;
 import me.junick.itembingo.client.state.BoardClientState;
 import me.junick.itembingo.client.state.BoardClientState.ConnectionState;
@@ -43,6 +44,7 @@ public final class ClientNetworking {
         PayloadTypeRegistry.clientboundPlay().register(BoardPayload.TYPE, BoardPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(OriginalPayload.TYPE, OriginalPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(OriginalPayload.TYPE, OriginalPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(SubmitAckPayload.TYPE, SubmitAckPayload.CODEC);
 
         // Registering these receivers also makes Fabric announce the S2C
         // channels to the server, which Bukkit requires before it may send.
@@ -52,6 +54,8 @@ public final class ClientNetworking {
                 (payload, context) -> BoardClientState.applyBoardPacket(payload.data()));
         ClientPlayNetworking.registerGlobalReceiver(OriginalPayload.TYPE,
                 (payload, context) -> BoardImageExporter.handleOriginalResponse(payload.data()));
+        ClientPlayNetworking.registerGlobalReceiver(SubmitAckPayload.TYPE,
+                (payload, context) -> handleSubmitAck(payload.data()));
 
         ServerboundPlayChannelEvents.REGISTER.register((listener, sender, client, channels) -> {
             if (BoardClientState.connection() == ConnectionState.UNKNOWN
@@ -94,19 +98,44 @@ public final class ClientNetworking {
         try {
             DataInputStream in = new DataInputStream(new ByteArrayInputStream(data));
             int serverVersion = in.readInt();
-            boolean accepted = in.readBoolean();
-            if (accepted) {
-                BoardClientState.setConnection(ConnectionState.ACTIVE, serverVersion);
-            } else {
-                BoardClientState.setConnection(ConnectionState.MISMATCH, serverVersion);
-                var player = net.minecraft.client.Minecraft.getInstance().player;
-                if (player != null) {
-                    player.sendSystemMessage(Component.translatable("itembingo.status.mismatch",
-                            ModProtocol.PROTOCOL_VERSION, serverVersion));
+            byte code = in.readByte();
+            switch (code) {
+                case ModProtocol.HELLO_ACCEPTED ->
+                        BoardClientState.setConnection(ConnectionState.ACTIVE, serverVersion);
+                case ModProtocol.HELLO_REQUEST -> {
+                    // The plugin (re)loaded and lost the handshake set — redo it.
+                    BoardClientState.setConnection(ConnectionState.UNKNOWN, -1);
+                    sendHello();
+                }
+                default -> {
+                    BoardClientState.setConnection(ConnectionState.MISMATCH, serverVersion);
+                    var player = net.minecraft.client.Minecraft.getInstance().player;
+                    if (player != null) {
+                        player.sendSystemMessage(Component.translatable("itembingo.status.mismatch",
+                                ModProtocol.PROTOCOL_VERSION, serverVersion));
+                    }
                 }
             }
         } catch (IOException e) {
             // Garbled ack: leave the state as-is; the timeout will mark UNSUPPORTED.
+        }
+    }
+
+    private static void handleSubmitAck(byte[] data) {
+        try {
+            DataInputStream in = new DataInputStream(new ByteArrayInputStream(data));
+            int cellIndex = in.readInt();
+            byte result = in.readByte();
+            if (result == ModProtocol.ACK_OK) return; // success shows via the board push
+            // The server already explains WHY in chat; this is the immediate
+            // physical feedback: an error tone and a red flash on the cell.
+            BoardClientState.flagRejected(cellIndex);
+            var player = net.minecraft.client.Minecraft.getInstance().player;
+            if (player != null) {
+                player.playSound(net.minecraft.sounds.SoundEvents.VILLAGER_NO, 0.7f, 1.0f);
+            }
+        } catch (IOException e) {
+            // Malformed ack — nothing to do.
         }
     }
 
