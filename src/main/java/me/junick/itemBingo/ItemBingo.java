@@ -196,6 +196,9 @@ public final class ItemBingo extends JavaPlugin {
         currentBingo = board;
         BingoStorage.save(board);
 
+        // A fresh board means a fresh pre-game stage (unless a timer is live).
+        TimerManager.onNewBoard();
+
         // The old scroll positions don't map onto the new board, so forget them;
         // each player re-centers on their next open.
         BingoViewport.clearAll();

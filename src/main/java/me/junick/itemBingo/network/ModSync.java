@@ -36,9 +36,11 @@ public final class ModSync {
     }
 
     /**
-     * Sends the pristine board for image export, gated like {@code /summary
-     * board} plus a mode exception: allowed whenever the game is not running,
-     * or anytime in modes that never hide items (everything but Fog of War).
+     * Sends the pristine board for image export. Modes that never hide items
+     * always get the full board. Fog of War depends on the game stage: RUNNING
+     * is denied outright; NOT_STARTED gets a partial board carrying only the
+     * initial starter reveals (exactly what everyone can already see); ENDED
+     * gets everything, matching {@code /summary board}.
      */
     public static void sendOriginalBoard(Player p) {
         if (!ModPlayers.contains(p)) return;
@@ -47,16 +49,28 @@ public final class ModSync {
             DataOutputStream out = new DataOutputStream(bytes);
 
             BingoBoard board = ItemBingo.currentBingo;
+            boolean fog = Settings.isFogOfWarMode();
+            TimerManager.GameStage stage = TimerManager.getStage();
             if (board == null) {
                 out.writeByte(ModProtocol.ORIGINAL_NO_BOARD);
-            } else if (TimerManager.isRunning() && Settings.isFogOfWarMode()) {
+            } else if (fog && stage == TimerManager.GameStage.RUNNING) {
                 out.writeByte(ModProtocol.ORIGINAL_DENIED_FOG);
             } else {
+                boolean partial = fog && stage == TimerManager.GameStage.NOT_STARTED;
+                java.util.Set<Integer> revealed = partial
+                        ? me.junick.itemBingo.util.FogOfWar.initialReveals(board.getWidth(), board.getHeight())
+                        : null;
                 out.writeByte(ModProtocol.ORIGINAL_OK);
+                out.writeBoolean(partial);
                 out.writeShort(board.getWidth());
                 out.writeShort(board.getHeight());
-                for (ItemStack item : board.getItems()) {
-                    out.writeUTF(item.getType().getKey().toString());
+                java.util.List<ItemStack> items = board.getItems();
+                for (int idx = 0; idx < items.size(); idx++) {
+                    boolean hasItem = revealed == null || revealed.contains(idx);
+                    out.writeBoolean(hasItem);
+                    if (hasItem) {
+                        out.writeUTF(items.get(idx).getType().getKey().toString());
+                    }
                 }
             }
             p.sendPluginMessage(ItemBingo.getInstance(), ModProtocol.CHANNEL_ORIGINAL, bytes.toByteArray());

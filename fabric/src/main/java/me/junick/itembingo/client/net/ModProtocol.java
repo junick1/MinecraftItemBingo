@@ -13,7 +13,7 @@ package me.junick.itembingo.client.net;
 public final class ModProtocol {
     private ModProtocol() {}
 
-    public static final int PROTOCOL_VERSION = 3;
+    public static final int PROTOCOL_VERSION = 4;
 
     public static final byte STATUS_OK = 0;
     public static final byte STATUS_NO_BOARD = 1;
@@ -34,6 +34,11 @@ public final class ModProtocol {
     public static final byte ORIGINAL_OK = 0;
     public static final byte ORIGINAL_DENIED_FOG = 1;
     public static final byte ORIGINAL_NO_BOARD = 2;
+
+    /** Game lifecycle stage carried in the board payload. */
+    public static final byte STAGE_NOT_STARTED = 0;
+    public static final byte STAGE_RUNNING = 1;
+    public static final byte STAGE_ENDED = 2;
 
     /** Fog of War submit-lock is active: hidden cells reject submissions. */
     public static final int FLAG_FOG_SUBMIT_LOCK = 1;

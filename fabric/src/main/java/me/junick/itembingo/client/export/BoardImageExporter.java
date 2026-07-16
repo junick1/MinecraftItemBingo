@@ -127,6 +127,7 @@ public final class BoardImageExporter {
             });
             title = Component.translatable("itembingo.export.header.progress");
             chips = List.of(
+                    BingoBoardScreen.stageBadge(BoardClientState.gameStage()),
                     Component.literal(w + "×" + h),
                     Component.literal(BoardClientState.submittedCount() + "/" + BoardClientState.totalCells())
                             .append(" · ").append(modeName),
@@ -164,14 +165,25 @@ public final class BoardImageExporter {
             byte code = in.readByte();
             switch (code) {
                 case ModProtocol.ORIGINAL_OK -> {
+                    boolean partial = in.readBoolean();
                     int w = in.readUnsignedShort();
                     int h = in.readUnsignedShort();
                     CellState[] board = new CellState[w * h];
                     for (int i = 0; i < board.length; i++) {
-                        board[i] = CellState.visible(in.readUTF());
+                        // Partial (fog before game start): only the starter
+                        // reveals carry items, the rest stays fogged.
+                        board[i] = in.readBoolean() ? CellState.visible(in.readUTF()) : CellState.HIDDEN;
                     }
                     title = Component.translatable("itembingo.export.header.original");
-                    chips = List.of(Component.literal(w + "×" + h), Component.literal(dateStamp()));
+                    List<Component> chipList = new ArrayList<>();
+                    chipList.add(BingoBoardScreen.stageBadge(BoardClientState.gameStage()));
+                    if (partial) {
+                        chipList.add(Component.translatable("itembingo.export.starter_only")
+                                .withStyle(ChatFormatting.AQUA));
+                    }
+                    chipList.add(Component.literal(w + "×" + h));
+                    chipList.add(Component.literal(dateStamp()));
+                    chips = chipList;
                     contributions = List.of();
                     arm(board, w, h);
                 }

@@ -10,6 +10,9 @@
   "itembingo.screen.mode.fog_of_war": "Fog of War",
   "itembingo.screen.mode.lockout": "락아웃",
   "itembingo.screen.fog_submit_lock": "[숨겨진 칸 제출 잠금]",
+  "itembingo.screen.stage.not_started": "시작 전",
+  "itembingo.screen.stage.in_progress": "진행 중",
+  "itembingo.screen.stage.finished": "종료됨",
   "itembingo.screen.no_board": "진행 중인 빙고판이 없습니다.",
   "itembingo.screen.view_denied": "팀에 소속되어야 빙고판을 볼 수 있습니다.",
   "itembingo.screen.hint": "드래그: 이동 · 스크롤: 세로 · Shift+스크롤: 가로 · Ctrl+스크롤: 확대/축소",
@@ -43,6 +46,7 @@
   "itembingo.export.header.progress": "빙고 진행도",
   "itembingo.export.contribution": "팀 기여도",
   "itembingo.export.more": "+%s명 더",
+  "itembingo.export.starter_only": "시작 공개 칸만 표시",
 
   "itembingo.settings.bingo_mod": "/bingo: 모드",
   "itembingo.settings.bingo_server": "/bingo: 서버",

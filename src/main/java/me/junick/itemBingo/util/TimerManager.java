@@ -25,6 +25,15 @@ import java.util.List;
 import java.util.Random;
 
 public class TimerManager {
+    /**
+     * Where the current board is in its life: rolled but not yet started,
+     * mid-game, or over. Any stop — natural finish or manual /timer stop —
+     * counts as ENDED; a new board resets to NOT_STARTED (unless a game is
+     * actively running across the swap).
+     */
+    public enum GameStage { NOT_STARTED, RUNNING, ENDED }
+
+    private static GameStage stage = GameStage.NOT_STARTED;
     private static boolean running = false;
     private static boolean paused = false;
     private static int maxSeconds = 1;
@@ -41,6 +50,7 @@ public class TimerManager {
 
     public static void saveState() {
         YamlConfiguration config = new YamlConfiguration();
+        config.set("stage", stage.name());
         config.set("running", running);
         config.set("paused", paused);
         config.set("remaining", remainingSeconds);
@@ -61,6 +71,12 @@ public class TimerManager {
 
         running = config.getBoolean("running", false);
         paused = config.getBoolean("paused", false);
+        try {
+            stage = GameStage.valueOf(config.getString("stage", ""));
+        } catch (IllegalArgumentException e) {
+            // Pre-stage save file: all we know is whether a game is running.
+            stage = running ? GameStage.RUNNING : GameStage.NOT_STARTED;
+        }
         remainingSeconds = config.getInt("remaining", 0);
         elapsedSeconds = config.getInt("elapsed", 0);
         maxSeconds = config.getInt("max", 0);
@@ -116,8 +132,11 @@ public class TimerManager {
         elapsedSeconds = 0;
         paused = false;
         running = true;
+        stage = GameStage.RUNNING;
         setSwap();
         resumeTask();
+        // Stage gates what the companion mod may export — keep clients current.
+        me.junick.itemBingo.network.ModSync.broadcastBoard();
     }
 
     public static void stop() {
@@ -125,6 +144,7 @@ public class TimerManager {
         paused = false;
         remainingSeconds = 0;
         elapsedSeconds = 0;
+        stage = GameStage.ENDED;
 
         if (task != null) {
             task.cancel();
@@ -134,6 +154,21 @@ public class TimerManager {
         for (Player player : Bukkit.getOnlinePlayers()) {
             player.sendActionBar(Messages.get(player, "timer.ended"));
         }
+        me.junick.itemBingo.network.ModSync.broadcastBoard();
+    }
+
+    /**
+     * A new board was installed: back to pre-game, unless a game is actively
+     * running across the board swap (then it simply continues).
+     */
+    public static void onNewBoard() {
+        if (!running) {
+            stage = GameStage.NOT_STARTED;
+        }
+    }
+
+    public static GameStage getStage() {
+        return stage;
     }
 
     /**

@@ -13,7 +13,7 @@ package me.junick.itemBingo.network;
 public final class ModProtocol {
     private ModProtocol() {}
 
-    public static final int PROTOCOL_VERSION = 3;
+    public static final int PROTOCOL_VERSION = 4;
 
     /** C2S {@code i32 protocolVersion} / S2C {@code i32 serverProtocolVersion, u8 accepted}. */
     public static final String CHANNEL_HELLO = "itembingo:hello";
@@ -21,7 +21,8 @@ public final class ModProtocol {
     /**
      * S2C full per-viewer board view:
      * {@code u8 status}; when {@link #STATUS_OK}: {@code u8 gameMode (Settings.GameMode
-     * ordinal), u8 flags, u16 width, u16 height, u16 submittedCount, u16 totalCells},
+     * ordinal), u8 gameStage (TimerManager.GameStage ordinal), u8 flags,
+     * u16 width, u16 height, u16 submittedCount, u16 totalCells},
      * then width*height cells row-major ({@code index = y*width + x}), each
      * {@code u8 cellState} followed by state-specific data:
      * VISIBLE → {@code UTF itemKey}; HIDDEN/LOCKED → nothing;
@@ -43,15 +44,21 @@ public final class ModProtocol {
     /**
      * Original (markless) board for image export.
      * C2S: empty request. S2C: {@code u8 status (ORIGINAL_*)}; when OK:
-     * {@code u16 width, u16 height}, then width*height {@code UTF itemKey}
-     * row-major. Denied while a Fog of War game is running — the original
-     * would reveal exactly what fog hides.
+     * {@code u8 partial}, {@code u16 width, u16 height}, then width*height
+     * cells row-major, each {@code u8 hasItem} followed by {@code UTF itemKey}
+     * when 1. {@code partial=1} means fog before game start: only the initial
+     * starter reveals carry items. Denied while a Fog of War game is RUNNING —
+     * the original would reveal exactly what fog hides.
      */
     public static final String CHANNEL_ORIGINAL = "itembingo:original";
 
     public static final byte ORIGINAL_OK = 0;
     public static final byte ORIGINAL_DENIED_FOG = 1;
     public static final byte ORIGINAL_NO_BOARD = 2;
+
+    public static final byte STAGE_NOT_STARTED = 0;
+    public static final byte STAGE_RUNNING = 1;
+    public static final byte STAGE_ENDED = 2;
 
     public static final byte STATUS_OK = 0;
     public static final byte STATUS_NO_BOARD = 1;

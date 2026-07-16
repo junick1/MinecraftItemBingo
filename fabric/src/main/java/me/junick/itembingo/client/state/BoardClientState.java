@@ -35,6 +35,7 @@ public final class BoardClientState {
 
     private static byte status = ModProtocol.STATUS_NO_BOARD;
     private static byte gameMode;
+    private static byte gameStage;
     private static byte flags;
     private static int width;
     private static int height;
@@ -77,6 +78,7 @@ public final class BoardClientState {
     public static byte status() { return status; }
     public static boolean hasBoard() { return status == ModProtocol.STATUS_OK && cells.length > 0; }
     public static byte gameMode() { return gameMode; }
+    public static byte gameStage() { return gameStage; }
     public static boolean fogSubmitLock() { return (flags & ModProtocol.FLAG_FOG_SUBMIT_LOCK) != 0; }
     public static int width() { return width; }
     public static int height() { return height; }
@@ -112,6 +114,7 @@ public final class BoardClientState {
             }
 
             byte newMode = in.readByte();
+            byte newStage = in.readByte();
             byte newFlags = in.readByte();
             int w = in.readUnsignedShort();
             int h = in.readUnsignedShort();
@@ -152,6 +155,7 @@ public final class BoardClientState {
 
             status = ModProtocol.STATUS_OK;
             gameMode = newMode;
+            gameStage = newStage;
             flags = newFlags;
             width = w;
             height = h;

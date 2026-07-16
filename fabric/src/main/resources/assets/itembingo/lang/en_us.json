@@ -10,6 +10,9 @@
   "itembingo.screen.mode.fog_of_war": "Fog of War",
   "itembingo.screen.mode.lockout": "Lockout",
   "itembingo.screen.fog_submit_lock": "[Hidden cells locked]",
+  "itembingo.screen.stage.not_started": "Not started",
+  "itembingo.screen.stage.in_progress": "In progress",
+  "itembingo.screen.stage.finished": "Finished",
   "itembingo.screen.no_board": "No bingo board is active.",
   "itembingo.screen.view_denied": "Join a team to view the board.",
   "itembingo.screen.hint": "Drag: pan · Scroll: vertical · Shift+Scroll: horizontal · Ctrl+Scroll: zoom",
@@ -43,6 +46,7 @@
   "itembingo.export.header.progress": "Bingo Progress",
   "itembingo.export.contribution": "Team contribution",
   "itembingo.export.more": "+%s more",
+  "itembingo.export.starter_only": "Starter reveals only",
 
   "itembingo.settings.bingo_mod": "/bingo: mod",
   "itembingo.settings.bingo_server": "/bingo: server",

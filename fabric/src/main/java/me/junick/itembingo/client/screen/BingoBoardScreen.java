@@ -457,7 +457,9 @@ public class BingoBoardScreen extends Screen {
                     .withStyle(ChatFormatting.GREEN);
             Component mode = Component.translatable(modeKey(BoardClientState.gameMode()))
                     .withStyle(ChatFormatting.AQUA);
-            var right = Component.empty().append(progress).append("  ").append(mode);
+            Component stage = stageBadge(BoardClientState.gameStage());
+            var right = Component.empty().append(progress).append("  ").append(mode)
+                    .append("  ").append(stage);
             if (BoardClientState.fogSubmitLock()) {
                 right.append("  ").append(Component.translatable("itembingo.screen.fog_submit_lock")
                         .withStyle(ChatFormatting.RED));
@@ -713,6 +715,18 @@ public class BingoBoardScreen extends Screen {
         };
     }
 
+    /** Localized, color-coded game stage (gray / green / gold). */
+    public static Component stageBadge(byte stage) {
+        return switch (stage) {
+            case ModProtocol.STAGE_RUNNING -> Component.translatable("itembingo.screen.stage.in_progress")
+                    .withStyle(ChatFormatting.GREEN);
+            case ModProtocol.STAGE_ENDED -> Component.translatable("itembingo.screen.stage.finished")
+                    .withStyle(ChatFormatting.GOLD);
+            default -> Component.translatable("itembingo.screen.stage.not_started")
+                    .withStyle(ChatFormatting.GRAY);
+        };
+    }
+
     private void renderBoard(GuiGraphicsExtractor g, int mouseX, int mouseY) {
         int top = boardTop();
         int bottom = boardBottom();
@@ -903,8 +917,7 @@ public class BingoBoardScreen extends Screen {
                 for (Component line : getTooltipFromItem(minecraft(), stack)) {
                     lines.add(line.getVisualOrderText());
                 }
-                lines.add(Component.translatable("itembingo.screen.submit_hint")
-                        .withStyle(ChatFormatting.DARK_GRAY).getVisualOrderText());
+
                 g.setTooltipForNextFrame(lines, mouseX, mouseY);
             }
         }

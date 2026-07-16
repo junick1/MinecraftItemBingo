@@ -55,6 +55,7 @@ public final class BoardViewBuilder {
 
             out.writeByte(ModProtocol.STATUS_OK);
             out.writeByte(Settings.getGameMode().ordinal());
+            out.writeByte(me.junick.itemBingo.util.TimerManager.getStage().ordinal());
             out.writeByte(flags);
             out.writeShort(w);
             out.writeShort(h);
