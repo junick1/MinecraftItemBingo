@@ -10,6 +10,7 @@ import me.junick.itembingo.client.state.BoardClientState.ConnectionState;
 import me.junick.itembingo.client.state.CellState;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.minecraft.client.DeltaTracker;
@@ -61,7 +62,11 @@ public final class BoardHudOverlay implements HudElement {
     private static int resizeH;
 
     public static void register() {
-        HudElementRegistry.addLast(ID, new BoardHudOverlay());
+        // Anchored to the chat element rather than appended at the tree's end:
+        // HUD-pipeline optimizers (ImmediatelyFast, Iris hooks) are known to
+        // drop trailing custom layers, but vanilla anchors always survive.
+        // Before chat also means chat text renders above the panel.
+        HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, ID, new BoardHudOverlay());
 
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (screen instanceof BingoBoardScreen) return; // fullscreen board has its own camera view
@@ -86,7 +91,8 @@ public final class BoardHudOverlay implements HudElement {
         if (mc.gui.screen() != null) return;
         dragging = resizing = panningBoard = false; // no cursor: interactions are over
         if (!visible()) return;
-        if (mc.getDebugOverlay().showDebugScreen()) return;
+        // Deliberately no debug-HUD check: mods that register F3 entries can
+        // leave it looking "open" and permanently hide the overlay in-game.
         render(g, -1, -1);
     }
 
