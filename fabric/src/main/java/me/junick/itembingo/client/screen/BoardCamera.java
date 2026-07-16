@@ -3,12 +3,15 @@ package me.junick.itembingo.client.screen;
 /**
  * Pan/zoom math over board space ({@link #CELL} px per cell at zoom 1).
  *
- * <p>The board-space center and zoom are SHARED, session-wide state: the
+ * <p>The FRAMING is shared, session-wide state: the board-space center plus
+ * the horizontal span (how much board is visible across the viewport). The
  * fullscreen board and the HUD overlay each own a {@code BoardCamera} with
- * their own viewport size, but {@link #sync} reads the shared view every
- * frame and {@link #pan}/{@link #zoomAt} write it back — so panning one view
- * moves the other identically. New board dimensions reset the shared view to
- * a centered 100%.
+ * their own viewport size; {@link #sync} reads the shared framing every frame
+ * and derives a local zoom that fits it ({@code vpW / span}), while
+ * {@link #pan}/{@link #zoomAt} write the framing back. Sharing the region —
+ * not the raw zoom — means the small overlay and the huge fullscreen view
+ * both show the same cells, each at its own natural size. New board
+ * dimensions reset the framing to the full board width, centered.
  */
 public final class BoardCamera {
     /** Cell edge in board-space pixels at zoom 1 (16px icon + frame). */
@@ -19,7 +22,8 @@ public final class BoardCamera {
 
     private static double sharedCenterX;
     private static double sharedCenterY;
-    private static float sharedZoom = 1.0f;
+    /** Board-space px visible across the viewport (the shared "how zoomed"). */
+    private static double sharedSpanX = -1;
     private static int sharedBoardW = -1;
     private static int sharedBoardH = -1;
 
@@ -41,14 +45,14 @@ public final class BoardCamera {
         this.boardH = Math.max(1, boardH);
         this.vpW = Math.max(1, vpW);
         this.vpH = Math.max(1, vpH);
-        if (this.boardW != sharedBoardW || this.boardH != sharedBoardH) {
+        if (this.boardW != sharedBoardW || this.boardH != sharedBoardH || sharedSpanX <= 0) {
             sharedBoardW = this.boardW;
             sharedBoardH = this.boardH;
-            sharedZoom = 1.0f;
+            sharedSpanX = this.boardW * CELL; // whole board width in view
             sharedCenterX = this.boardW * CELL / 2.0;
             sharedCenterY = this.boardH * CELL / 2.0;
         }
-        zoom = sharedZoom;
+        zoom = Math.clamp((float) (this.vpW / sharedSpanX), MIN_ZOOM, MAX_ZOOM);
         offsetX = sharedCenterX - this.vpW / (2.0 * zoom);
         offsetY = sharedCenterY - this.vpH / (2.0 * zoom);
         clamp();
@@ -74,7 +78,7 @@ public final class BoardCamera {
     }
 
     private void write() {
-        sharedZoom = zoom;
+        sharedSpanX = vpW / (double) zoom;
         sharedCenterX = offsetX + vpW / (2.0 * zoom);
         sharedCenterY = offsetY + vpH / (2.0 * zoom);
     }
