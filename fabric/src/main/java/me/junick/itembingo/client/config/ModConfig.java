@@ -52,6 +52,14 @@ public final class ModConfig {
     /** Whether typing /bingo opens the mod board instead of the server GUI. */
     public static boolean overrideBingo() { return data.overrideBingoCommand; }
 
+    /** Persists the overlay position after a drag (snapped to a corner). */
+    public static void setPosition(Corner corner, int offsetX, int offsetY) {
+        data.corner = corner;
+        data.offsetX = Math.max(0, offsetX);
+        data.offsetY = Math.max(0, offsetY);
+        save();
+    }
+
     public static boolean toggleOverrideBingo() {
         data.overrideBingoCommand = !data.overrideBingoCommand;
         save();

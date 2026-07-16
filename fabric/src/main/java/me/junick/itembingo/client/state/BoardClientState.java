@@ -43,12 +43,6 @@ public final class BoardClientState {
     private static CellState[] cells = new CellState[0];
     private static int revision;
 
-    /** Board cell coordinates of the HUD overlay window's top-left corner. */
-    private static int hudCol;
-    private static int hudRow;
-    /** False until the player frames a region themselves (HUD centers instead). */
-    private static boolean hudViewportSet;
-
     /** How long a freshly-submitted cell glows, in ms. */
     public static final long FLASH_MS = 700;
     /** Cell index → ms timestamp of the push that turned it submitted. */
@@ -74,7 +68,6 @@ public final class BoardClientState {
         width = height = submittedCount = totalCells = 0;
         gameMode = 0;
         flags = 0;
-        hudViewportSet = false;
         FLASHES.clear();
         revision++;
     }
@@ -144,8 +137,7 @@ public final class BoardClientState {
             }
 
             // Same board still in play: flash cells that just turned submitted.
-            // A new/resized board (or the first push) starts with a clean slate,
-            // and the HUD re-centers on it.
+            // A new/resized board (or the first push) starts with a clean slate.
             boolean sameBoard = status == ModProtocol.STATUS_OK && w == width && h == height;
             if (sameBoard) {
                 long now = System.currentTimeMillis();
@@ -156,7 +148,6 @@ public final class BoardClientState {
                 }
             } else {
                 FLASHES.clear();
-                hudViewportSet = false;
             }
 
             status = ModProtocol.STATUS_OK;
@@ -167,8 +158,6 @@ public final class BoardClientState {
             submittedCount = submitted;
             totalCells = total;
             cells = newCells;
-            hudCol = Math.clamp(hudCol, 0, Math.max(0, w - 1));
-            hudRow = Math.clamp(hudRow, 0, Math.max(0, h - 1));
             revision++;
         } catch (IOException e) {
             // Malformed push (shouldn't happen with a matching protocol) — keep
@@ -191,17 +180,4 @@ public final class BoardClientState {
         return 1.0f - (float) age / FLASH_MS;
     }
 
-    /* ------------------------- HUD viewport ------------------------- */
-
-    public static int hudCol() { return hudCol; }
-    public static int hudRow() { return hudRow; }
-
-    /** Whether the player has framed a region themselves (via the fullscreen GUI). */
-    public static boolean hasHudViewport() { return hudViewportSet; }
-
-    public static void setHudViewport(int col, int row) {
-        hudCol = Math.clamp(col, 0, Math.max(0, width - 1));
-        hudRow = Math.clamp(row, 0, Math.max(0, height - 1));
-        hudViewportSet = true;
-    }
 }

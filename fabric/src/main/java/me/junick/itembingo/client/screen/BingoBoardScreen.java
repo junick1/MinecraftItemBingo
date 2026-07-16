@@ -48,8 +48,6 @@ public class BingoBoardScreen extends Screen {
     private static final int INV_COLS = 9;
 
     private final BoardCamera camera = new BoardCamera();
-    private int seenRevision = -1;
-    private boolean cameraAttached;
     private boolean panning;
 
     /** Vanilla quick-craft (drag-distribute) state, mirroring AbstractContainerScreen. */
@@ -137,30 +135,8 @@ public class BingoBoardScreen extends Screen {
     /* ------------------------- lifecycle ------------------------- */
 
     @Override
-    protected void init() {
-        // init() also re-runs on window resize; only the first call may restore
-        // the saved camera — later ones must keep the current pan/zoom.
-        syncBoardState(!cameraAttached);
-        cameraAttached = true;
-    }
-
-    private void syncBoardState(boolean attach) {
-        int w = Math.max(1, BoardClientState.width());
-        int h = Math.max(1, BoardClientState.height());
-        if (attach) {
-            camera.attach(w, h, width, boardBottom() - boardTop());
-        } else {
-            camera.boardChanged(w, h);
-            camera.resize(width, boardBottom() - boardTop());
-        }
-        seenRevision = BoardClientState.revision();
-    }
-
-    @Override
     public void onClose() {
         BoardImageExporter.cancel();
-        camera.save();
-        BoardClientState.setHudViewport(camera.visibleTopLeftCol(), camera.visibleTopLeftRow());
         // If something is still on the cursor, close the inventory menu properly
         // so the server puts the carried stack back (vanilla close semantics).
         var player = minecraft().player;
@@ -339,10 +315,10 @@ public class BingoBoardScreen extends Screen {
         if (hasCtrl()) {
             camera.zoomAt(mouseX, mouseY - boardTop(), scrollY);
         } else if (hasShift()) {
-            camera.pan((scrollY + scrollX) * BoardCamera.CELL * camera.zoom / 2.0, 0);
+            camera.pan((scrollY + scrollX) * BoardCamera.CELL * camera.zoom() / 2.0, 0);
         } else {
-            camera.pan(scrollX * BoardCamera.CELL * camera.zoom / 2.0,
-                    scrollY * BoardCamera.CELL * camera.zoom / 2.0);
+            camera.pan(scrollX * BoardCamera.CELL * camera.zoom() / 2.0,
+                    scrollY * BoardCamera.CELL * camera.zoom() / 2.0);
         }
         return true;
     }
@@ -413,9 +389,8 @@ public class BingoBoardScreen extends Screen {
     public void extractRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float delta) {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
-        if (BoardClientState.revision() != seenRevision) {
-            syncBoardState(false);
-        }
+        camera.sync(BoardClientState.width(), BoardClientState.height(),
+                width, boardBottom() - boardTop());
 
         if (BoardImageExporter.armed()) {
             exportPopupOpen = false;
@@ -497,7 +472,7 @@ public class BingoBoardScreen extends Screen {
         g.fill(0, top, width, invTop(), 0xE0141418);
         int textY = top + (HINT_BAR_H - 9) / 2 + 1;
 
-        String zoom = (int) Math.round(camera.zoom * 100) + "%";
+        String zoom = (int) Math.round(camera.zoom() * 100) + "%";
         int zoomX = width - font.width(zoom) - 8;
         g.text(font, zoom, zoomX, textY, 0xFF8899AA);
 
