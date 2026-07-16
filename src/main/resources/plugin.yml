@@ -29,6 +29,7 @@ commands:
   chest:
     description: Open your team/private storage chest
     usage: /chest
+    aliases: [cheat, chesr, c, 상자, 상]
   tpa:
     description: Request to teleport to a teammate
     usage: /tpa <player>
@@ -41,6 +42,7 @@ commands:
   bingo:
     description: View the bingo board
     usage: /bingo
+    aliases: [b, 빙고, 빙]
   timer:
     description: Timer utilities
     usage: /timer <start|stop|reset> [seconds]
@@ -55,6 +57,7 @@ commands:
   shop:
     description: Open shop
     usage: /shop
+    aliases: [s, 상점, 샵]
   startbingo:
     description: Start the bingo game
     usage: /startbingo <seconds>
@@ -72,6 +75,10 @@ commands:
     description: Set your display language
     usage: /language <english|korean|auto>
     aliases: [lang]
+  password:
+    description: Set your password for webui
+    usage: /password <new password>
+    aliases: [pass]
   chat:
     description: Set your default chat channel (team/all)
     usage: /chat <team|t|all|a>

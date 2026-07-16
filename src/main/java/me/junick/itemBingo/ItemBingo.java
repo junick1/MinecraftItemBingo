@@ -126,6 +126,7 @@ public final class ItemBingo extends JavaPlugin {
         getCommand("rank").setExecutor(new RankCommand());
         getCommand("summary").setExecutor(new SummaryCommand());
         getCommand("shop").setExecutor(new ShopCommand());
+        getCommand("password").setExecutor(new PasswordCommand());
 
         RollBingo rb = new RollBingo();
         getCommand("rollbingo").setExecutor(rb);
@@ -215,6 +216,7 @@ public final class ItemBingo extends JavaPlugin {
         ChatManager.save();
         ChestManager.save();
         LanguageManager.save();
+        PasswordManager.save();
 
         WebUI.stopServer();
 
