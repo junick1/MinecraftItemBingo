@@ -23,7 +23,7 @@ import java.util.List;
  * confirmation is shown in the newly chosen language, and any open GUI is reopened
  * so the change is visible immediately.
  */
-public class PasswordCommand implements CommandExecutor {
+public class PasswordCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
@@ -47,5 +47,10 @@ public class PasswordCommand implements CommandExecutor {
         p.sendMessage(Messages.get(p, "command.password.ok"));
         PasswordManager.setPassword(p.getUniqueId(), password);
         return true;
+    }
+
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String @NotNull [] args) {
+        return List.of();
     }
 }

@@ -91,6 +91,10 @@ command:
     info-team: " §bTeam {team}§7: §f{size}명"
     info-unassigned: " §c미배정: §f{count}명"
     list: "§b[Team {team}] §f({count}명) §7{names}"
+  password:
+    reset: "패스워드가 리셋되었습니다."
+    ok: "패스워드가 설정되었습니다."
+    space: "패스워드에 공백을 포함할 수 없습니다."
 
 language:
   name:
@@ -229,8 +233,12 @@ item:
   mysterious_sherd:
     name: "의문의 도자기 조각 상자"
     lore:
-      - "사용하면 정해진 확률에 따라 도자기 조각을 획득할 수 있다."
-      - "확률형 아이템 포함"
+      - "사용하면 정해진 확률에 따라 도자기 조각을 1~4개 획득할 수 있다."
+      - "인벤토리가 가득 차면 아이템이 떨어진다."
+      - "1개 획득 (50%)"
+      - "2개 획득 (30%)"
+      - "3개 획득 (15%)"
+      - "4개 획득 (5%)"
   golden_pickaxe:
     name: "금 곡괭이"
     lore:

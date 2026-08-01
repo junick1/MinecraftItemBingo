@@ -92,6 +92,10 @@ command:
     info-team: " §bTeam {team}§7: §f{size}"
     info-unassigned: " §cUnassigned: §f{count}"
     list: "§b[Team {team}] §f({count}) §7{names}"
+  password:
+    reset: "Your password has been reset."
+    ok: "Your password has been set."
+    space: "You cannot use whitespaces in your password."
 
 language:
   name:
@@ -230,8 +234,12 @@ item:
   mysterious_sherd:
     name: "Mysterious Sherd Box"
     lore:
-      - "Obtain pottery sherd according to a set probability."
-      - "Includes probability items"
+      - "Obtain 1 to 4 pottery sherds based on a set probability."
+      - "If your inventory is full, the items will drop."
+      - "Obtain 1 (50%)"
+      - "Obtain 2 (30%)"
+      - "Obtain 3 (15%)"
+      - "Obtain 4 (5%)"
   golden_pickaxe:
     name: "Golden Pickaxe"
     lore:
