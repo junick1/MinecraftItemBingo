@@ -268,7 +268,14 @@ item:
     name: "Knowledge Book for Villagers"
     lore:
       - "When used on a villager with a profession, immediately unlocks all trades."
-
+  red_plate1:
+    name: ""
+    lore:
+      - "Obtain random stained glass"
+  red_plate2:
+    name: ""
+    lore:
+      - "Obtain random stained glass pane"
 effect:
   speed:
     name: "Speed"

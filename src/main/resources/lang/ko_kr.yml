@@ -267,7 +267,14 @@ item:
     name: "서울대합격증"
     lore:
       - "직업이 있는 주민에 사용하면 즉시 모든 거래를 해금한다."
-
+  red_plate1:
+    name: ""
+    lore:
+      - "랜덤한 색유리 획득"
+  red_plate2:
+    name: ""
+    lore:
+      - "랜덤한 색유리판 획득"
 effect:
   speed:
     name: "신속"

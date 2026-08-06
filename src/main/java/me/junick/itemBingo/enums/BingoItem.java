@@ -68,12 +68,12 @@ public enum BingoItem {
     RED_PLATE1(
             TextColor.color(0, 0, 0),
             Material.RED_STAINED_GLASS_PANE,
-            Map.of(BingoRewardType.DIAMOND, 0)
+            Map.of(BingoRewardType.DIAMOND, 1)
     ),
     RED_PLATE2(
             TextColor.color(0, 0, 0),
             Material.RED_STAINED_GLASS_PANE,
-            Map.of(BingoRewardType.DIAMOND, 0)
+            Map.of(BingoRewardType.DIAMOND, 1)
     ),
     GOLDEN_PICKAXE(
             NamedTextColor.GOLD,
@@ -103,6 +103,11 @@ public enum BingoItem {
     KNOWLEDGE_BOOK(
             NamedTextColor.YELLOW,
             Material.KNOWLEDGE_BOOK,
+            Map.of(BingoRewardType.EMERALD, 10)
+    ),
+    NEW_HEART(
+            NamedTextColor.GOLD,
+            Material.CREAKING_HEART,
             Map.of(BingoRewardType.EMERALD, 10)
     );
 
