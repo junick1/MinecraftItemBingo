@@ -268,13 +268,20 @@ item:
     lore:
       - "직업이 있는 주민에 사용하면 즉시 모든 거래를 해금한다."
   red_plate1:
-    name: ""
+    name: "붉은 유리판 1"
     lore:
       - "랜덤한 색유리 획득"
   red_plate2:
-    name: ""
+    name: "붉은 유리판 2"
     lore:
       - "랜덤한 색유리판 획득"
+  premium_mysterious_sherd:
+    name: "프리미엄 도자기 조각 상자"
+    lore:
+      - "사용하면 정해진 확률에 따라 도자기 조각을 4~5개 획득할 수 있다."
+      - "인벤토리가 가득 차면 아이템이 떨어진다."
+      - "4개 획득 (85%)"
+      - "5개 획득 (15%)"
 effect:
   speed:
     name: "신속"

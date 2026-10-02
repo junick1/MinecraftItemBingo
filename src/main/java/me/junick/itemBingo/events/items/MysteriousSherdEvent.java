@@ -79,4 +79,44 @@ public class MysteriousSherdEvent implements Listener {
 
         hand.setAmount(hand.getAmount() - 1);
     }
+
+    @EventHandler
+    public void onUsePremium(PlayerInteractEvent e) {
+        if (e.getHand() != EquipmentSlot.HAND) return;
+        if (!e.getAction().isRightClick()) return;
+
+        Player player = e.getPlayer();
+        ItemStack hand = player.getInventory().getItemInMainHand();
+
+        if (!CustomItems.is(hand, BingoItem.PREMIUM_MYSTERIOUS_SHERD)) return;
+
+        e.setCancelled(true);
+
+        int num = 4;
+        double r = random.nextDouble(0, 1);
+        if (r < 0.15) num = 5;
+
+        player.sendMessage("+" + num);
+        switch (num) {
+            case 4 -> player.playSound(player.getLocation(), Sound.ENTITY_ITEM_PICKUP, 1.0f, 1.0f);
+            case 5 -> player.playSound(player.getLocation(), Sound.ENTITY_PLAYER_LEVELUP, 1.0f, 2.0f);
+        }
+
+        List<Material> pool = new ArrayList<>(itemList);
+        Collections.shuffle(pool, random);
+
+        ItemStack[] toGive = new ItemStack[num];
+        for (int i = 0; i < num; i++) {
+            toGive[i] = new ItemStack(pool.get(i));
+        }
+
+        var leftover = player.getInventory().addItem(toGive);
+        if (!leftover.isEmpty()) {
+            for (var item : leftover.values()) {
+                player.getWorld().dropItem(player.getLocation(), item);
+            }
+        }
+
+        hand.setAmount(hand.getAmount() - 1);
+    }
 }

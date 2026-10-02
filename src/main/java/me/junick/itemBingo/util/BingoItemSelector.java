@@ -76,6 +76,12 @@ public class BingoItemSelector {
             if (material == Material.FARMLAND) continue;
             if (material == Material.SUSPICIOUS_GRAVEL) continue;
             if (material == Material.SUSPICIOUS_SAND) continue;
+            if (material == Material.FROGSPAWN) continue;
+
+            if (material == Material.OCHRE_FROGLIGHT) continue; // 개선하기 전까지 좀
+            if (material == Material.PEARLESCENT_FROGLIGHT) continue;
+            if (material == Material.VERDANT_FROGLIGHT) continue;
+
 
             CANDIDATE_ITEMS.add(new ItemStack(material));
         }
@@ -123,15 +129,15 @@ public class BingoItemSelector {
                         case POTTERY_SHERD -> weight -= 0;
                         case SMITHING_TEMPLATE -> weight -= 0;
                         */
-                        case COLOR -> weight -= 170;
-                        case SILK_TOUCH -> weight -= 100;
-                        case WAXED -> weight -= 75;
-                        case DISC -> weight += 120;
-                        case COPPER -> weight += -75;
-                        case THE_END -> weight -= 50;
-                        case THE_NETHER -> weight -= 0;
-                        case POTTERY_SHERD -> weight += 120;
-                        case SMITHING_TEMPLATE -> weight += 120;
+//                        case COLOR -> weight -= 170;
+//                        case SILK_TOUCH -> weight -= 100;
+//                        case WAXED -> weight -= 75;
+//                        case DISC -> weight += 120;
+//                        case COPPER -> weight += -75;
+//                        case THE_END -> weight -= 50;
+//                        case THE_NETHER -> weight -= 0;
+//                        case POTTERY_SHERD -> weight += 120;
+//                        case SMITHING_TEMPLATE -> weight += 120;
                     }
                 }
             }

@@ -269,13 +269,20 @@ item:
     lore:
       - "When used on a villager with a profession, immediately unlocks all trades."
   red_plate1:
-    name: ""
+    name: "Red plate 1"
     lore:
       - "Obtain random stained glass"
   red_plate2:
-    name: ""
+    name: "Red plate 2"
     lore:
       - "Obtain random stained glass pane"
+  premium_mysterious_sherd:
+    name: "Premium Sherd Box"
+    lore:
+      - "Obtain 4 to 5 pottery sherds based on a set probability."
+      - "If your inventory is full, the items will drop."
+      - "Obtain 4 (85%)"
+      - "Obtain 5 (15%)"
 effect:
   speed:
     name: "Speed"

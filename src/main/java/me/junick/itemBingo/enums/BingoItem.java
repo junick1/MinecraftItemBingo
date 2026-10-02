@@ -22,7 +22,7 @@ public enum BingoItem {
     BINGO_FILLER(
             NamedTextColor.LIGHT_PURPLE,
             Material.LIGHT_BLUE_DYE,
-            Map.of(BingoRewardType.LINE, 15)
+            Map.of(BingoRewardType.LINE, 13)
     ),
     DYE_SELECTOR(
             NamedTextColor.GREEN,
@@ -75,15 +75,16 @@ public enum BingoItem {
             Material.RED_STAINED_GLASS_PANE,
             Map.of(BingoRewardType.DIAMOND, 1)
     ),
+    /*
     GOLDEN_PICKAXE(
             NamedTextColor.GOLD,
             Material.GOLDEN_PICKAXE,
             Map.of(BingoRewardType.EMERALD, 3)
-    ),
+    ),*/
     IRON_PICKAXE(
             NamedTextColor.GRAY,
             Material.IRON_PICKAXE,
-            Map.of(BingoRewardType.EMERALD, 10)
+            Map.of(BingoRewardType.EMERALD, 3)
     ),
     HONEY_FILLER(
             NamedTextColor.GOLD,
@@ -109,7 +110,13 @@ public enum BingoItem {
             NamedTextColor.GOLD,
             Material.CREAKING_HEART,
             Map.of(BingoRewardType.EMERALD, 10)
-    );
+    ),
+    PREMIUM_MYSTERIOUS_SHERD(
+            TextColor.fromHexString("#9D5848"),
+            Material.COPPER_INGOT,
+            Map.of(BingoRewardType.DIAMOND, 17)
+    )
+    ;
 
     private final TextColor color;
     private final Material icon;

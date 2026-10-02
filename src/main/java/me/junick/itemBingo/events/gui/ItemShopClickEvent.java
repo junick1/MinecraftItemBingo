@@ -60,13 +60,13 @@ public class ItemShopClickEvent implements Listener {
                 yield itemStack;
             }
             case MYSTERIOUS_SHERD -> CustomItems.get(BingoItem.MYSTERIOUS_SHERD, loc);
-            case GOLDEN_PICKAXE -> {
-                var itemStack = new ItemStack(Material.GOLDEN_PICKAXE);
-                var meta = itemStack.getItemMeta();
-                meta.addEnchant(Enchantment.SILK_TOUCH, 1, true);
-                itemStack.setItemMeta(meta);
-                yield itemStack;
-            }
+//            case GOLDEN_PICKAXE -> {
+//                var itemStack = new ItemStack(Material.GOLDEN_PICKAXE);
+//                var meta = itemStack.getItemMeta();
+//                meta.addEnchant(Enchantment.SILK_TOUCH, 1, true);
+//                itemStack.setItemMeta(meta);
+//                yield itemStack;
+//            }
             case IRON_PICKAXE -> {
                 var itemStack = new ItemStack(Material.IRON_PICKAXE);
                 var meta = itemStack.getItemMeta();
